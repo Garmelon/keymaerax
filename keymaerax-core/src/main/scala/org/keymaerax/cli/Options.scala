@@ -11,6 +11,7 @@ import org.keymaerax.tools.ToolName
 import org.keymaerax.tools.install.ToolConfiguration
 import scopt.OParser
 
+import java.nio.file.Path
 import scala.concurrent.duration.Duration
 
 // TODO Convert to Scala 3 enum
@@ -52,6 +53,7 @@ object Command {
       exportAnswers: Boolean = false,
       skipOnParseError: Boolean = false,
   ) extends Command
+  case class HRun(in: Option[Path] = None) extends Command
   // Webui commands
   case class Codegen(
       in: String = null,
@@ -398,6 +400,16 @@ object Options {
           opt[Unit]("skip-on-parse-error")
             .action((_, o) => o.updateCommand[Command.Grade](_.copy(skipOnParseError = true)))
             .text(wrap("Skip grading on parse errors.")),
+        ),
+      note(""),
+      cmd("hrun")
+        .action((_, o) => o.copy(command = Some(Command.HRun())))
+        .text(wrap("Run a hippolochus program."))
+        .children(
+          arg[Path]("<in>")
+            .optional()
+            .action((x, o) => o.updateCommand[Command.HRun](_.copy(in = Some(x))))
+            .text(wrap("The file to execute. Uses stdin if no file is specified."))
         ),
     )
 

@@ -1,0 +1,9 @@
+greetee = "world";
+print("hello ", greetee);
+print("1 + 1 = ", 1 + 1);
+
+addWorks = theorem dGL {
+    1 + 1 = 2
+} by {
+    t.sorry();
+};

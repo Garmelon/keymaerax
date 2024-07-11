@@ -152,6 +152,9 @@ object KeymaeraxCore {
           msgOut = System.out,
           resultOut = System.out,
         )
+      case Some(cmd: Command.HRun) =>
+        initializeProver(combineToolConfigs(options.toToolConfig, toolConfigFromFile(ToolName.Z3)))
+        CommandHRun.run(cmd.in)
       // Unknown or no commands
       case Some(command) => println("WARNING: Unknown command " + command)
       case None => options.printUsageAndExitWithError()

@@ -581,7 +581,7 @@ trait ArchiveParser extends (String => List[ParsedArchiveEntry]) {
   }
 
   /** Returns the first entry in `in` as formula. */
-  def parseAsFormula(in: InputStream): Formula = parseAsFormula(io.Source.fromInputStream(in).mkString)
+  def parseAsFormula(in: InputStream): Formula = parseAsFormula(scala.io.Source.fromInputStream(in).mkString)
 
   /** Reads a specific entry from the archive. */
   def getEntry(name: String, content: String, parseTactics: Boolean = true): Option[ParsedArchiveEntry] =

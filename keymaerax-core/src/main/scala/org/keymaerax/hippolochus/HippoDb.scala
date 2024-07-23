@@ -5,10 +5,13 @@
 
 package org.keymaerax.hippolochus
 
-import org.keymaerax.hippolochus.axiom.{HippoAxiom, RichAxiom}
-import org.keymaerax.hippolochus.library.{CoreAxioms, Tactics}
-import org.keymaerax.hippolochus.rule.{HippoRule, RichRule}
-import org.keymaerax.hippolochus.tactic.{HippoTactic, RichTactic}
+import io.github.classgraph.{ClassGraph, ClassInfo, ScanResult}
+import org.keymaerax.core.hippolochus.annotations.{Axiom, Rule, Tactic}
+import org.keymaerax.hippolochus.axiom.HippoAxiom
+import org.keymaerax.hippolochus.rule.HippoRule
+import org.keymaerax.hippolochus.tactic.HippoTactic
+
+import java.lang.annotation.Annotation
 
 case class HippoDb(
     axioms: Map[HippoIdentifier, HippoAxiom],
@@ -17,13 +20,50 @@ case class HippoDb(
 )
 
 object HippoDb {
-  private val allAxioms: Seq[RichAxiom[HippoAxiom]] = Seq(CoreAxioms.compose)
-  private val allRules: Seq[RichRule[HippoRule]] = Seq()
-  private val allTactics: Seq[RichTactic[HippoTactic]] = Seq(Tactics.sorry, Tactics.label, Tactics.axiom, Tactics.rule)
+  private def getAnnotatedFieldsOfClass[A <: Annotation, T](
+      info: ClassInfo,
+      annotation: Class[A],
+      getName: A => String,
+      getValue: AnyRef => T,
+  ): Seq[(HippoIdentifier, T)] = {
+    require(info.getName.endsWith("$"), "annotations in normal classes not allowed")
+    val clazz = info.loadClass()
+    val instance = clazz.getField("MODULE$").get(null)
 
-  val filledIn: HippoDb = HippoDb(
-    axioms = allAxioms.map(a => a.info.name -> a).toMap,
-    rules = allRules.map(r => r.info.name -> r).toMap,
-    tactics = allTactics.map(t => t.info.name -> t).toMap,
-  )
+    clazz
+      .getDeclaredFields
+      .filter(_.isAnnotationPresent(annotation))
+      .map { field =>
+        val method = clazz.getMethod(field.getName)
+        val name = HippoIdentifier(getName(field.getAnnotation(annotation)))
+        val value = getValue(method.invoke(instance))
+        name -> value
+      }
+  }
+
+  private def getAllAnnotatedFields[A <: Annotation, T](
+      scan: ScanResult,
+      annotation: Class[A],
+      getName: A => String,
+      getValue: AnyRef => T,
+  ): Seq[(HippoIdentifier, T)] = {
+    import scala.jdk.CollectionConverters._
+    scan
+      .getClassesWithFieldAnnotation(annotation)
+      .asScala
+      .toSeq
+      .flatMap(info => getAnnotatedFieldsOfClass(info, annotation, getName, getValue))
+  }
+
+  def fromAnnotationScan(): HippoDb = {
+    val scan = new ClassGraph().enableAllInfo().scan()
+    val axioms = getAllAnnotatedFields[Axiom, HippoAxiom](scan, classOf[Axiom], _.name(), _.asInstanceOf[HippoAxiom])
+    val rules = getAllAnnotatedFields[Rule, HippoRule](scan, classOf[Rule], _.name(), _.asInstanceOf[HippoRule])
+    val tactics =
+      getAllAnnotatedFields[Tactic, HippoTactic](scan, classOf[Tactic], _.name(), _.asInstanceOf[HippoTactic])
+    require(axioms.map(_._1).distinct.length == axioms.length, "axiom names must be unique")
+    require(rules.map(_._1).distinct.length == rules.length, "rule names must be unique")
+    require(tactics.map(_._1).distinct.length == tactics.length, "axiom names must be unique")
+    HippoDb(axioms = axioms.toMap, rules = rules.toMap, tactics = tactics.toMap)
+  }
 }

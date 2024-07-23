@@ -6,6 +6,7 @@
 package org.keymaerax.hippolochus.library
 
 import org.keymaerax.core.Provable
+import org.keymaerax.core.hippolochus.annotations.Axiom
 import org.keymaerax.hippolochus.axiom.{HippoAxiomInfo, PureAxiom, RichAxiom}
 import org.keymaerax.hippolochus.proof.HippoProof
 
@@ -13,5 +14,6 @@ object CoreAxioms {
   private def create(info: HippoAxiomInfo, coreName: String): RichAxiom[PureAxiom] =
     RichAxiom(info, PureAxiom(HippoProof.fromProvable(Provable.axioms(coreName))))
 
+  @Axiom(name = "compose")
   val compose: RichAxiom[PureAxiom] = create(HippoAxiomInfo(name = "compose"), "[;] compose")
 }

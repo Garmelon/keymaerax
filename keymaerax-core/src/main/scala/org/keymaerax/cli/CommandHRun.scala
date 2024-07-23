@@ -28,7 +28,7 @@ object CommandHRun {
     }
 
     val program = AstExpression.toHippoExpression(ast)
-    val interpreter = SequentialInterpreter(Namespace.populated(HippoDb.filledIn))
+    val interpreter = SequentialInterpreter(Namespace.populated(HippoDb.fromAnnotationScan()))
     val result = interpreter.eval(program)
 
     println(result)

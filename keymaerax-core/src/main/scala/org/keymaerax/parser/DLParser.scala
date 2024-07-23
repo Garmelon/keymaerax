@@ -43,7 +43,7 @@ import scala.collection.immutable._
  * @see
  *   [[KeYmaeraXParser]]
  */
-object DLParser extends DLParser {
+object DLParser extends DLParser(checkAgainst = ParserInit.checkAgainstFromConfig()) {
   assert(OpSpec.statementSemicolon, "This parser is built for formulas whose atomic statements end with a ;")
   assert(
     !OpSpec.negativeNumber,
@@ -134,9 +134,8 @@ object DLParser extends DLParser {
  * @see
  *   [[https://github.com/LS-Lab/KeYmaeraX-release/wiki/KeYmaera-X-Syntax-and-Informal-Semantics Wiki]]
  */
-class DLParser extends Parser {
+class DLParser(private val checkAgainst: Option[Parser]) extends Parser {
   import DLParser.parseException
-  private val checkAgainst: Option[Parser] = ParserInit.checkAgainstFromConfig()
 
   /**
    * Parse the input string in the concrete syntax as a differential dynamic logic expression

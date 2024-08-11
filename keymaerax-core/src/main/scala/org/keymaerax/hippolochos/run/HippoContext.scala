@@ -6,7 +6,7 @@
 package org.keymaerax.hippolochos.run
 
 import org.keymaerax.core.{Expression, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
-import org.keymaerax.hippolochos.proof.HippoProof
+import org.keymaerax.hippolochos.proof.{HippoPremise, HippoProof}
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
 class HippoContext {
@@ -19,7 +19,8 @@ class HippoContext {
   // In some occasions, they also perform slight optimizations to keep the resulting Proof smaller.
   // The Join constructor is wrapped separately later.
 
-  def sorry(conclusion: Sequent, premises: IndexedSeq[Sequent]): HippoProof = HippoProof.Sorry(conclusion, premises)
+  def sorry(conclusion: Sequent, premises: IndexedSeq[Sequent]): HippoProof = HippoProof
+    .Sorry(conclusion, premises.map(HippoPremise.locallySound))
 
   def sorry(conclusion: Sequent, premises: Sequent*): HippoProof = sorry(conclusion, premises.toIndexedSeq)
 
@@ -42,6 +43,11 @@ class HippoContext {
 
   def uSubst(proof: HippoProof, substs: (Expression, Expression)*): HippoProof =
     uSubst(proof, USubst(substs.map { case (from, to) => SubstitutionPair(from, to) }))
+
+  def uSubstGlobal(premise: Sequent, subst: USubst): HippoProof = HippoProof.GloballySoundUSubst(premise, subst)
+
+  def uSubstGlobal(premise: Sequent, substs: (Expression, Expression)*): HippoProof =
+    uSubstGlobal(premise, USubst(substs.map { case (from, to) => SubstitutionPair(from, to) }))
 
   /////////////////////////
   // Tactic applications //
@@ -88,7 +94,7 @@ class HippoContext {
     backwardJoinAt(0)(tactic, conclusion, premises: _*)
 
   def backwardJoinAt(at: Int)(tactic: BackwardTactic, conclusion: HippoProof, premises: (Int, Sequent)*): HippoProof =
-    joinAt(at)(conclusion, backward(tactic, conclusion.premises(at), premises: _*))
+    joinAt(at)(conclusion, backward(tactic, conclusion.premises(at).sequent, premises: _*))
 
   ///////////////////////////
   // Starting proof chains //

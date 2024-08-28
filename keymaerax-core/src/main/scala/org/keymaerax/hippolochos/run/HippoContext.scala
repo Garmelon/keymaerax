@@ -95,6 +95,18 @@ class HippoContext(
   def uSubstGlobal(premise: Sequent, substs: (Expression, Expression)*): HippoProof =
     uSubstGlobal(premise, USubst(substs.map { case (from, to) => SubstitutionPair(from, to) }))
 
+  def swap(proof: HippoProof, premise1: Int, premise2: Int): HippoProof = {
+    // Even if we're not returning the result, we still construct it to run the correctness checks.
+    val result = HippoProof.Swap(proof, premise1: Int, premise2: Int)
+    if (premise1 == premise2) return proof
+    result
+  }
+
+  def deduplicate(proof: HippoProof, premise: Int, duplicate: Int): HippoProof = HippoProof
+    .Deduplicate(proof, premise, duplicate)
+
+  def weaken(proof: HippoProof, premise: Sequent): HippoProof = HippoProof.Weaken(proof, premise)
+
   /////////////////////////
   // Tactic applications //
   /////////////////////////

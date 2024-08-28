@@ -40,6 +40,21 @@ object HippoJson {
           "subproof" -> addProof(jsProofs, indexByProof, subproof).toJson,
           "at" -> at.toJson,
         )
+      case HippoProof.Swap(proof, premise1, premise2) => variant(
+          "swap",
+          "proof" -> addProof(jsProofs, indexByProof, proof).toJson,
+          "premise1" -> premise1.toJson,
+          "premise2" -> premise2.toJson,
+        )
+      case HippoProof.Deduplicate(proof, premise, duplicate) => variant(
+          "deduplicate",
+          "proof" -> addProof(jsProofs, indexByProof, proof).toJson,
+          "premise" -> premise.toJson,
+          "duplicate" -> duplicate.toJson,
+        )
+      case HippoProof.Weaken(proof, premise) =>
+        variant("weaken", "proof" -> addProof(jsProofs, indexByProof, proof).toJson, "premise" -> premise.toJson)
+
     }
 
     val index = jsProofs.length
@@ -74,6 +89,19 @@ object HippoJson {
           subproof = proofs(fields("subproof").convertTo[Int]),
           at = fields("at").convertTo[Int],
         )
+      case "swap" => HippoProof.Swap(
+          proof = proofs(fields("proof").convertTo[Int]),
+          premise1 = fields("premise1").convertTo[Int],
+          premise2 = fields("premise2").convertTo[Int],
+        )
+      case "deduplicate" => HippoProof.Deduplicate(
+          proof = proofs(fields("proof").convertTo[Int]),
+          premise = fields("premise").convertTo[Int],
+          duplicate = fields("duplicate").convertTo[Int],
+        )
+      case "weaken" => HippoProof
+          .Weaken(proof = proofs(fields("proof").convertTo[Int]), premise = fields("premise").convertTo[Sequent])
+
     }
 
     proofs.append(proof)

@@ -26,6 +26,12 @@ case class ProofChain(ctx: HippoContext, proof: HippoProof) {
     SubstitutionPair(from, to)
   }))
 
+  def swap(premise1: Int, premise2: Int): HippoProof = ctx.swap(proof, premise1, premise2)
+
+  def deduplicate(premise: Int, duplicate: Int): HippoProof = ctx.deduplicate(proof, premise, duplicate)
+
+  def weaken(premise: Sequent): HippoProof = ctx.weaken(proof, premise)
+
   /////////////////////////
   // Extending the proof //
   /////////////////////////

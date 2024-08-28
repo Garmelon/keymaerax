@@ -175,4 +175,50 @@ object HippoProof {
       proof.computeProvable(fromExternal, (before :+ premise) ++ after)
     }
   }
+
+  final case class Swap(proof: HippoProof, premise1: Int, premise2: Int) extends HippoProof {
+    require(proof.premises.indices.contains(premise1))
+    require(proof.premises.indices.contains(premise2))
+
+    val conclusion: core.Sequent = proof.conclusion
+    val premises: IndexedSeq[HippoPremise] = for (i <- proof.premises.indices)
+      yield proof.premises(if (i == premise1) premise2 else if (i == premise2) premise1 else i)
+
+    override def computeProvable(fromExternal: FromExternal, premises: IndexedSeq[core.Provable]): core.Provable =
+      assertConsistency(premises) {
+        val swappedPremises = for (i <- premises.indices)
+          yield premises(if (i == premise1) premise2 else if (i == premise2) premise1 else i)
+        proof.computeProvable(fromExternal, swappedPremises).swap(premise1, premise2)
+      }
+  }
+
+  final case class Deduplicate(proof: HippoProof, premise: Int, duplicate: Int) extends HippoProof {
+    require(proof.premises.indices.contains(premise))
+    require(proof.premises.indices.contains(duplicate))
+    require(proof.premises(premise).sequent == proof.premises(duplicate).sequent)
+
+    val conclusion: core.Sequent = proof.conclusion
+    val premises: IndexedSeq[HippoPremise] = {
+      val actualPremise = proof.premises(premise)
+      val duplicatePremise = proof.premises(premise)
+      val newPremise = actualPremise.copy(mustBeProved = actualPremise.mustBeProved || duplicatePremise.mustBeProved)
+      val updatedPremises = proof.premises.updated(premise, newPremise)
+      updatedPremises.take(duplicate) ++ updatedPremises.drop(duplicate + 1)
+    }
+
+    override def computeProvable(fromExternal: FromExternal, premises: IndexedSeq[core.Provable]): core.Provable =
+      assertConsistency(premises) {
+        val duplicatedPremise = if (premise < duplicate) premises(premise) else premises(premise - 1)
+        val duplicatedPremises = (premises.take(duplicate) :+ duplicatedPremise) ++ premises.drop(duplicate)
+        proof.computeProvable(fromExternal, duplicatedPremises).deduplicate(premise, duplicate)
+      }
+  }
+
+  final case class Weaken(proof: HippoProof, premise: core.Sequent) extends HippoProof {
+    val conclusion: core.Sequent = proof.conclusion
+    val premises: IndexedSeq[HippoPremise] = proof.premises :+ HippoPremise(sequent = premise, mustBeProved = false)
+
+    override def computeProvable(fromExternal: FromExternal, premises: IndexedSeq[core.Provable]): core.Provable =
+      assertConsistency(premises) { proof.computeProvable(fromExternal, premises.dropRight(1)).weaken(premise) }
+  }
 }

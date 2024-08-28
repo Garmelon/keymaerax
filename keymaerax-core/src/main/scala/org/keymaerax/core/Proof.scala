@@ -531,6 +531,78 @@ final case class Provable private (conclusion: Sequent, subgoals: immutable.Inde
     )
 
   /**
+   * Swap the positions of two subgoals.
+   *
+   * With `i = subgoal1` and `j = subgoal2`, this transforms the [[Provable]] as follows:
+   * {{{
+   *    S1 ... Si ... Sj ... Sn          S1 ... Sj ... Si ... Sn
+   *   -------------------------   =>   -------------------------
+   *               S                                S
+   * }}}
+   *
+   * Note that `subgoal1` does not need to be smaller than `subgoal2`. The two may even be equal to each other, in which
+   * case the resulting [[Provable]] does not change.
+   *
+   * @param subgoal1
+   *   The index of the first subgoal to swap.
+   * @param subgoal2
+   *   The index of the second subgoal to swap.
+   * @return
+   *   A [[Provable]] with the two subgoals swapped.
+   */
+  def swap(subgoal1: Provable.Subgoal, subgoal2: Provable.Subgoal): Provable = {
+    require(subgoals.indices.contains(subgoal1), "subgoal1 is out of range")
+    require(subgoals.indices.contains(subgoal2), "subgoal2 is out of range")
+    if (subgoal1 == subgoal2) return this // Optimization for performance, not necessary for correctness
+    val swappedSubgoals = for (i <- subgoals.indices)
+      yield subgoals(if (i == subgoal1) subgoal2 else if (i == subgoal2) subgoal1 else i)
+    this.copy(subgoals = swappedSubgoals)
+  }
+
+  /**
+   * Remove one of two identical subgoals.
+   *
+   * With `i = subgoal` and `j = duplicate`, this transforms the [[Provable]] as follows:
+   * {{{
+   *   S1 ... Si ... Sj ... Sn          S1 ... Si ... Sn
+   *  -------------------------   =>   ------------------
+   *              S                            S
+   * }}}
+   *
+   * @param subgoal
+   *   The index of a subgoal with a duplicate.
+   * @param duplicate
+   *   The index of the duplicate subgoal that will be removed.
+   * @return
+   *   A [[Provable]] with the duplicate subgoal removed.
+   */
+  def deduplicate(subgoal: Provable.Subgoal, duplicate: Provable.Subgoal): Provable = {
+    require(subgoals.indices.contains(subgoal), "subgoal is out of range")
+    require(subgoals.indices.contains(duplicate), "duplicate is out of range")
+    require(subgoal != duplicate, "subgoal and duplicate must be different indices")
+    require(subgoals(subgoal) == subgoals(duplicate), "duplicate doesn't match subgoal")
+    val dedupedSubgoals = subgoals.take(duplicate) ++ subgoals.drop(duplicate + 1)
+    this.copy(subgoals = dedupedSubgoals)
+  }
+
+  /**
+   * Append an arbitrary new subgoal.
+   *
+   * This transforms the [[Provable]] as follows:
+   * {{{
+   *   S1 ... Sn          S1 ... Sn  newSubgoal
+   *  -----------   =>   -----------------------
+   *       S                        S
+   * }}}
+   *
+   * @param newSubgoal
+   *   The subgoal that is appended to the existing list of subgoals.
+   * @return
+   *   A [[Provable]] with the additional subgoal appended.
+   */
+  def weaken(newSubgoal: Sequent): Provable = this.copy(subgoals = subgoals :+ newSubgoal)
+
+  /**
    * Sub-Provable: Get a sub-Provable corresponding to a Provable with the given subgoal as conclusion.
    *
    * Provables resulting from the returned subgoal can be merged into this Provable to prove said subgoal.

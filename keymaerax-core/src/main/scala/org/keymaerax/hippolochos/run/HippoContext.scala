@@ -5,11 +5,12 @@
 
 package org.keymaerax.hippolochos.run
 
-import org.keymaerax.core.{Expression, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
-import org.keymaerax.hippolochos.proof.{HippoPremise, HippoProof}
+import org.keymaerax.btactics.ToolProvider
+import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
+import org.keymaerax.hippolochos.proof.{ExternalSource, HippoPremise, HippoProof}
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
-class HippoContext {
+class HippoContext(toolProvider: ToolProvider) {
 
   ////////////////////////
   // Proof constructors //
@@ -19,14 +20,22 @@ class HippoContext {
   // In some occasions, they also perform slight optimizations to keep the resulting Proof smaller.
   // The Join constructor is wrapped separately later.
 
-  def sorry(conclusion: Sequent, premises: IndexedSeq[Sequent]): HippoProof = HippoProof
-    .Sorry(conclusion, premises.map(HippoPremise.locallySound))
+  def sorry(conclusion: Sequent, premises: IndexedSeq[HippoPremise]): HippoProof = HippoProof
+    .External(conclusion, premises, ExternalSource.Sorry)
 
-  def sorry(conclusion: Sequent, premises: Sequent*): HippoProof = sorry(conclusion, premises.toIndexedSeq)
+  def sorry(conclusion: Sequent, premises: HippoPremise*): HippoProof = sorry(conclusion, premises.toIndexedSeq)
+
+  def qe(formula: Formula): HippoProof = {
+    // TODO Cache provable
+    val provable = toolProvider.qeTool().get.qe(formula).fact.underlyingProvable
+    HippoProof.External(
+      conclusion = provable.conclusion,
+      premises = provable.subgoals.map(HippoPremise(_, mustBeProved = false)),
+      source = ExternalSource.QeTool(formula),
+    )
+  }
 
   def sequent(conclusion: Sequent): HippoProof = HippoProof.Sequent(conclusion)
-
-  def provable(provable: Provable): HippoProof = HippoProof.Provable(provable)
 
   def coreAxiom(name: String): HippoProof = HippoProof.CoreAxiom(name)
 
@@ -102,4 +111,22 @@ class HippoContext {
 
   def chain(proof: HippoProof): ProofChain = ProofChain(this, proof)
   def chain(sequent: Sequent): ProofChain = chain(this.sequent(sequent))
+
+  //////////////////////////
+  // Extracting Provables //
+  //////////////////////////
+
+  private def fromExternal(external: HippoProof.External): Provable = external.source match {
+    case ExternalSource.Sorry => ???
+    // TODO Retrieve qe result from cache
+    case ExternalSource.QeTool(formula) => toolProvider.qeTool().get.qe(formula).fact.underlyingProvable
+  }
+
+  def provableFromLocalProof(proof: HippoProof): Provable = proof.localProvable(fromExternal)
+
+  def provableFromGlobalProof(proof: HippoProof, premises: IndexedSeq[Provable]): Provable = proof
+    .globalProvable(fromExternal, premises)
+
+  def provableFromGlobalProof(proof: HippoProof, premises: Provable*): Provable =
+    provableFromGlobalProof(proof, premises.toIndexedSeq)
 }

@@ -7,7 +7,7 @@ package org.keymaerax.hippolochos.run
 
 import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
-import org.keymaerax.hippolochos.proof.{ExternalSource, HippoPremise, HippoProof}
+import org.keymaerax.hippolochos.proof.{DerivedHippoProof, ExternalSource, HippoPremise, HippoProof}
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
 class HippoContext(toolProvider: ToolProvider) {
@@ -75,6 +75,17 @@ class HippoContext(toolProvider: ToolProvider) {
 
   def backward(tactic: BackwardTactic, conclusion: Sequent, premises: (Int, Sequent)*): HippoProof =
     backward(tactic, conclusion, premises.toMap)
+
+  def derived(proof: DerivedHippoProof): HippoProof = proof.by match {
+    // We want to give the tactic as much information as possible,
+    // so we try running it backwards before we try running it forwards.
+    // Any PureTactic is also a BackwardTactic, so we don't need to match it separately.
+    case tactic: BackwardTactic =>
+      val premiseMap = proof.premises.map(_.sequent).zipWithIndex.map(_.swap).toMap
+      backward(tactic, proof.conclusion, premiseMap)
+
+    case tactic: ForwardTactic => forward(tactic, proof.premises.map(_.sequent))
+  }
 
   //////////////////////
   // Combining proofs //

@@ -6,6 +6,7 @@
 package org.keymaerax.hippolochos.proof
 
 import org.keymaerax.core.SubstitutionPair
+import org.keymaerax.hippolochos.tools.Hash
 import org.keymaerax.parser.FullPrettyPrinter
 import org.keymaerax.{core, GlobalState}
 import spray.json._
@@ -236,18 +237,28 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
   // Hippo types //
   /////////////////
 
+  implicit object HashFormat extends JsonFormat[Hash] {
+    override def write(obj: Hash): JsValue = JsString(obj.hexString)
+    override def read(json: JsValue): Hash = Hash(json.convertTo[String])
+  }
+
   implicit val externalSourceQeToolFormat: RootJsonFormat[ExternalSource.QeTool] =
     jsonFormat(ExternalSource.QeTool, "formula")
+
+  implicit val externalSourceDerivedFormat: RootJsonFormat[ExternalSource.Derived] =
+    jsonFormat(ExternalSource.Derived, "hash")
 
   implicit object ExternalSourceFormat extends RootJsonFormat[ExternalSource] {
     override def write(obj: ExternalSource): JsValue = obj match {
       case ExternalSource.Sorry => variant("sorry")
       case o: ExternalSource.QeTool => variantO("qeTool", o.toJson)
+      case o: ExternalSource.Derived => variantO("derived", o.toJson)
     }
 
     override def read(json: JsValue): ExternalSource = json.asJsObject.fields(discriminant).convertTo[String] match {
       case "sorry" => ExternalSource.Sorry
       case "qeTool" => json.convertTo[ExternalSource.QeTool]
+      case "derived" => json.convertTo[ExternalSource.Derived]
       case _ => deserializationError("ExternalSource expected")
     }
   }

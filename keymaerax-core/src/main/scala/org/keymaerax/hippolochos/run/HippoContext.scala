@@ -12,13 +12,43 @@ import org.keymaerax.hippolochos.proof.{DerivedHippoProof, ExternalSource, Hippo
 import org.keymaerax.hippolochos.tools.Hash
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
-class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable]) {
+import scala.collection.mutable
+
+class HippoContext(
+    val toolProvider: ToolProvider,
+    val toolCache: Cache[Provable],
+    val derivedCache: Cache[HippoProof],
+) {
+  val derivedProofs: mutable.Map[Hash, DerivedHippoProof] = mutable.Map.empty
+
   //////////////////////
   // External sources //
   //////////////////////
 
   private def computeQe(formula: Formula): Provable = toolCache
     .getOrCompute(Hash.ofFormula(formula)) { toolProvider.qeTool().get.qe(formula).fact.underlyingProvable }
+
+  def announceDerived(proof: DerivedHippoProof): Unit = derivedProofs.put(proof.hash, proof)
+
+  def computeDerived(proof: DerivedHippoProof): HippoProof = {
+    announceDerived(proof)
+
+    derivedCache.getOrCompute(proof.hash) {
+      val computed = proof.by match {
+        // We want to give the tactic as much information as possible,
+        // so we try running it backwards before we try running it forwards.
+        // Any PureTactic is also a BackwardTactic, so we don't need to match it separately.
+        case tactic: BackwardTactic =>
+          val premiseMap = proof.premises.map(_.sequent).zipWithIndex.map(_.swap).toMap
+          backward(tactic, proof.conclusion, premiseMap)
+
+        case tactic: ForwardTactic => forward(tactic, proof.premises.map(_.sequent))
+      }
+      require(computed.conclusion == proof.conclusion)
+      require(computed.premises == proof.premises)
+      computed
+    }
+  }
 
   ////////////////////////
   // Proof constructors //
@@ -40,6 +70,14 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
       premises = provable.subgoals.map(HippoPremise(_, mustBeProved = false)),
       source = ExternalSource.QeTool(formula),
     )
+  }
+
+  def derived(proof: DerivedHippoProof): HippoProof = {
+    // We remember the proof so we can later derive it if we need it and it's not in the cache.
+    announceDerived(proof)
+
+    HippoProof
+      .External(conclusion = proof.conclusion, premises = proof.premises, source = ExternalSource.Derived(proof.hash))
   }
 
   def sequent(conclusion: Sequent): HippoProof = HippoProof.Sequent(conclusion)
@@ -83,17 +121,6 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
   def backward(tactic: BackwardTactic, conclusion: Sequent, premises: (Int, Sequent)*): HippoProof =
     backward(tactic, conclusion, premises.toMap)
 
-  def derived(proof: DerivedHippoProof): HippoProof = proof.by match {
-    // We want to give the tactic as much information as possible,
-    // so we try running it backwards before we try running it forwards.
-    // Any PureTactic is also a BackwardTactic, so we don't need to match it separately.
-    case tactic: BackwardTactic =>
-      val premiseMap = proof.premises.map(_.sequent).zipWithIndex.map(_.swap).toMap
-      backward(tactic, proof.conclusion, premiseMap)
-
-    case tactic: ForwardTactic => forward(tactic, proof.premises.map(_.sequent))
-  }
-
   //////////////////////
   // Combining proofs //
   //////////////////////
@@ -134,10 +161,17 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
   // Extracting Provables //
   //////////////////////////
 
-  private def fromExternal(external: HippoProof.External): Provable = external.source match {
-    case ExternalSource.Sorry => ???
-    case ExternalSource.QeTool(formula) => computeQe(formula)
-  }
+  private def fromExternal(external: HippoProof.External, premises: IndexedSeq[Provable]): Provable =
+    external.source match {
+      case ExternalSource.Sorry => ???
+      case ExternalSource.QeTool(formula) =>
+        val provable = external.assertConsistency(premises) { computeQe(formula) }
+        HippoProof.applyPremises(provable, premises)
+      case ExternalSource.Derived(hash) =>
+        // It is possible for the hash to be in the derivedCache but not the derivedProofs.
+        val proof = derivedCache.getOrCompute(hash) { computeDerived(derivedProofs(hash)) }
+        proof.globalProvable(fromExternal, premises)
+    }
 
   def provableFromLocalProof(proof: HippoProof): Provable = proof.localProvable(fromExternal)
 

@@ -34,9 +34,7 @@ sealed abstract class HippoProof {
     computeProvable(fromExternal, premises)
   }
 
-  protected final def assertConsistency(
-      premises: IndexedSeq[core.Provable]
-  )(provable: => core.Provable): core.Provable = {
+  final def assertConsistency(premises: IndexedSeq[core.Provable])(provable: => core.Provable): core.Provable = {
     assert(this.premises.length == premises.length)
     assert(this.premises.zip(premises).forall { case (tp, p) => tp.sequent == p.conclusion })
 
@@ -50,20 +48,20 @@ sealed abstract class HippoProof {
 object HippoProof {
   private val CQrule: HippoProof.CoreAxiomaticRule = HippoProof.CoreAxiomaticRule("CQ equation congruence")
 
-  private def applyPremises(provable: core.Provable, premises: IndexedSeq[core.Provable]): core.Provable = {
+  def applyPremises(provable: core.Provable, premises: IndexedSeq[core.Provable]): core.Provable = {
     assert(provable.subgoals.length == premises.length)
     // Replace premises from right to left so the index works out.
     premises.zipWithIndex.foldRight(provable) { case ((premise, i), provable) => provable(premise, i) }
   }
 
-  private type FromExternal = External => core.Provable
+  private type FromExternal = (External, IndexedSeq[core.Provable]) => core.Provable
 
   final case class External(conclusion: core.Sequent, premises: IndexedSeq[HippoPremise], source: ExternalSource)
       extends HippoProof {
     override protected def computeProvable(
         fromExternal: FromExternal,
         premises: IndexedSeq[core.Provable],
-    ): core.Provable = fromExternal(this)
+    ): core.Provable = fromExternal(this, premises)
   }
 
   final case class Sequent(conclusion: core.Sequent) extends HippoProof {

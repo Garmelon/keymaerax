@@ -7,10 +7,18 @@ package org.keymaerax.hippolochos.run
 
 import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
+import org.keymaerax.hippolochos.cache.Cache
 import org.keymaerax.hippolochos.proof.{DerivedHippoProof, ExternalSource, HippoPremise, HippoProof}
+import org.keymaerax.hippolochos.tools.Hash
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
-class HippoContext(toolProvider: ToolProvider) {
+class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable]) {
+  //////////////////////
+  // External sources //
+  //////////////////////
+
+  private def computeQe(formula: Formula): Provable = toolCache
+    .getOrCompute(Hash.ofFormula(formula)) { toolProvider.qeTool().get.qe(formula).fact.underlyingProvable }
 
   ////////////////////////
   // Proof constructors //
@@ -26,8 +34,7 @@ class HippoContext(toolProvider: ToolProvider) {
   def sorry(conclusion: Sequent, premises: HippoPremise*): HippoProof = sorry(conclusion, premises.toIndexedSeq)
 
   def qe(formula: Formula): HippoProof = {
-    // TODO Cache provable
-    val provable = toolProvider.qeTool().get.qe(formula).fact.underlyingProvable
+    val provable = computeQe(formula)
     HippoProof.External(
       conclusion = provable.conclusion,
       premises = provable.subgoals.map(HippoPremise(_, mustBeProved = false)),
@@ -129,8 +136,7 @@ class HippoContext(toolProvider: ToolProvider) {
 
   private def fromExternal(external: HippoProof.External): Provable = external.source match {
     case ExternalSource.Sorry => ???
-    // TODO Retrieve qe result from cache
-    case ExternalSource.QeTool(formula) => toolProvider.qeTool().get.qe(formula).fact.underlyingProvable
+    case ExternalSource.QeTool(formula) => computeQe(formula)
   }
 
   def provableFromLocalProof(proof: HippoProof): Provable = proof.localProvable(fromExternal)

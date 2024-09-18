@@ -41,13 +41,17 @@ object Hash {
     seq.foreach(digestItem(digest, _))
   }
 
+  private def digestFormula(digest: MessageDigest, formula: Formula): Unit = digestStr(digest, printer(formula))
+
   private def digestSequent(digest: MessageDigest, sequent: Sequent): Unit =
-    digestSeq[Formula](digest, sequent.ante, (d, f) => digestStr(d, printer(f)))
+    digestSeq[Formula](digest, sequent.ante, digestFormula)
 
   private def digestHippoPremise(digest: MessageDigest, premise: HippoPremise): Unit = {
     digestBool(digest, premise.mustBeProved)
     digestSequent(digest, premise.sequent)
   }
+
+  def ofFormula(formula: Formula): Hash = hash { digestFormula(_, formula) }
 
   def ofProofShape(conclusion: Sequent, premises: IndexedSeq[HippoPremise]): Hash = hash { digest =>
     digestSequent(digest, conclusion)

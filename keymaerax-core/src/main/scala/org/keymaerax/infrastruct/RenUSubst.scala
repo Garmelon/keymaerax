@@ -5,10 +5,11 @@
 
 package org.keymaerax.infrastruct
 
-import org.keymaerax.core._
-import org.keymaerax.pt.ProvableSig
 import org.keymaerax.bellerophon.BelleExpr
 import org.keymaerax.btactics.{Idioms, TactixLibrary, UnifyUSCalculus}
+import org.keymaerax.core._
+import org.keymaerax.hippolochos.proof.HippoProof
+import org.keymaerax.pt.ProvableSig
 
 import scala.collection.immutable
 import scala.collection.immutable._
@@ -183,6 +184,8 @@ sealed trait RenUSubst extends (Expression => Expression) {
    */
   def toForward: ProvableSig => ProvableSig
 
+  def toHippo: HippoProof => HippoProof
+
   /**
    * This RenUSubst implemented strictly from the core.
    * @note
@@ -313,6 +316,22 @@ final class FastUSubstAboveURen(private[infrastruct] val subsDefsInput: immutabl
       val replaced = fact(usubst)
       // forward style: first US fact to get rid of program constants, then uniformly rename variables in the result
       rens.foldLeft(replaced)((pr, sp) => RenUSubst.UniformRenamingForward(pr, sp._1, sp._2))
+    }
+  }
+
+  override lazy val toHippo: HippoProof => HippoProof = {
+    Predef.assert(rens.toMap.keySet.intersect(rens.toMap.values.toSet).isEmpty, "no cyclic renaming")
+    fact => {
+      val replaced = HippoProof.USubst(fact, usubst)
+      // forward style: first US fact to get rid of program constants, then uniformly rename variables in the result
+      if (replaced.proved) rens.foldLeft[HippoProof](replaced) { case (proof, (what, repl)) =>
+        HippoProof.URename(proof, URename(what, repl, semantic = true))
+      }
+      else rens.foldLeft[HippoProof](replaced) { case (proof, (what, repl)) =>
+        val newConclusion = URename(what, repl, semantic = false)(proof.conclusion)
+        val step = HippoProof.CoreProofRule(newConclusion, UniformRenaming(what, repl))
+        HippoProof.Join(step, proof, 0)
+      }
     }
   }
 
@@ -511,6 +530,19 @@ final class USubstAboveURen(private[infrastruct] override val subsDefsInput: imm
     rens.foldLeft(replaced)((pr, sp) => RenUSubst.UniformRenamingForward(pr, sp._1, sp._2))
   }
 
+  override def toHippo: HippoProof => HippoProof = fact => {
+    val replaced = HippoProof.USubst(fact, usubst)
+    Predef.assert(rens.toMap.keySet.intersect(rens.toMap.values.toSet).isEmpty, "no cyclic renaming")
+    if (replaced.proved) rens.foldLeft[HippoProof](replaced) { case (proof, (what, repl)) =>
+      HippoProof.URename(proof, URename(what, repl, semantic = true))
+    }
+    else rens.foldLeft[HippoProof](replaced) { case (proof, (what, repl)) =>
+      val newConclusion = URename(what, repl, semantic = false)(proof.conclusion)
+      val step = HippoProof.CoreProofRule(newConclusion, UniformRenaming(what, repl))
+      HippoProof.Join(step, proof, 0)
+    }
+  }
+
   override val toCore: Expression => Expression =
     (e: Expression) => throw new UnsupportedOperationException("not yet implemented. @todo")
 
@@ -612,6 +644,20 @@ final class DirectUSubstAboveURen(
     Predef.assert(rens.toMap.keySet.intersect(rens.toMap.values.toSet).isEmpty, "no cyclic renaming")
     // forward style: first US fact to get rid of program constants, then uniformly rename variables in the result
     rens.foldLeft(replaced)((pr, sp) => RenUSubst.UniformRenamingForward(pr, sp._1, sp._2))
+  }
+
+  // Following the implementation of toForward but translated for HippoProvables
+  override val toHippo: HippoProof => HippoProof = fact => {
+    val replaced = HippoProof.USubst(fact, usubst)
+    Predef.assert(rens.toMap.keySet.intersect(rens.toMap.values.toSet).isEmpty, "no cyclic renaming")
+    if (replaced.proved) rens.foldLeft[HippoProof](replaced) { case (proof, (what, repl)) =>
+      HippoProof.URename(proof, URename(what, repl, semantic = true))
+    }
+    else rens.foldLeft[HippoProof](replaced) { case (proof, (what, repl)) =>
+      val newConclusion = URename(what, repl, semantic = false)(proof.conclusion)
+      val step = HippoProof.CoreProofRule(newConclusion, UniformRenaming(what, repl))
+      HippoProof.Join(step, proof, 0)
+    }
   }
 
   val toCore: Expression => Expression = e => {
@@ -716,7 +762,20 @@ private final class URenAboveUSubst(
     (rens.foldLeft(fact)((pr, sp) => RenUSubst.UniformRenamingForward(pr, sp._1, sp._2)))(usubst)
   }
 
-  override val toCore: Expression => Expression =
+  override def toHippo: HippoProof => HippoProof = fact => {
+    val renamed =
+      if (fact.proved) rens.foldLeft[HippoProof](fact) { case (proof, (what, repl)) =>
+        HippoProof.URename(proof, URename(what, repl, semantic = true))
+      }
+      else rens.foldLeft[HippoProof](fact) { case (proof, (what, repl)) =>
+        val newConclusion = URename(what, repl, semantic = false)(proof.conclusion)
+        val step = HippoProof.CoreProofRule(newConclusion, UniformRenaming(what, repl))
+        HippoProof.Join(step, proof, 0)
+      }
+    HippoProof.USubst(renamed, usubst)
+  }
+
+  val toCore: Expression => Expression =
     (e: Expression) => throw new UnsupportedOperationException("not yet implemented. @todo")
 
   private[infrastruct] def firstFlush: RenUSubst = substitution
@@ -830,6 +889,23 @@ final class FastURenAboveUSubst(private[infrastruct] val subsDefsInput: immutabl
         else rens.foldLeft(fact)((pr, sp) => RenUSubst.UniformRenamingForward(pr, sp._1, sp._2))
       // @note renall not needed in usubst replacements, because simultaneous effect comes after having renamed above
       renamedFact(usubst)
+    }
+  }
+
+  // Following the implementation of toForward but translated for HippoProvables
+  override lazy val toHippo: HippoProof => HippoProof = {
+    Predef.assert(rens.toMap.keySet.intersect(rens.toMap.values.toSet).isEmpty, "no cyclic renaming")
+    fact => {
+      val renamed =
+        if (fact.proved) rens.foldLeft(fact) { case (proof, (what, repl)) =>
+          HippoProof.URename(proof, URename(what, repl, semantic = true))
+        }
+        else rens.foldLeft(fact) { case (proof, (what, repl)) =>
+          val newConclusion = URename(what, repl, semantic = false)(proof.conclusion)
+          val step = HippoProof.CoreProofRule(newConclusion, UniformRenaming(what, repl))
+          HippoProof.Join(step, proof, 0)
+        }
+      HippoProof.USubst(renamed, usubst)
     }
   }
 

@@ -47,6 +47,9 @@ object HippoExpression {
   case class Access(target: HippoExpression, name: HippoIdentifier) extends HippoExpression
 
   case class Apply(target: HippoExpression, args: IndexedSeq[HippoExpression]) extends HippoExpression
+  object Apply {
+    def apply(target: HippoExpression, args: HippoExpression*): Apply = Apply(target, args.toIndexedSeq)
+  }
 
   case class ApplyTactic(target: HippoExpression, args: IndexedSeq[HippoExpression]) extends HippoExpression
 }

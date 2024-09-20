@@ -10,7 +10,7 @@ import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, Substit
 import org.keymaerax.hippolochos.cache.Cache
 import org.keymaerax.hippolochos.proof.{DerivedHippoProof, ExternalSource, HippoPremise, HippoProof}
 import org.keymaerax.hippolochos.tools.Hash
-import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
+import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
 
 import scala.collection.mutable
 
@@ -34,16 +34,7 @@ class HippoContext(
     announceDerived(proof)
 
     derivedCache.getOrCompute(proof.hash) {
-      val computed = proof.by match {
-        // We want to give the tactic as much information as possible,
-        // so we try running it backwards before we try running it forwards.
-        // Any PureTactic is also a BackwardTactic, so we don't need to match it separately.
-        case tactic: BackwardTactic =>
-          val premiseMap = proof.premises.map(_.sequent).zipWithIndex.map(_.swap).toMap
-          backward(tactic, proof.conclusion, premiseMap)
-
-        case tactic: ForwardTactic => forward(tactic, proof.premises.map(_.sequent))
-      }
+      val computed = tactic(proof.by, proof.conclusion, proof.premises.map(_.sequent))
       require(computed.conclusion == proof.conclusion)
       require(computed.premises == proof.premises)
       computed
@@ -120,6 +111,17 @@ class HippoContext(
 
   def backward(tactic: BackwardTactic, conclusion: Sequent, premises: (Int, Sequent)*): HippoProof =
     backward(tactic, conclusion, premises.toMap)
+
+  def tactic(tactic: Tactic, conclusion: Sequent, premises: IndexedSeq[Sequent]): HippoProof = tactic match {
+    // We want to give the tactic as much information as possible,
+    // so we try running it backwards before we try running it forwards.
+    // Any PureTactic is also a BackwardTactic, so we don't need to match it separately.
+    case tactic: BackwardTactic =>
+      val premiseMap = premises.zipWithIndex.map(_.swap).toMap
+      backward(tactic, conclusion, premiseMap)
+
+    case tactic: ForwardTactic => forward(tactic, premises)
+  }
 
   //////////////////////
   // Combining proofs //

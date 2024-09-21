@@ -5,6 +5,7 @@
 
 package org.keymaerax.hippolang.interpret
 
+import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.hippolang.HippoConversions._
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.parse.HippoParser
@@ -15,7 +16,7 @@ import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
 import java.nio.file.{Files, Path}
 
-case class HippoInterpreter(ctx: HippoContext, env: Option[ImmutableNamespace]) {
+case class HippoInterpreter(ctx: HippoContext, env: Option[ImmutableNamespace] = None) {
   def run(file: Path): (HippoValue, ImmutableNamespace) = {
     val absFile = file.toAbsolutePath
     val code = Files.readString(absFile)
@@ -253,6 +254,15 @@ case class HippoInterpreter(ctx: HippoContext, env: Option[ImmutableNamespace]) 
 }
 
 object HippoInterpreter {
+  def withCacheDir(
+      toolProvider: ToolProvider,
+      cacheDir: Path,
+      env: Option[ImmutableNamespace] = None,
+  ): HippoInterpreter = {
+    val ctx = HippoContext.withCacheDir(toolProvider, cacheDir)
+    new HippoInterpreter(ctx, env)
+  }
+
   private def hippoValToTacticArg(value: HippoValue): Any = value match {
     case HippoValue.Null => None
     case HippoValue.Bool(value) => value

@@ -11,6 +11,7 @@ import org.keymaerax.tools.ToolName
 import org.keymaerax.tools.install.ToolConfiguration
 import scopt.OParser
 
+import java.nio.file.Path
 import scala.concurrent.duration.Duration
 
 // TODO Convert to Scala 3 enum
@@ -51,6 +52,7 @@ object Command {
       exportAnswers: Boolean = false,
       skipOnParseError: Boolean = false,
   ) extends Command
+  case class Hippo(file: Path = null) extends Command
   // Webui commands
   case class Codegen(
       in: String = null,
@@ -388,6 +390,14 @@ object Options {
           opt[Unit]("skip-on-parse-error")
             .action((_, o) => o.updateCommand[Command.Grade](_.copy(skipOnParseError = true)))
             .text(wrap("Skip grading on parse errors.")),
+        ),
+      note(""),
+      cmd("hippo")
+        .action((_, o) => o.copy(command = Some(Command.Hippo())))
+        .children(
+          arg[Path]("<file>")
+            .action((x, o) => o.updateCommand[Command.Hippo](_.copy(file = x)))
+            .text(wrap("Hippolang file to execute."))
         ),
     )
 

@@ -8,7 +8,7 @@ package org.keymaerax.hippolang.interpret
 import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.hippolang.HippoConversions._
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
-import org.keymaerax.hippolang.parse.HippoParser
+import org.keymaerax.hippolang.parse.{HippoParser, SourceFile}
 import org.keymaerax.hippolang.{BuiltinFunction, BuiltinMemberFunction, HippoExpression, HippoIdentifier, HippoValue}
 import org.keymaerax.hippolib.meta.TacticInfo
 import org.keymaerax.hippolochos.run.HippoContext
@@ -20,22 +20,18 @@ case class HippoInterpreter(ctx: HippoContext, env: Option[ImmutableNamespace] =
   def run(file: Path): (HippoValue, ImmutableNamespace) = {
     val absFile = file.toAbsolutePath
     val code = Files.readString(absFile)
-    run(Some(absFile), code)
+    run(SourceFile(code, Some(absFile)))
   }
 
-  def run(file: Option[Path], code: String): (HippoValue, ImmutableNamespace) = {
-    val program = HippoParser.parse(code).get.value.toHExpr
-    run(file, program)
-  }
-
-  def run(file: Option[Path], program: HippoExpression): (HippoValue, ImmutableNamespace) = {
-    val fileInterpreter = new FileInterpreter(file)
+  def run(source: SourceFile): (HippoValue, ImmutableNamespace) = {
+    val program = HippoParser.parse(source).toHExpr
+    val fileInterpreter = new FileInterpreter(source)
     val value = fileInterpreter.eval(new MutableNamespace(env), program)
     val namespace = fileInterpreter.exported.freeze
     (value, namespace)
   }
 
-  private class FileInterpreter(file: Option[Path]) {
+  private class FileInterpreter(source: SourceFile) {
     val exported = new MutableNamespace()
 
     def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {
@@ -46,7 +42,11 @@ case class HippoInterpreter(ctx: HippoContext, env: Option[ImmutableNamespace] =
         val pathV = Path.of(eval(namespace, pathE).asString)
         val importFile =
           if (pathV.isAbsolute) pathV
-          else file.getOrElse(throw new UnsupportedOperationException("code has no path")).getParent.resolve(pathV)
+          else source
+            .path
+            .getOrElse(throw new UnsupportedOperationException("code has no path"))
+            .getParent
+            .resolve(pathV)
         val (_, importNamespace) = run(importFile)
         importNamespace.toHValue
 

@@ -54,7 +54,15 @@ object HippoParser {
   // This dlParser instance does not depend on global state.
   private val dlParser = new DLParser
 
-  def parse(source: String): Parsed[AstExpression] = fastparse.parse(source, program(_), verboseFailures = true)
+  def parse(source: SourceFile): AstExpression =
+    fastparse.parse[AstExpression](source.text, program(_), verboseFailures = true) match {
+      case success: Parsed.Success[AstExpression] => success.value
+      case failure: Parsed.Failure => throw new HlParseError(
+          slice = source.Slice(failure.index),
+          error = "Parsing failed",
+          label = s"expected ${failure.label}",
+        )
+    }
 
   /**
    * An identifier consists of one or more characters from the set `a-zA-Z0-9_`. The first character must not be a

@@ -7,11 +7,12 @@ package org.keymaerax.hippolochos.run
 
 import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
-import org.keymaerax.hippolochos.cache.Cache
+import org.keymaerax.hippolochos.cache.{Cache, HippoProofFsCache, LruCache, ProvableFsCache}
 import org.keymaerax.hippolochos.proof.{DerivedHippoProof, ExternalSource, HippoPremise, HippoProof}
 import org.keymaerax.hippolochos.tools.Hash
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
 
+import java.nio.file.Path
 import scala.collection.mutable
 
 class HippoContext(
@@ -182,4 +183,12 @@ class HippoContext(
 
   def provableFromGlobalProof(proof: HippoProof, premises: Provable*): Provable =
     provableFromGlobalProof(proof, premises.toIndexedSeq)
+}
+
+object HippoContext {
+  def withCacheDir(toolProvider: ToolProvider, cacheDir: Path): HippoContext = new HippoContext(
+    toolProvider = toolProvider,
+    toolCache = new ProvableFsCache(cacheDir.resolve("tool")).behind(new LruCache(1000)),
+    derivedCache = new HippoProofFsCache(cacheDir.resolve("derived")).behind(new LruCache(1000)),
+  )
 }

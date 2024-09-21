@@ -21,6 +21,7 @@ import org.keymaerax.btactics.{
 import org.keymaerax.cli.grade.AssessmentProver
 import org.keymaerax.core.{Formula, PrettyPrinter, StaticSemantics}
 import org.keymaerax.hippolang.interpret.{EnvBuilder, HippoInterpreter}
+import org.keymaerax.hippolang.parse.HlParseError
 import org.keymaerax.info.TechnicalName
 import org.keymaerax.parser.{
   ArchiveParser,
@@ -160,6 +161,9 @@ object KeymaeraxCore {
         val interpreter = HippoInterpreter.withCacheDir(ToolProvider.provider, cacheDir, env = Some(env))
         try interpreter.run(cmd.file)
         catch {
+          case e: HlParseError =>
+            e.print()
+            exit(1)
           case e: Exception =>
             println("An exception occurred during hippo evaluation:")
             println(e.getMessage)

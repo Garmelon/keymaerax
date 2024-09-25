@@ -7,6 +7,8 @@ package org.keymaerax.hippolib.core
 
 import org.keymaerax.bellerophon.UnificationException
 import org.keymaerax.core.{Equal, Equiv, Expression, Sequent}
+import org.keymaerax.hippolib.core.RewriteAt.Dir
+import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.hippolochos.tools.ExprPath
@@ -77,4 +79,12 @@ case class RewriteAtU(at: ExprPath, eq: HippoProof, dir: Option[RewriteAt.Dir] =
 
     ctx.chain(after).backwardJoin(RewriteAt(at, dir = Some(actualDir)), 1 -> subst.toHippo(eq)).proof
   }
+}
+
+object RewriteAtU {
+  val info: TacticInfo = TacticInfo(
+    TacticArgInfo(name = "at", arg = TacticArg.ExprPath),
+    TacticArgInfo(name = "eq", arg = TacticArg.HippoProof),
+    TacticArgInfo(name = "dir", arg = TacticArg.Option(TacticArg.String), default = Some(None)),
+  ) { (at, eq, dir) => RewriteAtU(at = at, eq = eq, dir = dir.map(Dir.parse)) }
 }

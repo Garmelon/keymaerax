@@ -6,6 +6,7 @@
 package org.keymaerax.hippolib.core
 
 import org.keymaerax.core
+import org.keymaerax.core.hippolib.publish
 import org.keymaerax.core.{AnyArg, Real, Sequent, UnitFunctional, UnitPredicational}
 import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
 import org.keymaerax.hippolochos.BackwardTactic
@@ -54,6 +55,8 @@ case class CEqAt(at: ExprPath) extends BackwardTactic {
     }
   }
 }
+
 object CEqAt {
+  @publish(name = "core.CEqAt")
   val info: TacticInfo = TacticInfo(TacticArgInfo(name = "at", arg = TacticArg.ExprPath)) { CEqAt(_) }
 }

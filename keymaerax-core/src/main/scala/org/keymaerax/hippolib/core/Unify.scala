@@ -6,6 +6,7 @@
 package org.keymaerax.hippolib.core
 
 import org.keymaerax.core.Sequent
+import org.keymaerax.core.hippolib.publish
 import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
 import org.keymaerax.hippolochos.BackwardTactic
 import org.keymaerax.hippolochos.proof.HippoProof
@@ -29,5 +30,6 @@ case class Unify(proof: HippoProof) extends BackwardTactic {
 }
 
 object Unify {
+  @publish(name = "core.Unify")
   val info: TacticInfo = TacticInfo(TacticArgInfo(name = "proof", arg = TacticArg.HippoProof)) { Unify(_) }
 }

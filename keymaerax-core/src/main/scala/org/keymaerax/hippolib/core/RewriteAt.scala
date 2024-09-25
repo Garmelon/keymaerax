@@ -5,6 +5,7 @@
 
 package org.keymaerax.hippolib.core
 
+import org.keymaerax.core.hippolib.publish
 import org.keymaerax.core.{
   CoHideRight,
   CommuteEquivRight,
@@ -181,6 +182,7 @@ object RewriteAt {
     }
   }
 
+  @publish(name = "core.RewriteAt")
   val info: TacticInfo = TacticInfo(
     TacticArgInfo(name = "at", arg = TacticArg.ExprPath),
     TacticArgInfo(name = "dir", arg = TacticArg.Option(TacticArg.String), default = Some(None)),

@@ -6,6 +6,7 @@
 package org.keymaerax.hippolib.core
 
 import org.keymaerax.bellerophon.UnificationException
+import org.keymaerax.core.hippolib.publish
 import org.keymaerax.core.{Equal, Equiv, Expression, Sequent}
 import org.keymaerax.hippolib.core.RewriteAt.Dir
 import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
@@ -82,6 +83,7 @@ case class RewriteAtU(at: ExprPath, eq: HippoProof, dir: Option[RewriteAt.Dir] =
 }
 
 object RewriteAtU {
+  @publish(name = "core.RewriteAtU")
   val info: TacticInfo = TacticInfo(
     TacticArgInfo(name = "at", arg = TacticArg.ExprPath),
     TacticArgInfo(name = "eq", arg = TacticArg.HippoProof),

@@ -5,6 +5,7 @@
 
 package org.keymaerax.hippolib.core
 
+import org.keymaerax.core.hippolib.publish
 import org.keymaerax.core.{CloseTrue, Sequent, SuccPos}
 import org.keymaerax.hippolib.meta.TacticInfo
 import org.keymaerax.hippolochos.BackwardTactic
@@ -27,5 +28,6 @@ object QE extends BackwardTactic {
       .proof
   }
 
+  @publish(name = "core.QE")
   val info: TacticInfo = TacticInfo(QE)
 }

@@ -17,6 +17,7 @@ import org.keymaerax.core.{
   Sequent,
   SuccPos,
 }
+import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
 import org.keymaerax.hippolib.primitive.Noop
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
@@ -172,5 +173,16 @@ object RewriteAt {
   object Dir {
     case object Ltr extends Dir
     case object Rtl extends Dir
+
+    def parse(s: String): Dir = s match {
+      case "ltr" => Dir.Ltr
+      case "rtl" => Dir.Rtl
+      case other => throw new IllegalArgumentException(s"unknown direction: $other")
+    }
   }
+
+  val info: TacticInfo = TacticInfo(
+    TacticArgInfo(name = "at", arg = TacticArg.ExprPath),
+    TacticArgInfo(name = "dir", arg = TacticArg.Option(TacticArg.String), default = Some(None)),
+  ) { (at, dir) => RewriteAt(at = at, dir = dir.map(Dir.parse)) }
 }

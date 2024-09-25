@@ -6,6 +6,7 @@
 package org.keymaerax.hippolib.core
 
 import org.keymaerax.core.{CloseTrue, Sequent, SuccPos}
+import org.keymaerax.hippolib.meta.TacticInfo
 import org.keymaerax.hippolochos.BackwardTactic
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
@@ -25,4 +26,6 @@ object QE extends BackwardTactic {
       .backward(CoreRule(CloseTrue(SuccPos(0))))
       .proof
   }
+
+  val info: TacticInfo = TacticInfo(QE)
 }

@@ -1,0 +1,19 @@
+﻿expand("init");
+expand("loopInv");
+implyR('R=="((w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv))&rp()>=0&hp()>0&rv>=0&alo()>0->abs(r)>rp()|abs(h)>hp()");
+andL('L=="((w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv))&rp()>=0&hp()>0&rv>=0&alo()>0");
+andL('L=="(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)");
+andL('L=="rp()>=0&hp()>0&rv>=0&alo()>0");
+andL('L=="hp()>0&rv>=0&alo()>0");
+andL('L=="rv>=0&alo()>0");
+expand("Limpl");
+allL("0", 'L=="\forall t \forall ro \forall ho (0<=t&t < maxI(v,w,vlo)/alo()&ro=rv*t&ho=w*alo()/2*t^2+v*t|t>=maxI(v,w,vlo)/alo()&ro=rv*t&ho=vlo*t-w*maxI(v,w,vlo)^2/(2*alo())->abs(r-ro)>rp()|w*h < w*ho-hp())");
+allL("0", 'L=="\forall ro \forall ho (0<=0&0 < maxI(v,w,vlo)/alo()&ro=rv*0&ho=w*alo()/2*0^2+v*0|0>=maxI(v,w,vlo)/alo()&ro=rv*0&ho=vlo*0-w*maxI(v,w,vlo)^2/(2*alo())->abs(r-ro)>rp()|w*h < w*ho-hp())");
+allL("0", 'L=="\forall ho (0<=0&0 < maxI(v,w,vlo)/alo()&0=rv*0&ho=w*alo()/2*0^2+v*0|0>=maxI(v,w,vlo)/alo()&0=rv*0&ho=vlo*0-w*maxI(v,w,vlo)^2/(2*alo())->abs(r-0)>rp()|w*h < w*ho-hp())");
+fullSimplify;
+implyL('L=="0 < maxI(v,w,vlo)/alo()|0>=maxI(v,w,vlo)/alo()&0=-w*maxI(v,w,vlo)^2/(2*alo())->abs(r)>rp()|w*h < -hp()"); <(
+  "0 < maxI(v,w,vlo)/alo()|0>=maxI(v,w,vlo)/alo()&0=-w*maxI(v,w,vlo)^2/(2*alo())":
+    QE,
+  "abs(r)>rp()|w*h < -hp()":
+    QE
+)

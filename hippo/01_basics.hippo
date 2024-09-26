@@ -1,0 +1,51 @@
+///////////////
+// Variables //
+///////////////
+
+val foo = 1 + 72;
+var bar = 3 + 4;
+print("foo=", foo, ", bar=", bar);
+bar = bar + 5;
+print("foo=", foo, ", bar=", bar);
+
+//////////////////
+// Control flow //
+//////////////////
+
+var factorial = 10;
+print("Computing the factorial of ", factorial);
+
+if (factorial < 20) {
+  var total = 1;
+  while (factorial > 0) {
+    total = total * factorial;
+    factorial = factorial - 1;
+  };
+  print("Result: ", total);
+} else {
+  print("You're asking a bit much here...");
+};
+
+///////////////
+// Functions //
+///////////////
+
+// No recursion :(
+
+val fib = function(n) {
+  var a = 0; var b = 0;
+  var i = 0;
+  while (i < n) {
+    val c = if (i < 2) i else a + b;
+    a = b; b = c;
+    i = i + 1;
+  };
+  b
+};
+
+print("The first ten fibonacci numbers are:");
+var i = 0;
+while (i < 10) {
+  print(fib(i));
+  i = i + 1;
+};

@@ -1,0 +1,15 @@
+print("Section 5.4 - A Proof of a Short Bouncing Ball");
+
+val proof_5_4 =
+    theorem dLs { ==> A -> [{x'=v, v'=-g} {?x=0; v:=-c*v; ++ ?x>=0;}] B(x, v) }
+    by backward {
+        core.RewriteAtU(list(1), core.composeb)[];
+        core.RewriteAtU(list(1, 1), core.choiceb)[];
+        core.RewriteAtU(list(1, 1, 0), core.composeb)[];
+        core.RewriteAtU(list(1, 1, 0), core.testb)[];
+        core.RewriteAtU(list(1, 1, 1), core.testb)[];
+        core.RewriteAtU(list(1, 1, 0, 1), core.assignb)[];
+        // TODO Remaining parts of proof, mainly blocked by [']
+    };
+
+print("In section 5.4: ", proof_5_4);

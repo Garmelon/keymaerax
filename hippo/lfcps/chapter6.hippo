@@ -1,0 +1,18 @@
+print("Section 6.2 - Truth and Proof");
+
+val fig_6_2 =
+    theorem dLs { ==> v*v <= 10 & b > 0 -> b > 0 & (!(v >= 0) | v*v <= 10) }
+    by backward {
+        core.ImplyRight(1)[];
+        core.AndRight(1)[];
+        // Left branch
+        core.AndLeft(-1)[];
+        core.Close(-2, 1)[];
+        // Right branch
+        core.OrRight(1)[];
+        core.AndLeft(-1)[];
+        core.Close(-1, 2)[];
+    };
+
+print("Fig. 6.2: ", fig_6_2);
+//print(fig_6_2.conclusion.succ(0).select(list(0)));

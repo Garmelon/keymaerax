@@ -1,0 +1,33 @@
+val composeb = function() core.RewriteAtU(list(), core.composeb);
+val randomb = function() core.RewriteAtU(list(), core.randomb);
+val testb = function() core.RewriteAtU(list(), core.testb);
+val assignbAt = function(at) core.RewriteAtU(at, core.assignb);
+
+val simpleCompositionBackward =
+  verified theorem dLs{ ==> [x:=*;?x>0;x:=x+1;]x>1 }
+  by backward -> $c {
+    $c := composeb()
+       :< randomb()
+       :< core.Skolemize(1)
+       :< composeb()
+       :< testb()
+       :< assignbAt(list(1))
+       :< core.QE()[];
+  };
+
+print("backward: ", simpleCompositionBackward);
+
+val simpleCompositionGraph =
+  verified theorem dLs{ ==> [x:=*;?x>0;x:=x+1;]x>1 }
+  by graph {
+    print("Creating graph tactic");
+    core.QE()[]
+      :> assignbAt(list(1))
+      :> testb()
+      :> composeb()
+      :> core.Skolemize(1)
+      :> randomb()
+      :> composeb()
+  };
+
+print("   graph: ", simpleCompositionGraph);

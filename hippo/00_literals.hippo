@@ -1,0 +1,19 @@
+//////////////
+// Literals //
+//////////////
+
+null
+
+true
+false
+
+1
+-100
+
+"Hello world!"
+"escapes\n:D"
+
+list(1, 2, true, "hello")
+
+dL { 1+1==2 }
+dLs { a, b ==> a&b }

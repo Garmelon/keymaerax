@@ -1,0 +1,59 @@
+/////////////////
+// Sorry proof //
+/////////////////
+
+val proof_sorry =
+  theorem dLs { ==> 1+2=3 -> [x:=3;]1+2=x }
+  by core.Sorry();
+
+print("proof_sorry: ", proof_sorry);
+
+//////////////////
+// Manual proof //
+//////////////////
+
+val proof_manual = {
+  val stmt = dLs { ==> 1+2=3 -> [x:=3;]1+2=x };
+  var p = proof(stmt);
+  p = p.join(0, core.ImplyRight(1).backward(p.premises(0)));
+  p = p.join(0, core.RewriteAtU(list(), core.assignb).backward(p.premises(0)));
+  p = p.join(0, core.Close(-1, 1).backward(p.premises(0)));
+  verified theorem stmt by p // "Almost" redundant :P
+};
+
+print("proof_manual: ", proof_manual);
+
+//////////////////
+// Tactic proof //
+//////////////////
+
+val proof_tactic =
+  verified theorem dLs { ==> 1+2=3 -> [x:=3;]1+2=x }
+  by backward {
+    core.ImplyRight(1)[];
+    core.RewriteAtU(list(), core.assignb)[];
+    core.Close(-1, 1)[];
+  };
+
+print("proof_tactic: ", proof_tactic);
+
+//////////////////////////////
+// Bonus proof: Equivalence //
+//////////////////////////////
+
+val proof_equiv =
+  verified theorem dLs { ==> 1+2=3 <-> [x:=3;]1+2=x }
+  by backward {
+    core.EquivRight(1)[];
+    // Branch 1: 1+2+3  ==>  [x:=3;]1+2=x
+    core.RewriteAtU(list(), core.assignb)[];
+    core.Close(-1, 1)[];
+    // Branch 2: [x:=3;]1+2=x  ==>  1+2+3
+    val specificAssignb = core.assignb
+      .usubst(dLt{f()}, dLt{3})
+      .urename(dL{x_}, dL{x});
+    core.RewriteAtU(list(), specificAssignb)[];
+    core.Close(-1, 1)[];
+  };
+
+print("proof_equiv: ", proof_equiv);

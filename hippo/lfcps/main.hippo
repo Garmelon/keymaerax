@@ -1,0 +1,2 @@
+val chapter5 = import "chapter5.hippo";
+val chapter6 = import "chapter6.hippo";

@@ -1,0 +1,242 @@
+﻿/* Exported from KeYmaera X v4.9.8 */
+
+SharedDefinitions
+  Real hp;
+  Real rp;
+  Real alo;
+  Real wUp;
+  Real wLo;
+  Bool Limpl(Real r, Real h, Real v, Real w, Real vlo, Real rv);
+  Bool init(Real rv);
+  Bool loopInv(Real r, Real h, Real v, Real w, Real vlo, Real rv) <-> ( (w=wUp | w=wLo) & Limpl(r,h,v,w,vlo,rv) );
+  HP motion ::= { {r' = -rv, h' = -v, v' = a & w*v>=w*vlo|w*a>=alo } };
+  Bool Lexpl(Real r, Real h, Real v, Real w, Real vlo, Real rv);
+End.
+Theorem "ACAS X/Corollary 1: Correctness of explicit safe regions".
+
+ProgramVariables.
+
+  /* horizontal */
+  Real r;    /* relative distance in ft; xi - xo */
+             /* x = r */
+  Real rv;   /* relative speed -(vi - vo) */
+
+  /* vertical */
+  Real h;    /* relative altitude in ft */
+             /* if negative: the intruder is lower than the ownship */
+             /* h := hi - ho */
+             /* z = h */
+  Real v;    /* vertical velocity of ownship */
+  Real vlo;  /* target minimum velocity */
+  Real w;    /* velocity direction */
+  Real a;
+
+End.
+  
+Problem.
+(
+    init(rv)
+  & ( (w=wUp | w=wLo) & Limpl(r,h,v,w,vlo,rv) )
+  ->
+  [{ {
+     { ?true;
+       ++
+       {{ w:=wUp; ++ w:=wLo; }
+        vlo := *;
+        ?Limpl(r,h,v,w,vlo,rv);
+       }
+     }
+     a := *;
+     }
+     motion;
+   }*
+  ] ( (abs(r) > rp | abs(h) > hp) & Limpl(r,h,v,w,vlo,rv) )
+) -> (
+     init(rv)
+   & ( (w=wUp | w=wLo) & Lexpl(r,h,v,w,vlo,rv) )
+   ->
+   [{ {
+      { ?true;
+        ++
+        {{ w:=wUp; ++ w:=wLo; }
+         vlo := *;
+         ?Lexpl(r,h,v,w,vlo,rv);
+        }
+      }
+      a := *;
+      }
+      motion;
+    }*@invariant((init(rv) & (w=wUp | w=wLo))
+                 & ((abs(r) > rp | abs(h) > hp) & Limpl(r,h,v,w,vlo,rv)))
+   ] ( (abs(r) > rp | abs(h) > hp) & Lexpl(r,h,v,w,vlo,rv) )
+)
+End.
+
+Tactic "ACAS X/Corollary 1: Correctness of explicit safe regions: Proof"
+implyR('R=="(init(rv)&(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)->[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv)))->init(rv)&(w=wUp()|w=wLo())&Lexpl(r,h,v,w,vlo,rv)->[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Lexpl(r,h,v,w,vlo,rv))");
+implyR('R=="init(rv)&(w=wUp()|w=wLo())&Lexpl(r,h,v,w,vlo,rv)->[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Lexpl(r,h,v,w,vlo,rv))");
+implyL('L=="init(rv)&(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)->[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))"); <(
+  "init(rv)&(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)":
+    hideR('R=="[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Lexpl(r,h,v,w,vlo,rv))");
+    andR('R=="init(rv)&(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)"); <(
+      "init(rv)":
+        propClose,
+      "(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)":
+        andR('R=="(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)"); <(
+          "w=wUp()|w=wLo()":
+            propClose,
+          "Limpl(r,h,v,w,vlo,rv)":
+            label("uselemma_1");
+            todo
+        )
+    ),
+  "[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))":
+    loop("(init(rv)&(w=wUp()|w=wLo()))&(abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv)", 'R=="[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Lexpl(r,h,v,w,vlo,rv))"); <(
+      "Init":
+        andR('R=="(init(rv)&(w=wUp()|w=wLo()))&(abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv)"); <(
+          "init(rv)&(w=wUp()|w=wLo())":
+            propClose,
+          "(abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv)":
+            iterateb('L=="[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+            andL('L=="((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}][{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+            propClose
+        ),
+      "Post":
+        andR('R=="(abs(r)>rp()|abs(h)>hp())&Lexpl(r,h,v,w,vlo,rv)"); <(
+          "abs(r)>rp()|abs(h)>hp()":
+            propClose,
+          "Lexpl(r,h,v,w,vlo,rv)":
+            label("uselemma_2");
+            todo
+        ),
+      "Step":
+        cut("[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))"); <(
+          "Use":
+            label("superfluous_cut");
+            boxAnd('R=="[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((init(rv)&(w=wUp()|w=wLo()))&(abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+            andR('R=="[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}](init(rv)&(w=wUp()|w=wLo()))&[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))"); <(
+              "[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}](init(rv)&(w=wUp()|w=wLo()))":
+                hideL('L=="[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                boxAnd('R=="[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}](init(rv)&(w=wUp()|w=wLo()))");
+                andR('R=="[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]init(rv)&[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}](w=wUp()|w=wLo())"); <(
+                  "[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]init(rv)":
+                    GV('R=="[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]init(rv)");
+                    id,
+                  "[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}](w=wUp()|w=wLo())":
+                    composeb('R=="[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}](w=wUp()|w=wLo())");
+                    MR("w=wUp()|w=wLo()", 'R=="[{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}](w=wUp()|w=wLo())"); <(
+                      "Use Q->P":
+                        composeb('R=="[{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;](w=wUp()|w=wLo())");
+                        GV('R=="[?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);]#[a:=*;](w=wUp()|w=wLo())#");
+                        choiceb('R=="[?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);](w=wUp()|w=wLo())");
+                        GV('R=="#[?true;](w=wUp()|w=wLo())#&[{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);](w=wUp()|w=wLo())");
+                        composeb('R=="(w=wUp()|w=wLo())&#[{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);](w=wUp()|w=wLo())#");
+                        GV('R=="(w=wUp()|w=wLo())&[w:=wUp();++w:=wLo();]#[vlo:=*;?Lexpl(r,h,v,w,vlo,rv);](w=wUp()|w=wLo())#");
+                        chaseAt('R=="(w=wUp()|w=wLo())&#[w:=wUp();++w:=wLo();](w=wUp()|w=wLo())#");
+                        andR('R=="(w=wUp()|w=wLo())&(wUp()=wUp()|wUp()=wLo())&(wLo()=wUp()|wLo()=wLo())"); <(
+                          "w=wUp()|w=wLo()":
+                            propClose,
+                          "(wUp()=wUp()|wUp()=wLo())&(wLo()=wUp()|wLo()=wLo())":
+                            andR('R=="(wUp()=wUp()|wUp()=wLo())&(wLo()=wUp()|wLo()=wLo())"); <(
+                              "wUp()=wUp()|wUp()=wLo()":
+                                hideL('L=="(init(rv)&(w=wUp()|w=wLo()))&(abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv)");
+                                QE,
+                              "wLo()=wUp()|wLo()=wLo()":
+                                hideL('L=="(init(rv)&(w=wUp()|w=wLo()))&(abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv)");
+                                QE
+                            )
+                        ),
+                      "Show [a]Q":
+                        GV('R=="[{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}](w=wUp()|w=wLo())");
+                        propClose
+                    )
+                ),
+              "[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))":
+                hideL('L=="(init(rv)&(w=wUp()|w=wLo()))&(abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv)");
+                hideL('L=="init(rv)");
+                iterateb('L=="[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                iterateb('L=="((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};]#[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))#");
+                boxAnd('L=="((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&#[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};](((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};][{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv)))#");
+                andL('L=="((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};][{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};][{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                andL('L=="[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};][{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};][{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                hideL('L=="[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};][{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};][{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                hideL('L=="(abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv)");
+                composeb('R=="[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                composeb('L=="[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                composeb('R=="[{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                composeb('L=="[{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                choiceb('R=="[?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                choiceb('L=="[?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                andR('R=="[?true;][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))"); <(
+                  "[?true;][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))":
+                    andL('L=="[?true;][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                    hideL('L=="[{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                    expand "motion";
+                    id,
+                  "[{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))":
+                    andL('L=="[?true;][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                    hideL('L=="[?true;][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                    composeb('R=="[{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                    composeb('L=="[{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                    choiceb('R=="[w:=wUp();++w:=wLo();][vlo:=*;?Lexpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                    choiceb('L=="[w:=wUp();++w:=wLo();][vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                    andR('R=="[w:=wUp();][vlo:=*;?Lexpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[w:=wLo();][vlo:=*;?Lexpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))"); <(
+                      "[w:=wUp();][vlo:=*;?Lexpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))":
+                        andL('L=="[w:=wUp();][vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[w:=wLo();][vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                        hideL('L=="[w:=wLo();][vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                        expand "motion";
+                        assignb('R=="[w:=wUp();][vlo:=*;?Lexpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                        assignb('L=="[w:=wUp();][vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                        composeb('R=="[vlo:=*;?Lexpl(r,h,v,wUp(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))");
+                        composeb('L=="[vlo:=*;?Limpl(r,h,v,wUp(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))");
+                        randomb('R=="[vlo:=*;][?Lexpl(r,h,v,wUp(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))");
+                        randomb('L=="[vlo:=*;][?Limpl(r,h,v,wUp(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))");
+                        allR('R=="\forall vlo [?Lexpl(r,h,v,wUp(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))");
+                        allL('L=="\forall vlo [?Limpl(r,h,v,wUp(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))");
+                        testb('R=="[?Lexpl(r,h,v,wUp(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))");
+                        testb('L=="[?Limpl(r,h,v,wUp(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))");
+                        implyR('R=="Lexpl(r,h,v,wUp(),vlo,rv)->[a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))");
+                        implyL('L=="Limpl(r,h,v,wUp(),vlo,rv)->[a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))"); <(
+                          "Limpl(r,h,v,wUp(),vlo,rv)":
+                            hideR('R=="[a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))");
+                            label("useLemmaRevokeConst");
+                            todo,
+                          "[a:=*;][{r'=-rv,h'=-v,v'=a&wUp()*v>=wUp()*vlo|wUp()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wUp(),vlo,rv))":
+                            id
+                        ),
+                      "[w:=wLo();][vlo:=*;?Lexpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))":
+                        andL('L=="[w:=wUp();][vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[w:=wLo();][vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                        hideL('L=="[w:=wUp();][vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][motion{|^@|};]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                        assignb('R=="[w:=wLo();][vlo:=*;?Lexpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                        expand "motion";
+                        assignb('L=="[w:=wLo();][vlo:=*;?Limpl(r,h,v,w,vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                        composeb('R=="[vlo:=*;?Lexpl(r,h,v,wLo(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))");
+                        composeb('L=="[vlo:=*;?Limpl(r,h,v,wLo(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))");
+                        randomb('R=="[vlo:=*;][?Lexpl(r,h,v,wLo(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))");
+                        randomb('L=="[vlo:=*;][?Limpl(r,h,v,wLo(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))");
+                        allR('R=="\forall vlo [?Lexpl(r,h,v,wLo(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))");
+                        allL('L=="\forall vlo [?Limpl(r,h,v,wLo(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))");
+                        testb('R=="[?Lexpl(r,h,v,wLo(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))");
+                        testb('L=="[?Limpl(r,h,v,wLo(),vlo,rv);][a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))");
+                        implyR('R=="Lexpl(r,h,v,wLo(),vlo,rv)->[a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))");
+                        implyL('L=="Limpl(r,h,v,wLo(),vlo,rv)->[a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))"); <(
+                          "Limpl(r,h,v,wLo(),vlo,rv)":
+                            hideR('R=="[a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))");
+                            label("useLemmaRecoverConst_2");
+                            todo,
+                          "[a:=*;][{r'=-rv,h'=-v,v'=a&wLo()*v>=wLo()*vlo|wLo()*a>=alo()}]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,wLo(),vlo,rv))":
+                            id
+                        )
+                    )
+                )
+            ),
+          "Show":
+            hideR('R=="[{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}]((init(rv)&(w=wUp()|w=wLo()))&(abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+            label("loop_lost_unnecessary_close");
+            todo
+        )
+    )
+)
+End.
+
+End.

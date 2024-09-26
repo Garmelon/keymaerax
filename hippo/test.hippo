@@ -1,0 +1,13 @@
+//var proof = theorem
+//  dLs{ ==> (x * x)' = x' * x + x * x' }
+//  by forward {
+//    belle.QE().backward(dLs{ ==> (x * x)' = (x * x)' })
+//    :> core.RewriteAtU(list(1), core.Dtimes)
+//    :> core.RewriteAtU(list(1, 0, 0), core.DvarAxiom)
+//    :> core.RewriteAtU(list(1, 1, 1), core.DvarAxiom)
+//  };
+
+//print(proof);
+
+var foo = dLs{ ==> [{x' = x^3}][x' := x^3;](x*x >= 1)' };
+print(core.RewriteAtU(list(1, 1, ), core.Dgreaterequal).backward(foo));

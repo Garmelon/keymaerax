@@ -1,0 +1,31 @@
+val composeb = function() core.RewriteAtU(list(), core.composeb);
+val randomb = function() core.RewriteAtU(list(), core.randomb);
+val testb = function() core.RewriteAtU(list(), core.testb);
+val assignbAt = function(at) core.RewriteAtU(at, core.assignbAxiom);
+
+val simpleCompositionBackward =
+  theorem dLs{ ==> [x:=*;?x>0;x:=x+1;]x>1 }
+  by backward {
+    composeb()[];
+    randomb()[];
+    core.Skolemize(1)[];
+    composeb()[];
+    testb()[];
+    assignbAt(list(1))[];
+    core.QE()[];
+  };
+
+val simpleCompositionGraph =
+  theorem dLs{ ==> [x:=*;?x>0;x:=x+1;]x>1 }
+  by graph {
+    val g1 = core.QE()[];
+    val g2 = assignbAt(list(1))[g1];
+    val g3 = testb()[g2];
+    val g4 = composeb()[g3];
+    val g5 = core.Skolemize(1)[g4];
+    val g6 = randomb()[g5];
+    composeb()[g6]
+  };
+
+print("backward: ", simpleCompositionBackward);
+print("   graph: ", simpleCompositionGraph);

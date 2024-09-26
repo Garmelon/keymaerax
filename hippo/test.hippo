@@ -1,0 +1,14 @@
+print("Hello world!");
+print("Hello world\nwith newline!");
+print();
+
+val foo = import "foo.hippo";
+print(foo.greeting, " from another file!");
+print();
+
+var i = 0;
+while (i < 10) {
+  print("while ", i);
+  i = i + 1;
+};
+print("after ", i);

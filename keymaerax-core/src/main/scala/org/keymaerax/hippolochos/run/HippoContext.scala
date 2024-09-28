@@ -10,7 +10,7 @@ import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, Substit
 import org.keymaerax.hippolochos.cache.{Cache, HippoProofFsCache, LruCache, ProvableFsCache}
 import org.keymaerax.hippolochos.proof.{DerivedHippoProof, ExternalSource, HippoPremise, HippoProof}
 import org.keymaerax.hippolochos.tools.Hash
-import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
+import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, HippoException, PureTactic, Tactic}
 
 import java.nio.file.Path
 import scala.collection.mutable
@@ -113,14 +113,31 @@ class HippoContext(
 
   // These functions wrap tactic application.
 
-  def pure(tactic: PureTactic): HippoProof = tactic.runPure(this)
+  def pure(tactic: PureTactic): HippoProof =
+    try tactic.runPure(this)
+    catch {
+      case e: Throwable =>
+        val name = tactic.getClass.getName
+        throw HippoException.wrap(e).annotate(s"during pure execution of $name")
+    }
 
-  def forward(tactic: ForwardTactic, premises: IndexedSeq[Sequent]): HippoProof = tactic.runForward(this, premises)
+  def forward(tactic: ForwardTactic, premises: IndexedSeq[Sequent]): HippoProof =
+    try tactic.runForward(this, premises)
+    catch {
+      case e: Throwable =>
+        val name = tactic.getClass.getName
+        throw HippoException.wrap(e).annotate(s"during forward execution of $name")
+    }
 
   def forward(tactic: ForwardTactic, premises: Sequent*): HippoProof = forward(tactic, premises.toIndexedSeq)
 
-  def backward(tactic: BackwardTactic, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = tactic
-    .runBackward(this, conclusion, premises)
+  def backward(tactic: BackwardTactic, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof =
+    try tactic.runBackward(this, conclusion, premises)
+    catch {
+      case e: Throwable =>
+        val name = tactic.getClass.getName
+        throw HippoException.wrap(e).annotate(s"during backward execution of $name")
+    }
 
   def backward(tactic: BackwardTactic, conclusion: Sequent, premises: (Int, Sequent)*): HippoProof =
     backward(tactic, conclusion, premises.toMap)

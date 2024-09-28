@@ -5,10 +5,13 @@
 
 package org.keymaerax.hippolib.meta
 
+import org.keymaerax.hippolochos.HippoException
 import org.keymaerax.hippolochos.run.HippoContext
 
 case class TacticArgInfo[+A <: TacticArg](name: String, arg: A, description: Option[String], default: Option[Any]) {
-  def getDefault(ctx: HippoContext): Option[arg.Type] = default.map(arg.validate(ctx, _))
+  def getDefault(ctx: HippoContext): Option[arg.Type] =
+    try default.map(arg.validate(ctx, _))
+    catch { case e: Throwable => HippoException.fail("exception while converting default argument value", cause = e) }
 }
 
 object TacticArgInfo {

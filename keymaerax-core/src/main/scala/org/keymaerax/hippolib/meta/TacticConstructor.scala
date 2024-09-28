@@ -5,8 +5,8 @@
 
 package org.keymaerax.hippolib.meta
 
-import org.keymaerax.hippolochos.Tactic
 import org.keymaerax.hippolochos.run.HippoContext
+import org.keymaerax.hippolochos.{HippoException, HippoNonfatalException, Tactic}
 
 trait TacticConstructor[+T <: Tactic] {
   val args: IndexedSeq[TacticArgInfo[TacticArg]]
@@ -18,14 +18,28 @@ trait TacticConstructor[+T <: Tactic] {
     val defaultArgs = this
       .args
       .takeRight(this.args.length - args.length)
-      .map(_.getDefault(ctx).getOrElse(throw new Exception("default values required")))
+      .map(arg =>
+        arg
+          .getDefault(ctx)
+          .getOrElse(HippoNonfatalException.fail(
+            s"argument ${arg.name} has no default value yet no value was provided"
+          ))
+      )
 
     construct(ctx, args ++ defaultArgs)
   }
 
   final def constructNamed(ctx: HippoContext, args: Map[String, Any]): T = {
-    val argsSeq = for (arg <- this.args)
-      yield args.get(arg.name).orElse(arg.getDefault(ctx)).getOrElse(throw new Exception("arg or default value required"))
+    val argsSeq = this
+      .args
+      .map(arg =>
+        args
+          .get(arg.name)
+          .orElse(arg.getDefault(ctx))
+          .getOrElse(HippoNonfatalException.fail(
+            s"argument ${arg.name} has no default value yet no value was provided"
+          ))
+      )
 
     construct(ctx, argsSeq)
   }
@@ -41,9 +55,14 @@ trait TacticConstructor[+T <: Tactic] {
 //   build: (arg1.Type, arg2.Type, ...) => T) extends TacticConstructor[T] { ... }
 
 object TacticConstructor {
+  @inline
+  private def convertArg(ctx: HippoContext, arg: TacticArgInfo[TacticArg], value: Any): arg.arg.Type = HippoException
+    .annotated(s"while converting argument ${arg.name}")(arg.arg.validate(ctx, value))
+
   def apply[T <: Tactic](tactic: T): TacticConstructor[T] = new TacticConstructor[T] {
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq()
     override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+      HippoNonfatalException.require(args.isEmpty, s"0 arguments expected, but got ${args.length}")
       val Seq() = args
       tactic
     }
@@ -53,8 +72,9 @@ object TacticConstructor {
     new TacticConstructor[T] {
       override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1)
       override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+        HippoNonfatalException.require(args.length == 1, s"1 argument expected, but got ${args.length}")
         val Seq(val1) = args
-        build(arg1.arg.validate(ctx, val1))
+        build(convertArg(ctx, arg1, val1))
       }
     }
 
@@ -63,8 +83,9 @@ object TacticConstructor {
   ): TacticConstructor[T] = new TacticConstructor[T] {
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2)
     override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+      HippoNonfatalException.require(args.length == 2, s"2 arguments expected, but got ${args.length}")
       val Seq(val1, val2) = args
-      build(arg1.arg.validate(ctx, val1), arg2.arg.validate(ctx, val2))
+      build(convertArg(ctx, arg1, val1), convertArg(ctx, arg2, val2))
     }
   }
 
@@ -75,8 +96,9 @@ object TacticConstructor {
   )(build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type) => T): TacticConstructor[T] = new TacticConstructor[T] {
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3)
     override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+      HippoNonfatalException.require(args.length == 3, s"3 arguments expected, but got ${args.length}")
       val Seq(val1, val2, val3) = args
-      build(arg1.arg.validate(ctx, val1), arg2.arg.validate(ctx, val2), arg3.arg.validate(ctx, val3))
+      build(convertArg(ctx, arg1, val1), convertArg(ctx, arg2, val2), convertArg(ctx, arg3, val3))
     }
   }
 
@@ -89,12 +111,13 @@ object TacticConstructor {
     new TacticConstructor[T] {
       override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3, arg4)
       override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+        HippoNonfatalException.require(args.length == 4, s"4 arguments expected, but got ${args.length}")
         val Seq(val1, val2, val3, val4) = args
         build(
-          arg1.arg.validate(ctx, val1),
-          arg2.arg.validate(ctx, val2),
-          arg3.arg.validate(ctx, val3),
-          arg4.arg.validate(ctx, val4),
+          convertArg(ctx, arg1, val1),
+          convertArg(ctx, arg2, val2),
+          convertArg(ctx, arg3, val3),
+          convertArg(ctx, arg4, val4),
         )
       }
     }
@@ -109,13 +132,14 @@ object TacticConstructor {
     new TacticConstructor[T] {
       override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3, arg4, arg5)
       override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+        HippoNonfatalException.require(args.length == 5, s"5 arguments expected, but got ${args.length}")
         val Seq(val1, val2, val3, val4, val5) = args
         build(
-          arg1.arg.validate(ctx, val1),
-          arg2.arg.validate(ctx, val2),
-          arg3.arg.validate(ctx, val3),
-          arg4.arg.validate(ctx, val4),
-          arg5.arg.validate(ctx, val5),
+          convertArg(ctx, arg1, val1),
+          convertArg(ctx, arg2, val2),
+          convertArg(ctx, arg3, val3),
+          convertArg(ctx, arg4, val4),
+          convertArg(ctx, arg5, val5),
         )
       }
     }

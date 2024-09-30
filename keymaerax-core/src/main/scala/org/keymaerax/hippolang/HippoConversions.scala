@@ -118,6 +118,7 @@ object HippoConversions {
       case AstExpression.Parens(exprs, returnExpr) => Sequence(exprs.map(_.toHExpr), returnExpr.map(_.toHExpr))
       case AstExpression.Block(exprs, returnExpr) => Block(Sequence(exprs.map(_.toHExpr), returnExpr.map(_.toHExpr)))
       case AstExpression.BackwardBlock(inner) => BackwardBlock(inner.toHExpr)
+      case AstExpression.GraphBlock(inner) => GraphBlock(inner.toHExpr)
       case AstExpression.BuiltinAccess(target, member) => BuiltinAccess(target.toHExpr, member)
       case AstExpression.Access(target, name) => Access(target.toHExpr, name.name)
       case AstExpression.Apply(target, args) => Apply(target.toHExpr, args.map(_.toHExpr))

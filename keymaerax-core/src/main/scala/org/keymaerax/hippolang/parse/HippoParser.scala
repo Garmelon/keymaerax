@@ -23,6 +23,7 @@ object HippoParser {
   private val keywordExport = "export"
   private val keywordFalse = "false"
   private val keywordFunction = "function"
+  private val keywordGraph = "graph"
   private val keywordIf = "if"
   private val keywordImport = "import"
   private val keywordNull = "null"
@@ -42,6 +43,7 @@ object HippoParser {
     keywordExport,
     keywordFalse,
     keywordFunction,
+    keywordGraph,
     keywordIf,
     keywordImport,
     keywordNull,
@@ -185,11 +187,15 @@ object HippoParser {
   private def backwardBlockExpression[$: P]: P[AstExpression.BackwardBlock] =
     P((keywordBackward ~/ blockExpression).map(AstExpression.BackwardBlock))
 
+  private def graphBlockExpression[$: P]: P[AstExpression.GraphBlock] =
+    P((keywordGraph ~/ blockExpression).map(AstExpression.GraphBlock))
+
   private def primitiveExpression[$: P]: P[AstExpression] = P(
     // dlSequentExpression must come before dlExpressionExpression since "dL" is a prefix of "dLs".
     nullExpression | boolExpression | intExpression | stringExpression | dlSequentExpression | dlExpressionExpression |
       builtinFunctionExpression | importExpression | declareExpression | ifExpression | whileExpression |
       functionExpression | theoremExpression | parensExpression | blockExpression | backwardBlockExpression |
+      graphBlockExpression |
       // Because these two start with a literal, they have to come last so they don't shadow literals like "while".
       // Otherwise, "while (foo) ..." is interpreted as an apply on the literal "while",
       // and due to cuts, results in a parse error because it expects a ";" to follow.

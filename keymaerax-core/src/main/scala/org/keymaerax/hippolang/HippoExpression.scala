@@ -39,6 +39,8 @@ object HippoExpression {
 
   case class BackwardBlock(inner: HippoExpression) extends HippoExpression
 
+  case class GraphBlock(inner: HippoExpression) extends HippoExpression
+
   ////////////
   // Suffix //
   ////////////

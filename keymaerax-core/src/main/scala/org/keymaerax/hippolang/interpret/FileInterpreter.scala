@@ -75,6 +75,10 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
     case HippoExpression.BackwardBlock(inner) => HippoValue
         .Tactic(FileInterpreterBackward.tactic(ictx = ictx, file = file, namespace = namespace.freeze, expr = inner))
 
+    case HippoExpression.GraphBlock(inner) => HippoValue.Tactic(
+        FileInterpreterGraph.tactic(ictx = ictx, ctx = ctx, file = file, namespace = namespace.freeze, expr = inner)
+      )
+
     case HippoExpression.BuiltinAccess(target, member) =>
       val targetV = eval(namespace, target)
       HippoValue.BuiltinMemberFunction(targetV, member)
@@ -195,10 +199,16 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
         case HippoValue.BuiltinFunction(value) => s"<builtin function ${value.name}>"
         case HippoValue.BuiltinMemberFunction(target, value) => s"<builtin member function ${value.name}>"
         case HippoValue.Function(env, args, body) => s"<function>"
+        case HippoValue.GraphNode(graph, node) => "<graph node>"
       }
       println(argStrs.mkString)
       HippoValue.Null
+
+    case BuiltinFunction.Premise => applyBuiltinFunctionPremise(args)
   }
+
+  protected def applyBuiltinFunctionPremise(args: IndexedSeq[HippoValue]): HippoValue =
+    throw new UnsupportedOperationException("#premise builtin can only be called in the context of a graph block")
 
   private def applyBuiltinMemberFunction(
       target: HippoValue,

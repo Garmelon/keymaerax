@@ -38,6 +38,7 @@ class EnvBuilder(child: Option[Namespace] = None) {
   def addBuiltins(): EnvBuilder = {
     add(BuiltinFunction.List.name, BuiltinFunction.List.toHValue)
     add(BuiltinFunction.Print.name, BuiltinFunction.Print.toHValue)
+    add(BuiltinFunction.Premise.name, BuiltinFunction.Premise.toHValue)
 
     for (builtin <- BuiltinFunction.all) addPath(List(HippoIdentifier("builtins"), builtin.name), builtin.toHValue)
 

@@ -150,6 +150,13 @@ object AstExpression {
    */
   case class BackwardBlock(inner: Block) extends AstExpression
 
+  /**
+   * {{{
+   *   graph { ... }
+   * }}}
+   */
+  case class GraphBlock(inner: Block) extends AstExpression
+
   ////////////
   // Suffix //
   ////////////

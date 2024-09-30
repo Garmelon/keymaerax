@@ -7,6 +7,7 @@ package org.keymaerax.hippolang
 
 import org.keymaerax.core.Sequent
 import org.keymaerax.hippolang.namespace.ImmutableNamespace
+import org.keymaerax.hippolib.primitive.Graph
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.{core, hippolochos}
 
@@ -64,4 +65,14 @@ object HippoValue {
 
   final case class Function(env: ImmutableNamespace, args: Seq[HippoIdentifier], body: HippoExpression)
       extends HippoValue
+
+  // For graph { ... }
+
+  // TODO When migrating to Scala 3: GraphNode(graph: Graph.Builder)(node: graph.Var)
+  final case class GraphNode(graph: Graph.Builder, node: Graph.Builder#Var) extends HippoValue {
+    // Check if the node belongs to the graph (which it should always do).
+    // This is a band-aid fix for classes not properly supporting path-dependent types in Scala 2.
+    // We should be able to remove it once we migrate to Scala 3.
+    node.belongingTo(graph)
+  }
 }

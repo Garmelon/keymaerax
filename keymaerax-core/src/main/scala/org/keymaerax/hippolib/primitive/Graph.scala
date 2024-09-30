@@ -98,9 +98,17 @@ object Graph {
   def newBuilder: Builder = new Builder()
 
   class Builder private[Graph] {
+    thisBuilder =>
 
     /** A [[Var]] represents a sequent in the graph. */
-    final class Var private[Builder] (private[Builder] val i: Int)
+    final class Var private[Builder] (private[Builder] val i: Int) {
+
+      /** Helper function for casting [[Var]]s. We should be able to remove it once we migrate to Scala 3. */
+      def belongingTo(builder: Builder): builder.Var = {
+        assert(builder eq thisBuilder)
+        this.asInstanceOf[builder.Var]
+      }
+    }
 
     private val steps = mutable.Buffer[Step]()
 
@@ -114,6 +122,10 @@ object Graph {
     def step(tactic: Tactic, premises: Var*): Var = {
       steps.append(Step(tactic = tactic, premises = premises.map(_.i).toIndexedSeq))
       new Var(steps.length - 1)
+    }
+
+    def stepAny(tactic: Tactic, premises: Seq[Builder#Var]): Var = {
+      step(tactic, premises.map(_.belongingTo(this)): _*)
     }
 
     def build(conclusion: Var): Graph = {

@@ -20,7 +20,7 @@ import org.keymaerax.btactics.{
 }
 import org.keymaerax.cli.grade.AssessmentProver
 import org.keymaerax.core.{Formula, PrettyPrinter, StaticSemantics}
-import org.keymaerax.hippolang.interpret.{EnvBuilder, HippoInterpreter}
+import org.keymaerax.hippolang.interpret.{EnvBuilder, HippoInterpreterContext}
 import org.keymaerax.hippolang.parse.HlParseError
 import org.keymaerax.info.TechnicalName
 import org.keymaerax.parser.{
@@ -158,7 +158,7 @@ object KeymaeraxCore {
         val home = Path.of(FileConfiguration.KEYMAERAX_HOME_PATH)
         val cacheDir = home.resolve("hippo").resolve("cache")
         val env = new EnvBuilder().addBuiltins().addHippoLib().build()
-        val interpreter = HippoInterpreter.withCacheDir(ToolProvider.provider, cacheDir, env = Some(env))
+        val interpreter = HippoInterpreterContext.withCacheDir(ToolProvider.provider, cacheDir, env = Some(env))
         try interpreter.run(cmd.file)
         catch {
           case e: HlParseError =>

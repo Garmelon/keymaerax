@@ -143,6 +143,13 @@ object AstExpression {
    */
   case class Block(exprs: Seq[AstExpression], returnExpr: Option[AstExpression]) extends AstExpression
 
+  /**
+   * {{{
+   *   backward { ... }
+   * }}}
+   */
+  case class BackwardBlock(inner: Block) extends AstExpression
+
   ////////////
   // Suffix //
   ////////////

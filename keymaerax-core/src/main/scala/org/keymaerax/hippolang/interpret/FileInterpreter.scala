@@ -72,6 +72,9 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
       val nestedNamespace = new MutableNamespace(Some(namespace))
       eval(nestedNamespace, inner)
 
+    case HippoExpression.BackwardBlock(inner) => HippoValue
+        .Tactic(FileInterpreterBackward.tactic(ictx = ictx, file = file, namespace = namespace.freeze, expr = inner))
+
     case HippoExpression.BuiltinAccess(target, member) =>
       val targetV = eval(namespace, target)
       HippoValue.BuiltinMemberFunction(targetV, member)
@@ -85,9 +88,11 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
       val argsV = args.map(eval(namespace, _))
       applyValue(targetV, argsV)
 
-    case HippoExpression.ApplyTactic(_, _) =>
-      throw new UnsupportedOperationException("tactic application not supported in normal mode")
+    case e: HippoExpression.ApplyTactic => evalApplyTactic(namespace, e)
   }
+
+  protected def evalApplyTactic(namespace: MutableNamespace, expr: HippoExpression.ApplyTactic): HippoValue =
+    throw new UnsupportedOperationException("tactic application not supported in normal mode")
 
   private def accessValue(target: HippoValue, name: HippoIdentifier): HippoValue = {
     import org.keymaerax.hippolang.BuiltinMemberFunction._

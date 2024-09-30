@@ -15,6 +15,7 @@ object HippoParser {
   // To parse a keyword, always use the corresponding constant instead of a magic string value.
   // This helps ensure the list does not become outdated.
   private val keywordAs = "as"
+  private val keywordBackward = "backward"
   private val keywordBy = "by"
   private val keywordDlExpression = "dL"
   private val keywordDlSequent = "dLs"
@@ -33,6 +34,7 @@ object HippoParser {
   private val keywordWhile = "while"
   val keywords: Set[String] = Set(
     keywordAs,
+    keywordBackward,
     keywordBy,
     keywordDlExpression,
     keywordDlSequent,
@@ -180,11 +182,14 @@ object HippoParser {
     }
   )
 
+  private def backwardBlockExpression[$: P]: P[AstExpression.BackwardBlock] =
+    P((keywordBackward ~/ blockExpression).map(AstExpression.BackwardBlock))
+
   private def primitiveExpression[$: P]: P[AstExpression] = P(
     // dlSequentExpression must come before dlExpressionExpression since "dL" is a prefix of "dLs".
     nullExpression | boolExpression | intExpression | stringExpression | dlSequentExpression | dlExpressionExpression |
       builtinFunctionExpression | importExpression | declareExpression | ifExpression | whileExpression |
-      functionExpression | theoremExpression | parensExpression | blockExpression |
+      functionExpression | theoremExpression | parensExpression | blockExpression | backwardBlockExpression |
       // Because these two start with a literal, they have to come last so they don't shadow literals like "while".
       // Otherwise, "while (foo) ..." is interpreted as an apply on the literal "while",
       // and due to cuts, results in a parse error because it expects a ";" to follow.

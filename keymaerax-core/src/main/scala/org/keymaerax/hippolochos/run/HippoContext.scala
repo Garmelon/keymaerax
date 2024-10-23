@@ -21,7 +21,7 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
   //////////////////////
 
   private def computeQe(formula: Formula): Provable = toolCache
-    .getOrCompute(Hash.ofFormula(formula)) { toolProvider.qeTool().get.qe(formula).fact.underlyingProvable }
+    .getOrCompute(Hash.start.digest(formula).build) { toolProvider.qeTool().get.qe(formula).fact.underlyingProvable }
 
   ////////////////////////
   // Proof constructors //

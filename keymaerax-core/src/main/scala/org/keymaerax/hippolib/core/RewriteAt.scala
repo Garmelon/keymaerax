@@ -21,7 +21,7 @@ import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolib.primitive.Noop
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.ExprPath
+import org.keymaerax.hippolochos.tools.{ExprPath, Hash}
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
 
 /**
@@ -44,6 +44,16 @@ import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
 case class RewriteAt(at: ExprPath, dir: Option[RewriteAt.Dir] = None)(implicit lib: HippoLib)
     extends ForwardTactic with BackwardTactic {
   import RewriteAt.Dir
+
+  override lazy val hash: Hash = Hash
+    .start
+    .digest[this.type]
+    .digest(at)
+    .digestOpt(dir) {
+      case (b, Dir.Ltr) => b.digest("Ltr")
+      case (b, Dir.Rtl) => b.digest("Rtl")
+    }
+    .build
 
   // Rough sketch of proof structure
   // where eqF is either leftE=rightE or leftE<->rightE:

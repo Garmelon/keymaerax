@@ -11,9 +11,11 @@ import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolochos.BackwardTactic
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.ExprPath
+import org.keymaerax.hippolochos.tools.{ExprPath, Hash}
 
 case class CEqAt(at: ExprPath)(implicit lib: HippoLib) extends BackwardTactic {
+  override def hash: Hash = Hash.start.digest[this.type].digest(at).build
+
   override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
     require(conclusion.succ.length == 1)
     require(conclusion.succ.head.isInstanceOf[core.Equiv])

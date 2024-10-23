@@ -9,9 +9,12 @@ import org.keymaerax.core.Sequent
 import org.keymaerax.hippolochos.BackwardTactic
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
+import org.keymaerax.hippolochos.tools.Hash
 import org.keymaerax.infrastruct.UnificationMatch
 
 case class Unify(proof: HippoProof) extends BackwardTactic {
+  override lazy val hash: Hash = Hash.start.digest[this.type].digest(proof).build
+
   require(proof.conclusion.ante.isEmpty)
   require(proof.conclusion.succ.length == 1)
 

@@ -10,9 +10,11 @@ import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolochos.BackwardTactic
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.ExprPath
+import org.keymaerax.hippolochos.tools.{ExprPath, Hash}
 
 case class QE()(implicit lib: HippoLib) extends BackwardTactic {
+  override def hash: Hash = Hash.start.digest[this.type].build
+
   override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
     require(conclusion.ante.isEmpty)
     require(conclusion.succ.length == 1)

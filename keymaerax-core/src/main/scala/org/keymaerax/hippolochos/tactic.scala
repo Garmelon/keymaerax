@@ -8,8 +8,11 @@ package org.keymaerax.hippolochos
 import org.keymaerax.core.Sequent
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
+import org.keymaerax.hippolochos.tools.Hash
 
-sealed trait Tactic
+sealed trait Tactic {
+  def hash: Hash
+}
 
 trait ForwardTactic extends Tactic {
   def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof

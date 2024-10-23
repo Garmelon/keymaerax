@@ -11,10 +11,13 @@ import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.parse.{HippoParser, SourceFile}
 import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolochos.run.HippoContext
+import org.keymaerax.hippolochos.tools.Hash
 
 import java.nio.file.{Files, Path}
 
 case class HippoInterpreterContext(ctx: HippoContext, env: Option[ImmutableNamespace] = None) {
+  lazy val hash: Hash = Hash.start.digestOpt(env) { (b, ns) => b.digest(ns.hash) }.build
+
   def run(file: Path): (HippoValue, ImmutableNamespace) = {
     val absFile = file.toAbsolutePath
     val code = Files.readString(absFile)

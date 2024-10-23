@@ -8,12 +8,19 @@ package org.keymaerax.hippolib.primitive
 import org.keymaerax.core.Sequent
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.{HippoContext, ProofGraph}
+import org.keymaerax.hippolochos.tools.Hash
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
 
 import scala.collection.mutable
 
 class Graph private (private val steps: IndexedSeq[Graph.Step], private val conclusion: Int)
     extends PureTactic with ForwardTactic with BackwardTactic {
+  override lazy val hash: Hash = Hash
+    .start
+    .digest[this.type]
+    .digestSeq(steps) { (b, step) => b.digest(step.tactic.hash).digestSeq(step.premises)(_.digest(_)) }
+    .build
+
   def runAmbivalent(
       ctx: HippoContext,
       conclusion: Option[Sequent] = None,

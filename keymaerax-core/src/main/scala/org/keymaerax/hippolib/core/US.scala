@@ -9,8 +9,11 @@ import org.keymaerax.core.{Expression, Sequent, SubstitutionPair, USubst}
 import org.keymaerax.hippolochos.ForwardTactic
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
+import org.keymaerax.hippolochos.tools.Hash
 
 case class US(subst: USubst) extends ForwardTactic {
+  override lazy val hash: Hash = Hash.start.digest[this.type].digest(subst).build
+
   override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof = {
     require(premises.length == 1)
     val Seq(premise) = premises

@@ -7,13 +7,14 @@ package org.keymaerax.hippolang
 
 import org.keymaerax.hippolang.parse.HippoParser
 
-case class HippoIdentifier(value: String) {
+case class HippoIdentifier(value: String) extends Comparable[HippoIdentifier] {
   require(HippoIdentifier.isValid(value), "invalid identifier")
 
   def plain: String = value
   def quoted: String = s"'$value'"
   def quotedIfNecessary: String = if (HippoParser.keywords.contains(value)) quoted else plain
 
+  override def compareTo(o: HippoIdentifier): Int = value.compareTo(o.value)
   override def toString: String = quotedIfNecessary
 }
 

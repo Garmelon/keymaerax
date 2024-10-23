@@ -42,10 +42,5 @@ object FileInterpreterBackward {
       file: Option[Path],
       namespace: ImmutableNamespace,
       expr: HippoExpression,
-  ): BackwardTactic = { (ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]) =>
-    val innerInterp = new FileInterpreterBackward(ictx, ctx, file, conclusion)
-    val innerNs = new MutableNamespace(child = Some(namespace))
-    val _ = innerInterp.eval(innerNs, expr)
-    innerInterp.chain.proof
-  }
+  ): BackwardTactic = FileInterpreterBackwardTactic(ictx, file, namespace, expr)
 }

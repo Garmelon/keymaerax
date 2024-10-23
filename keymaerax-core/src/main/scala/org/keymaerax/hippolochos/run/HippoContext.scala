@@ -27,7 +27,7 @@ class HippoContext(
   //////////////////////
 
   def computeQe(formula: Formula): Provable = toolCache
-    .getOrCompute(Hash.ofFormula(formula)) { toolProvider.qeTool().get.qe(formula).fact.underlyingProvable }
+    .getOrCompute(Hash.start.digest(formula).build) { toolProvider.qeTool().get.qe(formula).fact.underlyingProvable }
 
   def announceDerived(proof: DerivedHippoProof): Unit = derivedProofs.put(proof.hash, proof)
 

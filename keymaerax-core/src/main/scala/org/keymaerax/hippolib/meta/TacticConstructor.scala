@@ -6,28 +6,27 @@
 package org.keymaerax.hippolib.meta
 
 import org.keymaerax.hippolochos.Tactic
-import org.keymaerax.hippolochos.run.HippoContext
 
 trait TacticConstructor[+T <: Tactic] {
   val args: IndexedSeq[TacticArgInfo[TacticArg]]
-  def construct(ctx: HippoContext, args: Seq[Any]): T
+  def construct(args: Seq[Any]): T
 
-  final def constructPositional(ctx: HippoContext, args: Seq[Any]): T = {
+  final def constructPositional(args: Seq[Any]): T = {
     require(args.length <= this.args.length)
 
     val defaultArgs = this
       .args
       .takeRight(this.args.length - args.length)
-      .map(_.getDefault(ctx).getOrElse(throw new Exception("default values required")))
+      .map(_.getDefault.getOrElse(throw new Exception("default values required")))
 
-    construct(ctx, args ++ defaultArgs)
+    construct(args ++ defaultArgs)
   }
 
-  final def constructNamed(ctx: HippoContext, args: Map[String, Any]): T = {
+  final def constructNamed(args: Map[String, Any]): T = {
     val argsSeq = for (arg <- this.args)
-      yield args.get(arg.name).orElse(arg.getDefault(ctx)).getOrElse(throw new Exception("arg or default value required"))
+      yield args.get(arg.name).orElse(arg.getDefault).getOrElse(throw new Exception("arg or default value required"))
 
-    construct(ctx, argsSeq)
+    construct(argsSeq)
   }
 }
 
@@ -43,7 +42,7 @@ trait TacticConstructor[+T <: Tactic] {
 object TacticConstructor {
   def apply[T <: Tactic](tactic: T): TacticConstructor[T] = new TacticConstructor[T] {
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq()
-    override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+    override def construct(args: Seq[Any]): T = {
       val Seq() = args
       tactic
     }
@@ -52,9 +51,9 @@ object TacticConstructor {
   def apply[A1 <: TacticArg, T <: Tactic](arg1: TacticArgInfo[A1])(build: arg1.arg.Type => T): TacticConstructor[T] =
     new TacticConstructor[T] {
       override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1)
-      override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+      override def construct(args: Seq[Any]): T = {
         val Seq(val1) = args
-        build(arg1.arg.validate(ctx, val1))
+        build(arg1.arg.validate(val1))
       }
     }
 
@@ -62,9 +61,9 @@ object TacticConstructor {
       build: (arg1.arg.Type, arg2.arg.Type) => T
   ): TacticConstructor[T] = new TacticConstructor[T] {
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2)
-    override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+    override def construct(args: Seq[Any]): T = {
       val Seq(val1, val2) = args
-      build(arg1.arg.validate(ctx, val1), arg2.arg.validate(ctx, val2))
+      build(arg1.arg.validate(val1), arg2.arg.validate(val2))
     }
   }
 
@@ -74,9 +73,9 @@ object TacticConstructor {
       arg3: TacticArgInfo[A3],
   )(build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type) => T): TacticConstructor[T] = new TacticConstructor[T] {
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3)
-    override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+    override def construct(args: Seq[Any]): T = {
       val Seq(val1, val2, val3) = args
-      build(arg1.arg.validate(ctx, val1), arg2.arg.validate(ctx, val2), arg3.arg.validate(ctx, val3))
+      build(arg1.arg.validate(val1), arg2.arg.validate(val2), arg3.arg.validate(val3))
     }
   }
 
@@ -88,14 +87,9 @@ object TacticConstructor {
   )(build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type, arg4.arg.Type) => T): TacticConstructor[T] =
     new TacticConstructor[T] {
       override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3, arg4)
-      override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+      override def construct(args: Seq[Any]): T = {
         val Seq(val1, val2, val3, val4) = args
-        build(
-          arg1.arg.validate(ctx, val1),
-          arg2.arg.validate(ctx, val2),
-          arg3.arg.validate(ctx, val3),
-          arg4.arg.validate(ctx, val4),
-        )
+        build(arg1.arg.validate(val1), arg2.arg.validate(val2), arg3.arg.validate(val3), arg4.arg.validate(val4))
       }
     }
 
@@ -108,14 +102,14 @@ object TacticConstructor {
   )(build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type, arg4.arg.Type, arg5.arg.Type) => T): TacticConstructor[T] =
     new TacticConstructor[T] {
       override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3, arg4, arg5)
-      override def construct(ctx: HippoContext, args: Seq[Any]): T = {
+      override def construct(args: Seq[Any]): T = {
         val Seq(val1, val2, val3, val4, val5) = args
         build(
-          arg1.arg.validate(ctx, val1),
-          arg2.arg.validate(ctx, val2),
-          arg3.arg.validate(ctx, val3),
-          arg4.arg.validate(ctx, val4),
-          arg5.arg.validate(ctx, val5),
+          arg1.arg.validate(val1),
+          arg2.arg.validate(val2),
+          arg3.arg.validate(val3),
+          arg4.arg.validate(val4),
+          arg5.arg.validate(val5),
         )
       }
     }

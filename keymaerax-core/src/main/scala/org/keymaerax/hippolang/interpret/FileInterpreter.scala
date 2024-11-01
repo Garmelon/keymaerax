@@ -120,7 +120,7 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
 
   private def applyTacticInfo(info: TacticInfo, args: IndexedSeq[HippoValue]): HippoValue = info
     .constructor
-    .constructPositional(ctx, args.map(FileInterpreter.hippoValToTacticArg))
+    .constructPositional(args.map(FileInterpreter.hippoValToTacticArg))
     .toHValue
 
   private def applyBuiltinFunction(target: BuiltinFunction, args: IndexedSeq[HippoValue]): HippoValue = target match {

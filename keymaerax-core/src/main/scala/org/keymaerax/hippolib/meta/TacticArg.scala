@@ -9,6 +9,7 @@ import org.keymaerax.hippolochos.run.HippoContext
 
 sealed trait TacticArg {
   type Type
+  // TODO Remove ctx
   def validate(ctx: HippoContext, any: Any): Type
 }
 
@@ -108,7 +109,7 @@ object TacticArg {
     override type Type = org.keymaerax.hippolochos.proof.HippoProof
     override def validate(ctx: HippoContext, any: Any): Type = any match {
       case v: Type => v
-      case v: ProofInfo => v(ctx)
+      case v: ProofInfo => v.proof
     }
   }
 }

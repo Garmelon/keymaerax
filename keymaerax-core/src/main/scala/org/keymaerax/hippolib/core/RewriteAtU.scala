@@ -6,10 +6,8 @@
 package org.keymaerax.hippolib.core
 
 import org.keymaerax.bellerophon.UnificationException
-import org.keymaerax.core.hippolib.publish
 import org.keymaerax.core.{Equal, Equiv, Expression, Sequent}
-import org.keymaerax.hippolib.core.RewriteAt.Dir
-import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
+import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.hippolochos.tools.ExprPath
@@ -21,7 +19,7 @@ import org.keymaerax.infrastruct.UnificationMatch
  *
  * Defaults to [[RewriteAt.Dir.Rtl]] if the direction is otherwise ambiguous.
  */
-case class RewriteAtU(at: ExprPath, eq: HippoProof, dir: Option[RewriteAt.Dir] = None)
+case class RewriteAtU(at: ExprPath, eq: HippoProof, dir: Option[RewriteAt.Dir] = None)(implicit lib: HippoLib)
     extends ForwardTactic with BackwardTactic {
   import RewriteAt.Dir
 
@@ -80,13 +78,4 @@ case class RewriteAtU(at: ExprPath, eq: HippoProof, dir: Option[RewriteAt.Dir] =
 
     ctx.chain(after).backwardJoin(RewriteAt(at, dir = Some(actualDir)), 1 -> subst.toHippo(eq)).proof
   }
-}
-
-object RewriteAtU {
-  @publish(name = "core.RewriteAtU")
-  val info: TacticInfo = TacticInfo(
-    TacticArgInfo(name = "at", arg = TacticArg.ExprPath),
-    TacticArgInfo(name = "eq", arg = TacticArg.HippoProof),
-    TacticArgInfo(name = "dir", arg = TacticArg.Option(TacticArg.String), default = Some(None)),
-  ) { (at, eq, dir) => RewriteAtU(at = at, eq = eq, dir = dir.map(Dir.parse)) }
 }

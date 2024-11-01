@@ -5,9 +5,7 @@
 
 package org.keymaerax.hippolib.core
 
-import org.keymaerax.core.hippolib.publish
 import org.keymaerax.core.{Expression, Sequent, SubstitutionPair, USubst}
-import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
 import org.keymaerax.hippolochos.ForwardTactic
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
@@ -24,9 +22,4 @@ object US {
   def apply(substs: (Expression, Expression)*): US = US(USubst(substs.map { case (from, to) =>
     SubstitutionPair(from, to)
   }))
-
-  @publish(name = "core.US")
-  val info: TacticInfo = TacticInfo(
-    TacticArgInfo(name = "subst", arg = TacticArg.Seq(TacticArg.Tuple2(TacticArg.Expression, TacticArg.Expression)))
-  ) { substs => US(substs: _*) }
 }

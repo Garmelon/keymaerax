@@ -7,7 +7,8 @@ package org.keymaerax.hippolochos
 
 import org.keymaerax.btactics.Z3ToolProvider
 import org.keymaerax.core.{Formula, PrettyPrinter, Sequent, Skolemize, SuccPos}
-import org.keymaerax.hippolib.core.{CoreAxioms, CoreRule, QE, RewriteAt, RewriteAtU, US}
+import org.keymaerax.hippolib.HippoLib
+import org.keymaerax.hippolib.core.{CoreRule, QE, RewriteAt, RewriteAtU, US}
 import org.keymaerax.hippolib.primitive.BidiBackward
 import org.keymaerax.hippolochos.cache.{HippoProofFsCache, LruCache, ProvableFsCache}
 import org.keymaerax.hippolochos.proof.{DerivedHippoProof, HippoProof}
@@ -30,7 +31,7 @@ object Test {
    * §    [x:=*;?x>0;x:=x+1;]x>1
    * }}}
    */
-  def simpleComposition(ctx: HippoContext): HippoProof = {
+  def simpleComposition1(implicit ctx: HippoContext, lib: HippoLib): HippoProof = {
     // §                           *
     // §             ----------------------------- [;] compose
     // §             [a;b;]p(||) <-> [a;][b;]p(||)
@@ -42,7 +43,7 @@ object Test {
         "b;".asProgram -> "?x>0;x:=x+1;".asProgram,
         "p(||)".asFormula -> "x>1".asFormula,
       ),
-      CoreAxioms.composeb(ctx),
+      lib.core.composeb.proof,
     )
 
     // §                      *
@@ -53,7 +54,7 @@ object Test {
     //
     // This time with the chaining API
     val eq2 = ctx
-      .chain(CoreAxioms.composeb(ctx))
+      .chain(lib.core.composeb.proof)
       .forward(US(
         "a;".asProgram -> "?x>0;".asProgram,
         "b;".asProgram -> "x:=x+1;".asProgram,
@@ -84,10 +85,10 @@ object Test {
    * §    [x:=*;?x>0;x:=x+1;]x>1
    * }}}
    */
-  def simpleComposition2(ctx: HippoContext): HippoProof = ctx
+  def simpleComposition2(implicit ctx: HippoContext, lib: HippoLib): HippoProof = ctx
     .chain(Sequent(ante = IndexedSeq(), succ = IndexedSeq("[x:=*;][?x>0;][x:=x+1;]x>1".asFormula)))
-    .forward(RewriteAtU(ExprPath(1), CoreAxioms.composeb(ctx)))
-    .forward(RewriteAtU(ExprPath(), CoreAxioms.composeb(ctx)))
+    .forward(RewriteAtU(ExprPath(1), lib.core.composeb.proof))
+    .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
     .proof
 
   /**
@@ -109,15 +110,15 @@ object Test {
    * §     |– [x:=*;?x>0;x:=x+1;]x>1
    * }}}
    */
-  def simpleComposition3(ctx: HippoContext): HippoProof = ctx
+  def simpleComposition3(implicit ctx: HippoContext, lib: HippoLib): HippoProof = ctx
     .chain("==> [x:=*;?x>0;x:=x+1;]x>1".asSequent)
-    .backward(RewriteAtU(ExprPath(), CoreAxioms.composeb(ctx)))
-    .backward(RewriteAtU(ExprPath(), CoreAxioms.randomb(ctx)))
+    .backward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
+    .backward(RewriteAtU(ExprPath(), lib.core.randomb.proof))
     .backward(CoreRule(Skolemize(SuccPos(0))))
-    .backward(RewriteAtU(ExprPath(), CoreAxioms.composeb(ctx)))
-    .backward(RewriteAtU(ExprPath(), CoreAxioms.testb(ctx)))
-    .backward(RewriteAtU(ExprPath(1), CoreAxioms.assignbAxiom(ctx)))
-    .backward(QE)
+    .backward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
+    .backward(RewriteAtU(ExprPath(), lib.core.testb.proof))
+    .backward(RewriteAtU(ExprPath(1), lib.core.assignbAxiom.proof))
+    .backward(QE())
     .proof
 
   /**
@@ -139,31 +140,32 @@ object Test {
    * §     |– [x:=*;?x>0;x:=x+1;]x>1
    * }}}
    */
-  def simpleComposition4(ctx: HippoContext): HippoProof = ctx
+  def simpleComposition4(implicit ctx: HippoContext, lib: HippoLib): HippoProof = ctx
     .chain("==> x>0->x+1>1".asSequent)
-    .backward(QE)
+    .backward(QE())
     // .forward(Forward(RewriteAt(ExprPath(1)), "==> x>0->[x:=x+1;]x>1".asSequent))
     // .backward(Unify(CoreAxioms.assignbAxiom))
-    .forward(BidiBackward(RewriteAtU(ExprPath(1), CoreAxioms.assignbAxiom(ctx)), "==> x>0->[x:=x+1;]x>1".asSequent))
-    .forward(RewriteAtU(ExprPath(), CoreAxioms.testb(ctx)))
-    .forward(RewriteAtU(ExprPath(), CoreAxioms.composeb(ctx)))
+    .forward(BidiBackward(RewriteAtU(ExprPath(1), lib.core.assignbAxiom.proof), "==> x>0->[x:=x+1;]x>1".asSequent))
+    .forward(RewriteAtU(ExprPath(), lib.core.testb.proof))
+    .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
     .forward(BidiBackward(CoreRule(Skolemize(SuccPos(0))), "==> \\forall x [?x>0;x:=x+1;]x>1".asSequent))
-    .forward(RewriteAtU(ExprPath(), CoreAxioms.randomb(ctx)))
-    .forward(RewriteAtU(ExprPath(), CoreAxioms.composeb(ctx)))
+    .forward(RewriteAtU(ExprPath(), lib.core.randomb.proof))
+    .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
     .proof
 
-  val simpleComposition: DerivedHippoProof = DerivedHippoProof("==> [x:=*;?x>0;x:=x+1;]x>1".asSequent) { ctx =>
-    ctx
-      .chain("==> x>0->x+1>1".asSequent)
-      .backward(QE)
-      .forward(BidiBackward(RewriteAtU(ExprPath(1), CoreAxioms.assignbAxiom(ctx)), "==> x>0->[x:=x+1;]x>1".asSequent))
-      .forward(RewriteAtU(ExprPath(), CoreAxioms.testb(ctx)))
-      .forward(RewriteAtU(ExprPath(), CoreAxioms.composeb(ctx)))
-      .forward(BidiBackward(CoreRule(Skolemize(SuccPos(0))), "==> \\forall x [?x>0;x:=x+1;]x>1".asSequent))
-      .forward(RewriteAtU(ExprPath(), CoreAxioms.randomb(ctx)))
-      .forward(RewriteAtU(ExprPath(), CoreAxioms.composeb(ctx)))
-      .proof
-  }
+  def simpleComposition5(implicit ctx: HippoContext, lib: HippoLib): DerivedHippoProof =
+    DerivedHippoProof("==> [x:=*;?x>0;x:=x+1;]x>1".asSequent) { ctx =>
+      ctx
+        .chain("==> x>0->x+1>1".asSequent)
+        .backward(QE())
+        .forward(BidiBackward(RewriteAtU(ExprPath(1), lib.core.assignbAxiom.proof), "==> x>0->[x:=x+1;]x>1".asSequent))
+        .forward(RewriteAtU(ExprPath(), lib.core.testb.proof))
+        .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
+        .forward(BidiBackward(CoreRule(Skolemize(SuccPos(0))), "==> \\forall x [?x>0;x:=x+1;]x>1".asSequent))
+        .forward(RewriteAtU(ExprPath(), lib.core.randomb.proof))
+        .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
+        .proof
+    }
 
   def main(args: Array[String]): Unit = {
     Configuration.setConfiguration(FileConfiguration)
@@ -172,7 +174,7 @@ object Test {
     val z3ToolProvider = Z3ToolProvider(ToolConfiguration(z3Path = Some("/home/joscha-nixos/stud/keymaerax/z3")))
     z3ToolProvider.init()
 
-    val ctx = new HippoContext(
+    implicit val ctx: HippoContext = new HippoContext(
       toolProvider = z3ToolProvider,
       toolCache =
         new ProvableFsCache(Path.of("/home/joscha-nixos/stud/keymaerax/cache/tool")).behind(new LruCache(1000)),
@@ -180,15 +182,14 @@ object Test {
         new HippoProofFsCache(Path.of("/home/joscha-nixos/stud/keymaerax/cache/derived")).behind(new LruCache(1000)),
     )
 
-    try simpleComposition3(ctx)
-    catch { case e: HippoException => println(e.format) }
+    implicit val lib: HippoLib = new HippoLib
 
-//    val proof = ctx.derived(simpleComposition)
-//
-//    printProof(proof)
-//    println()
-//    println(proof)
-//
+    val proof = simpleComposition3
+
+    printProof(proof)
+    println()
+    println(proof)
+
 //    val provable = ctx.provableFromLocalProof(proof)
 //    println()
 //    println(provable)

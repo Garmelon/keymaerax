@@ -245,20 +245,15 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
   implicit val externalSourceQeToolFormat: RootJsonFormat[ExternalSource.QeTool] =
     jsonFormat(ExternalSource.QeTool, "formula")
 
-  implicit val externalSourceDerivedFormat: RootJsonFormat[ExternalSource.Derived] =
-    jsonFormat(ExternalSource.Derived, "hash")
-
   implicit object ExternalSourceFormat extends RootJsonFormat[ExternalSource] {
     override def write(obj: ExternalSource): JsValue = obj match {
       case ExternalSource.Sorry => variant("sorry")
       case o: ExternalSource.QeTool => variantO("qeTool", o.toJson)
-      case o: ExternalSource.Derived => variantO("derived", o.toJson)
     }
 
     override def read(json: JsValue): ExternalSource = json.asJsObject.fields(discriminant).convertTo[String] match {
       case "sorry" => ExternalSource.Sorry
       case "qeTool" => json.convertTo[ExternalSource.QeTool]
-      case "derived" => json.convertTo[ExternalSource.Derived]
       case _ => deserializationError("ExternalSource expected")
     }
   }

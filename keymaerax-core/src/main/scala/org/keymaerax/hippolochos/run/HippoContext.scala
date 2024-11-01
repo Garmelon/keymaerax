@@ -7,20 +7,14 @@ package org.keymaerax.hippolochos.run
 
 import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
-import org.keymaerax.hippolochos.cache.{Cache, HippoProofFsCache, LruCache, ProvableFsCache}
-import org.keymaerax.hippolochos.proof.{DerivedHippoProof, ExternalSource, HippoPremise, HippoProof}
+import org.keymaerax.hippolochos.cache.{Cache, LruCache, ProvableFsCache}
+import org.keymaerax.hippolochos.proof.{ExternalSource, HippoPremise, HippoProof}
 import org.keymaerax.hippolochos.tools.Hash
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
 
 import java.nio.file.Path
-import scala.collection.mutable
 
-class HippoContext(
-    val toolProvider: ToolProvider,
-    val toolCache: Cache[Provable],
-    val derivedCache: Cache[HippoProof],
-) {
-  val derivedProofs: mutable.Map[Hash, DerivedHippoProof] = mutable.Map.empty
+class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable]) {
 
   //////////////////////
   // External sources //
@@ -28,19 +22,6 @@ class HippoContext(
 
   private def computeQe(formula: Formula): Provable = toolCache
     .getOrCompute(Hash.ofFormula(formula)) { toolProvider.qeTool().get.qe(formula).fact.underlyingProvable }
-
-  def announceDerived(proof: DerivedHippoProof): Unit = derivedProofs.put(proof.hash, proof)
-
-  def computeDerived(proof: DerivedHippoProof): HippoProof = {
-    announceDerived(proof)
-
-    derivedCache.getOrCompute(proof.hash) {
-      val computed = tactic(proof.by, proof.conclusion, proof.premises.map(_.sequent))
-      require(computed.conclusion == proof.conclusion)
-      require(computed.premises == proof.premises)
-      computed
-    }
-  }
 
   ////////////////////////
   // Proof constructors //
@@ -62,14 +43,6 @@ class HippoContext(
       premises = provable.subgoals.map(HippoPremise(_, mustBeProved = false)),
       source = ExternalSource.QeTool(formula),
     )
-  }
-
-  def derived(proof: DerivedHippoProof): HippoProof = {
-    // We remember the proof so we can later derive it if we need it and it's not in the cache.
-    announceDerived(proof)
-
-    HippoProof
-      .External(conclusion = proof.conclusion, premises = proof.premises, source = ExternalSource.Derived(proof.hash))
   }
 
   def sequent(conclusion: Sequent): HippoProof = HippoProof.Sequent(conclusion)
@@ -182,10 +155,6 @@ class HippoContext(
       case ExternalSource.QeTool(formula) =>
         val provable = external.assertConsistency(premises) { computeQe(formula) }
         HippoProof.applyPremises(provable, premises)
-      case ExternalSource.Derived(hash) =>
-        // It is possible for the hash to be in the derivedCache but not the derivedProofs.
-        val proof = derivedCache.getOrCompute(hash) { computeDerived(derivedProofs(hash)) }
-        proof.globalProvable(fromExternal, premises)
     }
 
   def provableFromLocalProof(proof: HippoProof): Provable = proof.localProvable(fromExternal)
@@ -201,6 +170,5 @@ object HippoContext {
   def withCacheDir(toolProvider: ToolProvider, cacheDir: Path): HippoContext = new HippoContext(
     toolProvider = toolProvider,
     toolCache = new ProvableFsCache(cacheDir.resolve("tool")).behind(new LruCache(1000)),
-    derivedCache = new HippoProofFsCache(cacheDir.resolve("derived")).behind(new LruCache(1000)),
   )
 }

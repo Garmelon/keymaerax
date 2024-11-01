@@ -10,8 +10,8 @@ import org.keymaerax.core.{Formula, PrettyPrinter, Sequent, Skolemize, SuccPos}
 import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolib.core.{CoreRule, QE, RewriteAt, RewriteAtU, US}
 import org.keymaerax.hippolib.primitive.BidiBackward
-import org.keymaerax.hippolochos.cache.{HippoProofFsCache, LruCache, ProvableFsCache}
-import org.keymaerax.hippolochos.proof.{DerivedHippoProof, HippoProof}
+import org.keymaerax.hippolochos.cache.{LruCache, ProvableFsCache}
+import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.hippolochos.tools.ExprPath
 import org.keymaerax.parser.StringConverter.StringToStringConverter
@@ -153,20 +153,6 @@ object Test {
     .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
     .proof
 
-  def simpleComposition5(implicit ctx: HippoContext, lib: HippoLib): DerivedHippoProof =
-    DerivedHippoProof("==> [x:=*;?x>0;x:=x+1;]x>1".asSequent) { ctx =>
-      ctx
-        .chain("==> x>0->x+1>1".asSequent)
-        .backward(QE())
-        .forward(BidiBackward(RewriteAtU(ExprPath(1), lib.core.assignbAxiom.proof), "==> x>0->[x:=x+1;]x>1".asSequent))
-        .forward(RewriteAtU(ExprPath(), lib.core.testb.proof))
-        .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
-        .forward(BidiBackward(CoreRule(Skolemize(SuccPos(0))), "==> \\forall x [?x>0;x:=x+1;]x>1".asSequent))
-        .forward(RewriteAtU(ExprPath(), lib.core.randomb.proof))
-        .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
-        .proof
-    }
-
   def main(args: Array[String]): Unit = {
     Configuration.setConfiguration(FileConfiguration)
     PrettyPrinter.setPrinter(org.keymaerax.parser.KeYmaeraXPrettyPrinter.pp)
@@ -178,8 +164,6 @@ object Test {
       toolProvider = z3ToolProvider,
       toolCache =
         new ProvableFsCache(Path.of("/home/joscha-nixos/stud/keymaerax/cache/tool")).behind(new LruCache(1000)),
-      derivedCache =
-        new HippoProofFsCache(Path.of("/home/joscha-nixos/stud/keymaerax/cache/derived")).behind(new LruCache(1000)),
     )
 
     implicit val lib: HippoLib = new HippoLib

@@ -9,6 +9,7 @@ import org.keymaerax.hippolang.HippoConversions._
 import org.keymaerax.hippolang.HippoValue
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.parse.{HippoParser, SourceFile}
+import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolochos.run.HippoContext
 
 import java.nio.file.{Files, Path}
@@ -26,5 +27,13 @@ case class HippoInterpreterContext(ctx: HippoContext, env: Option[ImmutableNames
     val value = fileInterpreter.eval(new MutableNamespace(env), program)
     val namespace = fileInterpreter.exported.freeze
     (value, namespace)
+  }
+}
+
+object HippoInterpreterContext {
+  def withHippoLib(ctx: HippoContext): HippoInterpreterContext = {
+    val lib = new HippoLib()(ctx)
+    val env = new EnvBuilder().addBuiltins().addHippoLib(lib).build()
+    HippoInterpreterContext(ctx = ctx, env = Some(env))
   }
 }

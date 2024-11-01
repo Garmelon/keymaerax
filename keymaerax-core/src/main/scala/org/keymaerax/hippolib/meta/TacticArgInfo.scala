@@ -5,10 +5,8 @@
 
 package org.keymaerax.hippolib.meta
 
-import org.keymaerax.hippolochos.run.HippoContext
-
 case class TacticArgInfo[+A <: TacticArg](name: String, arg: A, description: Option[String], default: Option[Any]) {
-  def getDefault(ctx: HippoContext): Option[arg.Type] = default.map(arg.validate(ctx, _))
+  def getDefault: Option[arg.Type] = default.map(arg.validate)
 }
 
 object TacticArgInfo {

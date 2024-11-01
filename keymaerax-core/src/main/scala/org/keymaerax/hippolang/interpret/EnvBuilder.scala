@@ -8,7 +8,7 @@ package org.keymaerax.hippolang.interpret
 import org.keymaerax.hippolang.HippoConversions._
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace, Namespace}
 import org.keymaerax.hippolang.{BuiltinFunction, HippoIdentifier, HippoValue}
-import org.keymaerax.hippolib.HippoLibDb
+import org.keymaerax.hippolib.HippoLib
 
 import scala.collection.mutable
 
@@ -45,11 +45,11 @@ class EnvBuilder(child: Option[Namespace] = None) {
     this
   }
 
-  def addHippoLib(db: HippoLibDb) = {
+  def addHippoLib(lib: HippoLib): EnvBuilder = {
     val byName = mutable.Map.empty[String, HippoValue]
-    for ((name, info) <- db.proofs) byName.put(name, info.toHValue)
-    for ((name, info) <- db.tactics) byName.put(name, info.toHValue)
-    for ((from, to) <- db.aliases) byName.put(from, byName(to))
+    for ((name, info) <- lib.db.proofs) byName.put(name, info.toHValue)
+    for ((name, info) <- lib.db.tactics) byName.put(name, info.toHValue)
+    for ((from, to) <- lib.db.aliases) byName.put(from, byName(to))
 
     for ((name, value) <- byName) {
       val path = name.split('.').map(HippoIdentifier(_)).toList
@@ -58,8 +58,6 @@ class EnvBuilder(child: Option[Namespace] = None) {
 
     this
   }
-
-  def addHippoLib(): EnvBuilder = addHippoLib(HippoLibDb.published())
 
   def build(): ImmutableNamespace = {
     val ns = new MutableNamespace(child)

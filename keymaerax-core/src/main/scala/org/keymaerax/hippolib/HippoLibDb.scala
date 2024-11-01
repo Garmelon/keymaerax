@@ -5,13 +5,14 @@
 
 package org.keymaerax.hippolib
 
-import io.github.classgraph.ClassGraph
 import org.keymaerax.core.hippolib.publish
 import org.keymaerax.hippolib.meta.{ProofInfo, TacticInfo}
 
-import java.lang.reflect.Field
-
-case class HippoLibDb(proofs: Map[String, ProofInfo], tactics: Map[String, TacticInfo], aliases: Map[String, String]) {
+case class HippoLibDb(
+    proofs: Map[String, ProofInfo] = Map.empty,
+    tactics: Map[String, TacticInfo] = Map.empty,
+    aliases: Map[String, String] = Map.empty,
+) {
   def isNameKnown(name: String): Boolean = proofs.contains(name) || tactics.contains(name) || aliases.contains(name)
 
   def addAlias(from: String, to: String): HippoLibDb = {
@@ -29,69 +30,38 @@ case class HippoLibDb(proofs: Map[String, ProofInfo], tactics: Map[String, Tacti
     require(!isNameKnown(name))
     copy(tactics = tactics.updated(name, proof))
   }
-}
 
-object HippoLibDb {
-  def empty: HippoLibDb = HippoLibDb(proofs = Map.empty, tactics = Map.empty, aliases = Map.empty)
+  def addPublished(obj: Object): HippoLibDb = {
+    val clazz = obj.getClass
+    var result = this
 
-  private def getObjectInstance(clazz: Class[_]): AnyRef = {
-    // An object's instance can be located through its public static final MODULE$ field.
-    // TODO Fail gracefully if this is not a Scala object
-    clazz.getField("MODULE$").get(null)
-  }
-
-  private def getObjectField(clazz: Class[_], instance: AnyRef, field: Field): AnyRef = {
-    // Val fields are private but have public getter functions of the same name.
-    val getter = clazz.getMethod(field.getName)
-
-    getter.invoke(instance)
-  }
-
-  private def findPublishedThings(): Seq[(String, publish, AnyRef)] = {
-    import scala.jdk.CollectionConverters._
-
-    val publishingObjects = new ClassGraph()
-      .enableAllInfo()
-      .scan()
-      .getClassesWithFieldAnnotation(classOf[publish])
-      .asScala
-      .toSeq
-
-    publishingObjects.flatMap { classInfo =>
-      val clazz = classInfo.loadClass()
-      val instance = getObjectInstance(clazz)
-
-      clazz
-        .getDeclaredFields
-        .toSeq
-        .filter(_.isAnnotationPresent(classOf[publish]))
-        .map { field =>
-          val path = s"${field.getName} in ${clazz.getName}"
-          val annotation = field.getAnnotation(classOf[publish])
-          val thing = getObjectField(clazz, instance, field)
-          (path, annotation, thing)
-        }
-    }
-  }
-
-  def published(): HippoLibDb = {
-    var found = HippoLibDb.empty
-
-    for ((path, annotation, thing) <- findPublishedThings()) {
+    for (field <- clazz.getDeclaredFields.toSeq.filter(_.isAnnotationPresent(classOf[publish]))) {
+      val annotation = field.getAnnotation(classOf[publish])
       val name = annotation.name()
       val aliases = annotation.aliases()
 
-      thing match {
-        case t: ProofInfo => found = found.addProof(name, t)
-        case t: TacticInfo => found = found.addTactic(name, t)
-        case _ => throw new Exception(
-            s"published field $path is neither ${classOf[ProofInfo].getName} nor ${classOf[TacticInfo].getName}"
-          )
-      }
+      // Val fields are private but have public getter functions of the same name.
+      // TODO Fail gracefully if invoking fails
+      val value = clazz.getMethod(field.getName).invoke(obj)
 
-      for (alias <- aliases) found = found.addAlias(alias, name)
+      if (name == "") {
+        require(aliases.isEmpty)
+        result = result.addPublished(value)
+      } else {
+        value match {
+          case v: ProofInfo => result = result.addProof(name, v)
+          case v: TacticInfo => result = result.addTactic(name, v)
+          case _ =>
+            throw new Exception(s"Only ${classOf[ProofInfo]} and ${classOf[TacticInfo]} can be published under a name.")
+        }
+        for (alias <- aliases) result = result.addAlias(alias, name)
+      }
     }
 
-    found
+    result
   }
+}
+
+object HippoLibDb {
+  def empty: HippoLibDb = HippoLibDb()
 }

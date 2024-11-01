@@ -5,7 +5,6 @@
 
 package org.keymaerax.hippolang.interpret
 
-import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.hippolang.HippoConversions._
 import org.keymaerax.hippolang.HippoValue
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
@@ -27,16 +26,5 @@ case class HippoInterpreterContext(ctx: HippoContext, env: Option[ImmutableNames
     val value = fileInterpreter.eval(new MutableNamespace(env), program)
     val namespace = fileInterpreter.exported.freeze
     (value, namespace)
-  }
-}
-
-object HippoInterpreterContext {
-  def withCacheDir(
-      toolProvider: ToolProvider,
-      cacheDir: Path,
-      env: Option[ImmutableNamespace] = None,
-  ): HippoInterpreterContext = {
-    val ctx = HippoContext.withCacheDir(toolProvider, cacheDir)
-    new HippoInterpreterContext(ctx, env)
   }
 }

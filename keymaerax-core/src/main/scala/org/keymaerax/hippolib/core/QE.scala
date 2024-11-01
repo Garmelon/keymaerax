@@ -5,15 +5,14 @@
 
 package org.keymaerax.hippolib.core
 
-import org.keymaerax.core.hippolib.publish
 import org.keymaerax.core.{CloseTrue, Sequent, SuccPos}
-import org.keymaerax.hippolib.meta.TacticInfo
+import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolochos.BackwardTactic
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.hippolochos.tools.ExprPath
 
-object QE extends BackwardTactic {
+case class QE()(implicit lib: HippoLib) extends BackwardTactic {
   override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
     require(conclusion.ante.isEmpty)
     require(conclusion.succ.length == 1)
@@ -27,7 +26,4 @@ object QE extends BackwardTactic {
       .backward(CoreRule(CloseTrue(SuccPos(0))))
       .proof
   }
-
-  @publish(name = "core.QE")
-  val info: TacticInfo = TacticInfo(QE)
 }

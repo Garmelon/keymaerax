@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface publish {
-    String name();
+    String name() default "";
 
     String[] aliases() default {};
 }

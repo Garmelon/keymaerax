@@ -5,7 +5,6 @@
 
 package org.keymaerax.hippolib.core
 
-import org.keymaerax.core.hippolib.publish
 import org.keymaerax.core.{
   CoHideRight,
   CommuteEquivRight,
@@ -18,7 +17,7 @@ import org.keymaerax.core.{
   Sequent,
   SuccPos,
 }
-import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
+import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolib.primitive.Noop
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
@@ -42,7 +41,8 @@ import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
  * §         G ⊢ C(right)
  * }}}
  */
-case class RewriteAt(at: ExprPath, dir: Option[RewriteAt.Dir] = None) extends ForwardTactic with BackwardTactic {
+case class RewriteAt(at: ExprPath, dir: Option[RewriteAt.Dir] = None)(implicit lib: HippoLib)
+    extends ForwardTactic with BackwardTactic {
   import RewriteAt.Dir
 
   // Rough sketch of proof structure
@@ -181,10 +181,4 @@ object RewriteAt {
       case other => throw new IllegalArgumentException(s"unknown direction: $other")
     }
   }
-
-  @publish(name = "core.RewriteAt")
-  val info: TacticInfo = TacticInfo(
-    TacticArgInfo(name = "at", arg = TacticArg.ExprPath),
-    TacticArgInfo(name = "dir", arg = TacticArg.Option(TacticArg.String), default = Some(None)),
-  ) { (at, dir) => RewriteAt(at = at, dir = dir.map(Dir.parse)) }
 }

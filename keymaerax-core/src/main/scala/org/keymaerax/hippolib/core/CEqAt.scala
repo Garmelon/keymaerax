@@ -6,15 +6,14 @@
 package org.keymaerax.hippolib.core
 
 import org.keymaerax.core
-import org.keymaerax.core.hippolib.publish
 import org.keymaerax.core.{AnyArg, Real, Sequent, UnitFunctional, UnitPredicational}
-import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
+import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolochos.BackwardTactic
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.hippolochos.tools.ExprPath
 
-case class CEqAt(at: ExprPath) extends BackwardTactic {
+case class CEqAt(at: ExprPath)(implicit lib: HippoLib) extends BackwardTactic {
   override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
     require(conclusion.succ.length == 1)
     require(conclusion.succ.head.isInstanceOf[core.Equiv])
@@ -32,7 +31,7 @@ case class CEqAt(at: ExprPath) extends BackwardTactic {
         val ctx_ = core.Function("ctx_", None, core.Real, core.Bool)
 
         ctx.uSubst(
-          CoreAxiomaticRules.CQrule(ctx),
+          lib.core.CQrule.proof,
           f_ -> leftInner,
           g_ -> rightInner,
           core.PredOf(ctx_, core.DotTerm()) -> at.replace(concF.left, core.DotTerm()),
@@ -46,7 +45,7 @@ case class CEqAt(at: ExprPath) extends BackwardTactic {
         val ctx_ = core.Function("ctx_", None, core.Bool, core.Bool)
 
         ctx.uSubst(
-          CoreAxiomaticRules.CErule(ctx),
+          lib.core.CErule.proof,
           p_ -> leftInner,
           q_ -> rightInner,
           core.PredicationalOf(ctx_, core.DotFormula) -> at.replace(concF.left, core.DotFormula),
@@ -54,9 +53,4 @@ case class CEqAt(at: ExprPath) extends BackwardTactic {
       case _ => ???
     }
   }
-}
-
-object CEqAt {
-  @publish(name = "core.CEqAt")
-  val info: TacticInfo = TacticInfo(TacticArgInfo(name = "at", arg = TacticArg.ExprPath)) { CEqAt(_) }
 }

@@ -84,6 +84,8 @@ object Hash {
       this
     }
 
+    def digest(name: GloballyUniqueName): Builder = digest(name.name)
+
     def digest(hash: Hash): Builder = digest(hash.hexString)
 
     def digest(path: Path): Builder = digest(path.toString)
@@ -186,7 +188,7 @@ object Hash {
       case HippoValue.Proof(value) => digest("Proof").digest(value)
       case HippoValue.Tactic(value) => digest("Tactic").digest(value.hash)
       case HippoValue.ProofInfo(value) => digest("ProofInfo").digest(value.proof)
-      case HippoValue.TacticInfo(value) => ???
+      case HippoValue.TacticInfo(value) => digest(value.constructor.hash)
       case HippoValue.BuiltinFunction(value) => digest("BuiltinFunction").digest(value.name)
       case HippoValue.BuiltinMemberFunction(target, value) =>
         digest("BuiltinMemberFunction").digest(target).digest(value.name)

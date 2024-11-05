@@ -6,8 +6,11 @@
 package org.keymaerax.hippolib.meta
 
 import org.keymaerax.hippolochos.Tactic
+import org.keymaerax.hippolochos.tools.{GloballyUniqueName, Hash}
 
 trait TacticConstructor[+T <: Tactic] {
+  def hash: Hash
+
   val args: IndexedSeq[TacticArgInfo[TacticArg]]
   def construct(args: Seq[Any]): T
 
@@ -40,7 +43,8 @@ trait TacticConstructor[+T <: Tactic] {
 //   build: (arg1.Type, arg2.Type, ...) => T) extends TacticConstructor[T] { ... }
 
 object TacticConstructor {
-  def apply[T <: Tactic](tactic: T): TacticConstructor[T] = new TacticConstructor[T] {
+  def apply[T <: Tactic](uniqueName: String)(tactic: => T): TacticConstructor[T] = new TacticConstructor[T] {
+    override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq()
     override def construct(args: Seq[Any]): T = {
       val Seq() = args
@@ -48,18 +52,23 @@ object TacticConstructor {
     }
   }
 
-  def apply[A1 <: TacticArg, T <: Tactic](arg1: TacticArgInfo[A1])(build: arg1.arg.Type => T): TacticConstructor[T] =
-    new TacticConstructor[T] {
-      override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1)
-      override def construct(args: Seq[Any]): T = {
-        val Seq(val1) = args
-        build(arg1.arg.validate(val1))
-      }
-    }
-
-  def apply[A1 <: TacticArg, A2 <: TacticArg, T <: Tactic](arg1: TacticArgInfo[A1], arg2: TacticArgInfo[A2])(
-      build: (arg1.arg.Type, arg2.arg.Type) => T
+  def apply[A1 <: TacticArg, T <: Tactic](uniqueName: String, arg1: TacticArgInfo[A1])(
+      build: arg1.arg.Type => T
   ): TacticConstructor[T] = new TacticConstructor[T] {
+    override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
+    override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1)
+    override def construct(args: Seq[Any]): T = {
+      val Seq(val1) = args
+      build(arg1.arg.validate(val1))
+    }
+  }
+
+  def apply[A1 <: TacticArg, A2 <: TacticArg, T <: Tactic](
+      uniqueName: String,
+      arg1: TacticArgInfo[A1],
+      arg2: TacticArgInfo[A2],
+  )(build: (arg1.arg.Type, arg2.arg.Type) => T): TacticConstructor[T] = new TacticConstructor[T] {
+    override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2)
     override def construct(args: Seq[Any]): T = {
       val Seq(val1, val2) = args
@@ -68,10 +77,12 @@ object TacticConstructor {
   }
 
   def apply[A1 <: TacticArg, A2 <: TacticArg, A3 <: TacticArg, T <: Tactic](
+      uniqueName: String,
       arg1: TacticArgInfo[A1],
       arg2: TacticArgInfo[A2],
       arg3: TacticArgInfo[A3],
   )(build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type) => T): TacticConstructor[T] = new TacticConstructor[T] {
+    override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3)
     override def construct(args: Seq[Any]): T = {
       val Seq(val1, val2, val3) = args
@@ -80,12 +91,14 @@ object TacticConstructor {
   }
 
   def apply[A1 <: TacticArg, A2 <: TacticArg, A3 <: TacticArg, A4 <: TacticArg, T <: Tactic](
+      uniqueName: String,
       arg1: TacticArgInfo[A1],
       arg2: TacticArgInfo[A2],
       arg3: TacticArgInfo[A3],
       arg4: TacticArgInfo[A4],
   )(build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type, arg4.arg.Type) => T): TacticConstructor[T] =
     new TacticConstructor[T] {
+      override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
       override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3, arg4)
       override def construct(args: Seq[Any]): T = {
         val Seq(val1, val2, val3, val4) = args
@@ -94,6 +107,7 @@ object TacticConstructor {
     }
 
   def apply[A1 <: TacticArg, A2 <: TacticArg, A3 <: TacticArg, A4 <: TacticArg, A5 <: TacticArg, T <: Tactic](
+      uniqueName: String,
       arg1: TacticArgInfo[A1],
       arg2: TacticArgInfo[A2],
       arg3: TacticArgInfo[A3],
@@ -101,6 +115,7 @@ object TacticConstructor {
       arg5: TacticArgInfo[A5],
   )(build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type, arg4.arg.Type, arg5.arg.Type) => T): TacticConstructor[T] =
     new TacticConstructor[T] {
+      override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
       override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3, arg4, arg5)
       override def construct(args: Seq[Any]): T = {
         val Seq(val1, val2, val3, val4, val5) = args

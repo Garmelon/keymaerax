@@ -199,7 +199,6 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
         case HippoValue.BuiltinFunction(value) => s"<builtin function ${value.name}>"
         case HippoValue.BuiltinMemberFunction(target, value) => s"<builtin member function ${value.name}>"
         case HippoValue.Function(env, args, body) => s"<function>"
-        case HippoValue.GraphNode(graph, node) => "<graph node>"
       }
       println(argStrs.mkString)
       HippoValue.Null

@@ -11,14 +11,27 @@ import org.keymaerax.hippolib.primitive.Graph
 import org.keymaerax.hippolochos.run.HippoContext
 
 import java.nio.file.Path
+import scala.collection.mutable
 
 class FileInterpreterGraph(ictx: HippoInterpreterContext, ctx: HippoContext, file: Option[Path])
     extends FileInterpreter(ictx, ctx, file) {
 
-  var graph: Graph.Builder = Graph.newBuilder
+  val graph: Graph.Builder = Graph.newBuilder
+  val nodes: mutable.IndexedBuffer[graph.Var] = mutable.IndexedBuffer.empty
+  val premises: mutable.Map[Int, Int] = mutable.Map.empty // Maps from premise index to node id
+
+  private def registerNode(node: graph.Var): Int = {
+    nodes.append(node)
+    nodes.length - 1
+  }
+
+  private def getNode(id: Int): graph.Var = {
+    require(0 <= id && id < nodes.length, "id is out of bounds")
+    nodes(id)
+  }
 
   override protected def applyBuiltinFunctionPremise(args: IndexedSeq[HippoValue]): HippoValue = args match {
-    case Seq(HippoValue.Int(i)) if i >= 0 => HippoValue.GraphNode(graph, graph.premise(i))
+    case Seq(HippoValue.Int(i)) if i >= 0 => HippoValue.Int(premises.getOrElseUpdate(i, registerNode(graph.premise(i))))
     case Seq(HippoValue.Int(_)) => throw new IllegalArgumentException("premise id must not be negative")
     case Seq(_) => throw new IllegalArgumentException("premise id must be a nonnegative integer")
     case _ => throw new IllegalArgumentException("exactly one argument required")
@@ -34,13 +47,12 @@ class FileInterpreterGraph(ictx: HippoInterpreterContext, ctx: HippoContext, fil
       .args
       .map(eval(namespace, _))
       .map {
-        case HippoValue.GraphNode(graph, node) if graph eq this.graph => node.belongingTo(this.graph)
-        case HippoValue.GraphNode(_, _) => throw new IllegalArgumentException("graph node must belong to current graph")
-        case _ => throw new IllegalArgumentException("only graph nodes are allowed in square brackets in graph blocks")
+        case HippoValue.Int(i) => getNode(i)
+        case _ => throw new IllegalArgumentException("only node ids are allowed in square brackets in graph blocks")
       }
 
     val node = this.graph.stepAny(targetV, argsV)
-    HippoValue.GraphNode(graph, node)
+    HippoValue.Int(registerNode(node))
   }
 }
 
@@ -56,9 +68,7 @@ object FileInterpreterGraph {
     val innerNs = new MutableNamespace(child = Some(namespace))
     val conclusion = innerInterp.eval(innerNs, expr)
     conclusion match {
-      case HippoValue.GraphNode(graph, node) =>
-        if (graph eq innerInterp.graph) graph.build(node.belongingTo(graph))
-        else throw new Exception("mixing nodes of different graphs is not allowed")
+      case HippoValue.Int(node) => innerInterp.graph.build(innerInterp.getNode(node))
       case _ => throw new Exception("graph block must return graph node")
     }
   }

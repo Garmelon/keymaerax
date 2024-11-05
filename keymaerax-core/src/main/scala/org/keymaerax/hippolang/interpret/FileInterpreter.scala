@@ -9,6 +9,7 @@ import org.keymaerax.hippolang.HippoConversions._
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.{BuiltinFunction, BuiltinMemberFunction, HippoExpression, HippoIdentifier, HippoValue}
 import org.keymaerax.hippolib.meta.TacticInfo
+import org.keymaerax.hippolib.primitive.Cached
 import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
@@ -58,11 +59,10 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
     case HippoExpression.Function(args, body) => HippoValue.Function(namespace.freeze, args, body)
 
     case HippoExpression.Theorem(conclusion, premises, proof) =>
-      // TODO Use cached results if available
       val conclusionV = eval(namespace, conclusion).asSequent
       val premisesV = premises.map(eval(namespace, _).asSequent).toIndexedSeq
       val proofV = eval(namespace, proof).asTactic
-      ctx.tactic(proofV, conclusionV, premisesV).toHValue
+      ctx.tactic(Cached(proofV), conclusionV, premisesV).toHValue
 
     case HippoExpression.Sequence(exprs, returnExpr) =>
       for (expr <- exprs) eval(namespace, expr)

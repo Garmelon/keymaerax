@@ -10,7 +10,7 @@ import org.keymaerax.core.{Formula, PrettyPrinter, Sequent, Skolemize, SuccPos}
 import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolib.core.{CoreRule, QE, RewriteAt, RewriteAtU, US}
 import org.keymaerax.hippolib.primitive.BidiBackward
-import org.keymaerax.hippolochos.cache.{LruCache, ProvableFsCache}
+import org.keymaerax.hippolochos.cache.{HippoProofFsCache, LruCache, ProvableFsCache}
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.hippolochos.tools.ExprPath
@@ -164,6 +164,8 @@ object Test {
       toolProvider = z3ToolProvider,
       toolCache =
         new ProvableFsCache(Path.of("/home/joscha-nixos/stud/keymaerax/cache/tool")).behind(new LruCache(1000)),
+      tacticCache =
+        new HippoProofFsCache(Path.of("/home/joscha-nixos/stud/keymaerax/cache/tactic")).behind(new LruCache(1000)),
     )
 
     implicit val lib: HippoLib = new HippoLib

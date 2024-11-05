@@ -7,7 +7,7 @@ package org.keymaerax.hippolib.core
 
 import org.keymaerax.core
 import org.keymaerax.core.hippolib.publish
-import org.keymaerax.hippolib.meta.{ProofInfo, TacticArg, TacticArgInfo, TacticInfo}
+import org.keymaerax.hippolib.meta.{ProofInfo, TacticArg, TacticArgInfo, TacticConstructor, TacticInfo}
 import org.keymaerax.hippolib.{core => self, HippoLib}
 import org.keymaerax.hippolochos.run.HippoContext
 
@@ -223,36 +223,41 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
   /////////////
 
   @publish(name = "core.CEqAt")
-  val CEqAt: TacticInfo = TacticInfo(TacticArgInfo(name = "at", arg = TacticArg.ExprPath)) { at => self.CEqAt(at) }
+  val CEqAt: TacticInfo = TacticInfo("core.CEqAt", TacticArgInfo(name = "at", arg = TacticArg.ExprPath)) { at =>
+    self.CEqAt(at)
+  }
 
   @publish(name = "core.Skolemize")
-  val Skolemize: TacticInfo = TacticInfo(TacticArgInfo("pos", TacticArg.SeqPos)) { pos =>
+  val Skolemize: TacticInfo = TacticInfo("core.Skolemize", TacticArgInfo("pos", TacticArg.SeqPos)) { pos =>
     CoreRule(core.Skolemize(pos))
   }
 
   @publish(name = "core.QE")
-  val QE: TacticInfo = TacticInfo(self.QE())
+  val QE: TacticInfo = TacticInfo("core.QE") { self.QE() }
 
   @publish(name = "core.RewriteAt")
   val RewriteAt: TacticInfo = TacticInfo(
+    "core.RewriteAt",
     TacticArgInfo(name = "at", arg = TacticArg.ExprPath),
     TacticArgInfo(name = "dir", arg = TacticArg.Option(TacticArg.String), default = Some(None)),
   ) { (at, dir) => self.RewriteAt(at = at, dir = dir.map(self.RewriteAt.Dir.parse)) }
 
   @publish(name = "core.RewriteAtU")
   val RewriteAtU: TacticInfo = TacticInfo(
+    "core.RewriteAtU",
     TacticArgInfo(name = "at", arg = TacticArg.ExprPath),
     TacticArgInfo(name = "eq", arg = TacticArg.HippoProof),
     TacticArgInfo(name = "dir", arg = TacticArg.Option(TacticArg.String), default = Some(None)),
   ) { (at, eq, dir) => self.RewriteAtU(at = at, eq = eq, dir = dir.map(self.RewriteAt.Dir.parse)) }
 
   @publish(name = "core.Unify")
-  val Unify: TacticInfo = TacticInfo(TacticArgInfo(name = "proof", arg = TacticArg.HippoProof)) { proof =>
+  val Unify: TacticInfo = TacticInfo("core.Unify", TacticArgInfo(name = "proof", arg = TacticArg.HippoProof)) { proof =>
     self.Unify(proof)
   }
 
   @publish(name = "core.US")
   val US: TacticInfo = TacticInfo(
-    TacticArgInfo(name = "subst", arg = TacticArg.Seq(TacticArg.Tuple2(TacticArg.Expression, TacticArg.Expression)))
+    "core.US",
+    TacticArgInfo(name = "subst", arg = TacticArg.Seq(TacticArg.Tuple2(TacticArg.Expression, TacticArg.Expression))),
   ) { substs => self.US(substs: _*) }
 }

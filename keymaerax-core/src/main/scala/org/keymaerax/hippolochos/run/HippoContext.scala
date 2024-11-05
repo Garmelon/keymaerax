@@ -7,14 +7,14 @@ package org.keymaerax.hippolochos.run
 
 import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
-import org.keymaerax.hippolochos.cache.{Cache, LruCache, ProvableFsCache}
+import org.keymaerax.hippolochos.cache.{Cache, HippoProofFsCache, LruCache, ProvableFsCache}
 import org.keymaerax.hippolochos.proof.{ExternalSource, HippoPremise, HippoProof}
 import org.keymaerax.hippolochos.tools.Hash
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
 
 import java.nio.file.Path
 
-class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable]) {
+class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable], val tacticCache: Cache[HippoProof]) {
 
   //////////////////////
   // External sources //
@@ -109,6 +109,29 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
     case tactic: ForwardTactic => forward(tactic, premises)
   }
 
+  // These functions also cache the tactic application.
+
+  def cachedPure(tactic: PureTactic): HippoProof = {
+    val hash = Hash.start.digest("pure").digest(tactic.hash).build
+    tacticCache.getOrCompute(hash) { pure(tactic) }
+  }
+
+  def cachedForward(tactic: ForwardTactic, premises: IndexedSeq[Sequent]): HippoProof = {
+    val hash = Hash.start.digest("forward").digest(tactic.hash).digestSeq(premises)(_.digest(_)).build
+    tacticCache.getOrCompute(hash) { forward(tactic, premises) }
+  }
+
+  def cachedBackward(tactic: BackwardTactic, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
+    val hash = Hash
+      .start
+      .digest("backward")
+      .digest(tactic.hash)
+      .digest(conclusion)
+      .digestSeq(premises.toSeq.sortBy(_._1)) { case (b, (i, p)) => b.digest(i).digest(p) }
+      .build
+    tacticCache.getOrCompute(hash) { backward(tactic, conclusion, premises) }
+  }
+
   //////////////////////
   // Combining proofs //
   //////////////////////
@@ -170,5 +193,6 @@ object HippoContext {
   def withCacheDir(toolProvider: ToolProvider, cacheDir: Path): HippoContext = new HippoContext(
     toolProvider = toolProvider,
     toolCache = new ProvableFsCache(cacheDir.resolve("tool")).behind(new LruCache(1000)),
+    tacticCache = new HippoProofFsCache(cacheDir.resolve("tactic")).behind(new LruCache(1000)),
   )
 }

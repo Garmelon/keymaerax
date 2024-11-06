@@ -20,9 +20,6 @@ import org.keymaerax.btactics.{
 }
 import org.keymaerax.cli.grade.AssessmentProver
 import org.keymaerax.core.{Formula, PrettyPrinter, StaticSemantics}
-import org.keymaerax.hippolang.interpret.HippoInterpreterContext
-import org.keymaerax.hippolang.parse.HlParseError
-import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.info.TechnicalName
 import org.keymaerax.parser.{
   ArchiveParser,
@@ -39,7 +36,7 @@ import org.keymaerax.tools.{KeYmaeraXTool, ToolName, ToolPathFinder}
 import org.keymaerax.{Configuration, FileConfiguration, KeYmaeraXStartup}
 
 import java.io.{FileReader, PrintWriter}
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, Paths}
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -154,23 +151,7 @@ object KeymaeraxCore {
           msgOut = System.out,
           resultOut = System.out,
         )
-      case Some(cmd: Command.Hippo) =>
-        initializeBackend(options.toToolConfig)
-        val home = Path.of(FileConfiguration.KEYMAERAX_HOME_PATH)
-        val cacheDir = home.resolve("hippo").resolve("cache")
-        val ctx = HippoContext.withCacheDir(ToolProvider.provider, cacheDir)
-        val interpreter = HippoInterpreterContext.withHippoLib(ctx)
-        try interpreter.run(cmd.file)
-        catch {
-          case e: HlParseError =>
-            e.print()
-            exit(1)
-          case e: Exception =>
-            println("An exception occurred during hippo evaluation:")
-            println(e.getMessage)
-            e.printStackTrace()
-            exit(1)
-        }
+      case Some(cmd: Command.Hippo) => new Hippo(options).run(cmd.file)
       // Unknown or no commands
       case Some(command) => println("WARNING: Unknown command " + command)
       case None =>

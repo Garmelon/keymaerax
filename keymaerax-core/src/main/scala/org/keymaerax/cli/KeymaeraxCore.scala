@@ -152,6 +152,7 @@ object KeymaeraxCore {
           resultOut = System.out,
         )
       case Some(cmd: Command.HRun) => new Hippo(options).run(cmd.file)
+      case Some(cmd: Command.HWatch) => new Hippo(options).watch(cmd.file)
       // Unknown or no commands
       case Some(command) => println("WARNING: Unknown command " + command)
       case None =>

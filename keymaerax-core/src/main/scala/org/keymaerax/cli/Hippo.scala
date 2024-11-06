@@ -12,7 +12,7 @@ import org.keymaerax.hippolang.interpret.HippoInterpreterContext
 import org.keymaerax.hippolang.parse.HlParseError
 import org.keymaerax.hippolochos.run.HippoContext
 
-import java.nio.file.Path
+import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
 
 /** Initialize a context in which hippolang programs can be executed, and implement hippolang-related CLI programs. */
 class Hippo(options: Options) {
@@ -33,6 +33,46 @@ class Hippo(options: Options) {
         println(e.getMessage)
         e.printStackTrace()
         exit(1)
+    }
+  }
+
+  def watch(file: Path): Unit = {
+    import scala.jdk.CollectionConverters._
+
+    val watchService = FileSystems.getDefault.newWatchService()
+    file
+      .getParent
+      .register(
+        watchService,
+        StandardWatchEventKinds.ENTRY_CREATE,
+        StandardWatchEventKinds.ENTRY_DELETE,
+        StandardWatchEventKinds.ENTRY_MODIFY,
+      )
+
+    run(file)
+
+    while (true) {
+      val key = watchService.take()
+      if (key == null) return
+      val events = key.pollEvents()
+      key.reset()
+
+      val fileChanged = events
+        .asScala
+        .exists { event =>
+          // This conversion is fine because of the events we registered earlier.
+          val changedFile = event.context().asInstanceOf[Path]
+          changedFile == file.getFileName
+        }
+
+      if (fileChanged) {
+        println()
+        println("#######################################")
+        println("## File was changed, re-executing... ##")
+        println("#######################################")
+        println()
+        run(file)
+      }
     }
   }
 }

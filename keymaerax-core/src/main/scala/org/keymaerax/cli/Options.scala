@@ -53,6 +53,7 @@ object Command {
       skipOnParseError: Boolean = false,
   ) extends Command
   case class HRun(file: Path = null) extends Command
+  case class HWatch(file: Path = null) extends Command
   // Webui commands
   case class Codegen(
       in: String = null,
@@ -399,6 +400,15 @@ object Options {
           arg[Path]("<file>")
             .action((x, o) => o.updateCommand[Command.HRun](_.copy(file = x)))
             .text(wrap("Hippolang file to execute."))
+        ),
+      note(""),
+      cmd("hwatch")
+        .action((_, o) => o.copy(command = Some(Command.HWatch())))
+        .text(wrapWide("Execute a single hippolang file and reexecute it whenever it is modified."))
+        .children(
+          arg[Path]("<file>")
+            .action((x, o) => o.updateCommand[Command.HWatch](_.copy(file = x)))
+            .text(wrap("Hippolang file to watch."))
         ),
     )
 

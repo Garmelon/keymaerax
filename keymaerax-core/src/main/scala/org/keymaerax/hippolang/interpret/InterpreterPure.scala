@@ -13,26 +13,18 @@ import org.keymaerax.hippolib.primitive.Cached
 import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
-import java.nio.file.Path
-
-class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Option[Path]) {
-  val exported = new MutableNamespace()
-
+class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
   def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {
     case HippoExpression.Const(value) => value
 
-    case HippoExpression.Import(pathE) =>
-      // TODO Cache imported files by path (assuming a file never changes during the existence of an interpreter)
-      val pathV = Path.of(eval(namespace, pathE).asString)
-      val importFile =
-        if (pathV.isAbsolute) pathV
-        else file.getOrElse(throw new UnsupportedOperationException("code has no path")).getParent.resolve(pathV)
-      val (_, importNamespace) = ictx.run(importFile)
-      importNamespace.toHValue
+    case HippoExpression.Import(_) =>
+      throw new UnsupportedOperationException("import not allowed during pure evaluation")
 
-    case HippoExpression.Declare(exports, mutable, name, value) =>
+    case HippoExpression.Declare(true, _, _, _) =>
+      throw new UnsupportedOperationException("export not allowed during pure evaluation")
+
+    case HippoExpression.Declare(false, mutable, name, value) =>
       val valueV = eval(namespace, value)
-      if (exports) exported.declare(name, valueV, mutable = true)
       namespace.declare(name, valueV, mutable)
       valueV
 
@@ -72,12 +64,11 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
       val nestedNamespace = new MutableNamespace(Some(namespace))
       eval(nestedNamespace, inner)
 
-    case HippoExpression.BackwardBlock(inner) => HippoValue
-        .Tactic(FileInterpreterBackward.tactic(ictx = ictx, file = file, namespace = namespace.freeze, expr = inner))
+    case HippoExpression.BackwardBlock(inner) =>
+      HippoValue.Tactic(InterpreterBackward.tactic(ictx = ictx, namespace = namespace.freeze, expr = inner))
 
-    case HippoExpression.GraphBlock(inner) => HippoValue.Tactic(
-        FileInterpreterGraph.tactic(ictx = ictx, ctx = ctx, file = file, namespace = namespace.freeze, expr = inner)
-      )
+    case HippoExpression.GraphBlock(inner) =>
+      HippoValue.Tactic(InterpreterGraph.tactic(ictx = ictx, ctx = ctx, namespace = namespace.freeze, expr = inner))
 
     case HippoExpression.BuiltinAccess(target, member) =>
       val targetV = eval(namespace, target)
@@ -92,13 +83,12 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
       val argsV = args.map(eval(namespace, _))
       applyValue(targetV, argsV)
 
-    case e: HippoExpression.ApplyTactic => evalApplyTactic(namespace, e)
+    case HippoExpression.ApplyTactic(_, _) =>
+      throw new UnsupportedOperationException("tactic application not allowed in normal mode")
   }
 
-  protected def evalApplyTactic(namespace: MutableNamespace, expr: HippoExpression.ApplyTactic): HippoValue =
-    throw new UnsupportedOperationException("tactic application not supported in normal mode")
-
-  private def accessValue(target: HippoValue, name: HippoIdentifier): HippoValue = {
+  // Protected because otherwise the value would have to be computed twice.
+  protected def accessValue(target: HippoValue, name: HippoIdentifier): HippoValue = {
     import org.keymaerax.hippolang.BuiltinMemberFunction._
 
     (target, name.value) match {
@@ -110,7 +100,8 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
     }
   }
 
-  private def applyValue(target: HippoValue, args: IndexedSeq[HippoValue]): HippoValue = target match {
+  // Protected because otherwise the values would have to be computed twice.
+  protected def applyValue(target: HippoValue, args: IndexedSeq[HippoValue]): HippoValue = target match {
     case HippoValue.TacticInfo(value) => applyTacticInfo(value, args)
     case HippoValue.BuiltinFunction(value) => applyBuiltinFunction(value, args)
     case HippoValue.BuiltinMemberFunction(target, value) => applyBuiltinMemberFunction(target, value, args)
@@ -120,7 +111,7 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
 
   private def applyTacticInfo(info: TacticInfo, args: IndexedSeq[HippoValue]): HippoValue = info
     .constructor
-    .constructPositional(args.map(FileInterpreter.hippoValToTacticArg))
+    .constructPositional(args.map(InterpreterPure.hippoValToTacticArg))
     .toHValue
 
   private def applyBuiltinFunction(target: BuiltinFunction, args: IndexedSeq[HippoValue]): HippoValue = target match {
@@ -203,11 +194,10 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
       println(argStrs.mkString)
       HippoValue.Null
 
-    case BuiltinFunction.Premise => applyBuiltinFunctionPremise(args)
+    case BuiltinFunction.Premise => throw new UnsupportedOperationException(
+        s"#${BuiltinFunction.Premise.name} can only be called in the context of a graph block"
+      )
   }
-
-  protected def applyBuiltinFunctionPremise(args: IndexedSeq[HippoValue]): HippoValue =
-    throw new UnsupportedOperationException("#premise builtin can only be called in the context of a graph block")
 
   private def applyBuiltinMemberFunction(
       target: HippoValue,
@@ -245,8 +235,8 @@ class FileInterpreter(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
   }
 }
 
-object FileInterpreter {
-  private def hippoValToTacticArg(value: HippoValue): Any = value match {
+object InterpreterPure {
+  protected def hippoValToTacticArg(value: HippoValue): Any = value match {
     case HippoValue.Null => None
     case HippoValue.Bool(value) => value
     case HippoValue.Int(value) => value

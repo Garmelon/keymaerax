@@ -26,7 +26,7 @@ case class HippoInterpreterContext(ctx: HippoContext, env: Option[ImmutableNames
 
   def run(source: SourceFile): (HippoValue, ImmutableNamespace) = {
     val program = HippoParser.parse(source).toHExpr
-    val fileInterpreter = new FileInterpreter(this, ctx, source.path)
+    val fileInterpreter = new InterpreterFile(this, ctx, source.path)
     val value = fileInterpreter.eval(new MutableNamespace(env), program)
     val namespace = fileInterpreter.exported.freeze
     (value, namespace)

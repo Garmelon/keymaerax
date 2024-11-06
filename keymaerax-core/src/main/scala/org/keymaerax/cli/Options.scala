@@ -52,7 +52,7 @@ object Command {
       exportAnswers: Boolean = false,
       skipOnParseError: Boolean = false,
   ) extends Command
-  case class Hippo(file: Path = null) extends Command
+  case class HRun(file: Path = null) extends Command
   // Webui commands
   case class Codegen(
       in: String = null,
@@ -392,11 +392,12 @@ object Options {
             .text(wrap("Skip grading on parse errors.")),
         ),
       note(""),
-      cmd("hippo")
-        .action((_, o) => o.copy(command = Some(Command.Hippo())))
+      cmd("hrun")
+        .action((_, o) => o.copy(command = Some(Command.HRun())))
+        .text(wrapWide("Execute a single hippolang file."))
         .children(
           arg[Path]("<file>")
-            .action((x, o) => o.updateCommand[Command.Hippo](_.copy(file = x)))
+            .action((x, o) => o.updateCommand[Command.HRun](_.copy(file = x)))
             .text(wrap("Hippolang file to execute."))
         ),
     )

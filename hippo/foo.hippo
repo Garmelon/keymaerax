@@ -1,1 +1,2 @@
 export val greeting = "Hello world";
+print("I just exported greeting \"", greeting, "\"");

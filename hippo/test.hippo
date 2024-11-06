@@ -4,6 +4,8 @@ print();
 
 val foo = import "foo.hippo";
 print(foo.greeting, " from another file!");
+val bar = import "foo.hippo";
+print(bar.greeting, " from another file (cached, hopefully)!");
 print();
 
 var i = 0;

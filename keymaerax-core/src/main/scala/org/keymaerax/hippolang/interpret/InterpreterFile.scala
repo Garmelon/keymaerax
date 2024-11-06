@@ -19,13 +19,11 @@ class InterpreterFile(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
 
   override def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {
     case HippoExpression.Import(pathE) =>
-      // TODO Cache imported files by path (assuming a file never changes during the existence of an interpreter)
       val pathV = Path.of(eval(namespace, pathE).asString)
       val importFile =
         if (pathV.isAbsolute) pathV
         else file.getOrElse(throw new UnsupportedOperationException("code has no path")).getParent.resolve(pathV)
-      val (_, importNamespace) = ictx.run(importFile)
-      importNamespace.toHValue
+      ictx.importCached(importFile).toHValue
 
     case HippoExpression.Declare(true, mutable, name, value) =>
       val valueV = eval(namespace, HippoExpression.Declare(exports = false, mutable, name, value))

@@ -14,9 +14,12 @@ import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.hippolochos.tools.Hash
 
 import java.nio.file.{Files, Path}
+import scala.collection.mutable
 
 case class HippoInterpreterContext(ctx: HippoContext, env: Option[ImmutableNamespace] = None) {
   lazy val hash: Hash = Hash.start.digestOpt(env) { (b, ns) => b.digest(ns.hash) }.build
+
+  private val importCache: mutable.Map[Path, ImmutableNamespace] = mutable.Map.empty
 
   def run(file: Path): (HippoValue, ImmutableNamespace) = {
     val absFile = file.toAbsolutePath
@@ -31,6 +34,8 @@ case class HippoInterpreterContext(ctx: HippoContext, env: Option[ImmutableNames
     val namespace = fileInterpreter.exported.freeze
     (value, namespace)
   }
+
+  def importCached(file: Path): ImmutableNamespace = importCache.getOrElseUpdate(file.toAbsolutePath, run(file)._2)
 }
 
 object HippoInterpreterContext {

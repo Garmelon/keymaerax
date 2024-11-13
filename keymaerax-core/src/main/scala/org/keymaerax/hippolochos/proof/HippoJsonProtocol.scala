@@ -37,7 +37,16 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
   }
 
   implicit object SequentFormat extends JsonFormat[core.Sequent] {
-    override def write(obj: core.Sequent): JsValue = JsString(printer(obj))
+    override def write(obj: core.Sequent): JsValue = {
+      // The pretty printer formats sequents in a way that is incompatible with the sequentParser.
+      // So we need to format sequents ourselves, or we encode them in JSON, one expression at a time.
+      // For now, I'm choosing the former since it should be more compact.
+      // However, it might lead to issues if there's unforeseen interactions in the syntax.
+      // Should that happen, encoding sequents as expressions in a JSON structure should be more robust.
+      val ante = obj.ante.map(printer).mkString(", ")
+      val succ = obj.succ.map(printer).mkString(", ")
+      JsString(s"$ante ==> $succ".trim)
+    }
     override def read(json: JsValue): core.Sequent = parser.sequentParser(json.convertTo[String])
   }
 

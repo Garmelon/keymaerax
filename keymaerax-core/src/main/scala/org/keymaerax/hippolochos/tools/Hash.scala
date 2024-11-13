@@ -146,6 +146,7 @@ object Hash {
     def digest(source: ExternalSource): Builder = source match {
       case ExternalSource.Sorry => digest("Sorry")
       case ExternalSource.QeTool(formula) => digest("QeTool").digest(formula)
+      case ExternalSource.Cache(hash) => digest("Cache").digest(hash)
     }
 
     def digest(premise: HippoPremise): Builder = {

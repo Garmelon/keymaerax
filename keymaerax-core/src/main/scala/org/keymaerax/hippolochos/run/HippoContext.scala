@@ -113,12 +113,14 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
 
   def cachedPure(tactic: PureTactic): HippoProof = {
     val hash = Hash.start.digest("pure").digest(tactic.hash).build
-    tacticCache.getOrCompute(hash) { pure(tactic) }
+    val proof = tacticCache.getOrCompute(hash) { pure(tactic) }
+    HippoProof.External(proof.conclusion, proof.premises, ExternalSource.Cache(hash))
   }
 
   def cachedForward(tactic: ForwardTactic, premises: IndexedSeq[Sequent]): HippoProof = {
     val hash = Hash.start.digest("forward").digest(tactic.hash).digestSeq(premises)(_.digest(_)).build
-    tacticCache.getOrCompute(hash) { forward(tactic, premises) }
+    val proof = tacticCache.getOrCompute(hash) { forward(tactic, premises) }
+    HippoProof.External(proof.conclusion, proof.premises, ExternalSource.Cache(hash))
   }
 
   def cachedBackward(tactic: BackwardTactic, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
@@ -129,7 +131,8 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
       .digest(conclusion)
       .digestSeq(premises.toSeq.sortBy(_._1)) { case (b, (i, p)) => b.digest(i).digest(p) }
       .build
-    tacticCache.getOrCompute(hash) { backward(tactic, conclusion, premises) }
+    val proof = tacticCache.getOrCompute(hash) { backward(tactic, conclusion, premises) }
+    HippoProof.External(proof.conclusion, proof.premises, ExternalSource.Cache(hash))
   }
 
   //////////////////////
@@ -178,6 +181,9 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
       case ExternalSource.QeTool(formula) =>
         val provable = external.assertConsistency(premises) { computeQe(formula) }
         HippoProof.applyPremises(provable, premises)
+      case ExternalSource.Cache(hash) =>
+        val proof = tacticCache.get(hash).get // TODO Throw some more appropriate exception?
+        provableFromGlobalProof(proof, premises)
     }
 
   def provableFromLocalProof(proof: HippoProof): Provable = proof.localProvable(fromExternal)

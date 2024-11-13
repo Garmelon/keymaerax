@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolochos.proof
 
-import org.keymaerax.core.SubstitutionPair
+import org.keymaerax.core.{Formula, Program, SubstitutionPair, Term}
 import org.keymaerax.hippolochos.tools.Hash
 import org.keymaerax.parser.FullPrettyPrinter
 import org.keymaerax.{core, GlobalState}
@@ -32,8 +32,31 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
   }
 
   implicit object ExpressionFormat extends JsonFormat[core.Expression] {
-    override def write(obj: core.Expression): JsValue = JsString(printer(obj))
-    override def read(json: JsValue): core.Expression = parser(json.convertTo[String])
+    // An expression converted to text without any sort of context may be ambiguous.
+    // For example, a bare name might be a variable in a program or in a term.
+    // Thus, we need to encode some amount of type information to be able to
+    // correctly reproduce the expression afterward.
+    // Should this not be sufficient, we could also encode expressions as JSON structures.
+    // It would take more space but should also be more robust.
+
+    private val termPrefix = "t:"
+    private val formulaPrefix = "f:"
+    private val programPrefix = "p:"
+
+    override def write(obj: core.Expression): JsValue = JsString(obj match {
+      case term: Term => termPrefix + printer(term)
+      case formula: Formula => formulaPrefix + printer(formula)
+      case program: Program => programPrefix + printer(program)
+      case _ => ???
+    })
+
+    override def read(json: JsValue): core.Expression = {
+      val str = json.convertTo[String]
+      if (str.startsWith(termPrefix)) parser.termParser(str.stripPrefix(termPrefix))
+      else if (str.startsWith(formulaPrefix)) parser.formulaParser(str.stripPrefix(formulaPrefix))
+      else if (str.startsWith(programPrefix)) parser.programParser(str.stripPrefix(programPrefix))
+      else ???
+    }
   }
 
   implicit object SequentFormat extends JsonFormat[core.Sequent] {
@@ -254,15 +277,20 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
   implicit val externalSourceQeToolFormat: RootJsonFormat[ExternalSource.QeTool] =
     jsonFormat(ExternalSource.QeTool, "formula")
 
+  implicit val externalSourceCacheFormat: RootJsonFormat[ExternalSource.Cache] =
+    jsonFormat(ExternalSource.Cache, "hash")
+
   implicit object ExternalSourceFormat extends RootJsonFormat[ExternalSource] {
     override def write(obj: ExternalSource): JsValue = obj match {
       case ExternalSource.Sorry => variant("sorry")
       case o: ExternalSource.QeTool => variantO("qeTool", o.toJson)
+      case o: ExternalSource.Cache => variantO("cache", o.toJson)
     }
 
     override def read(json: JsValue): ExternalSource = json.asJsObject.fields(discriminant).convertTo[String] match {
       case "sorry" => ExternalSource.Sorry
       case "qeTool" => json.convertTo[ExternalSource.QeTool]
+      case "cache" => json.convertTo[ExternalSource.Cache]
       case _ => deserializationError("ExternalSource expected")
     }
   }

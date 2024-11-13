@@ -25,7 +25,7 @@ abstract class FsCache[V](dir: Path, version: Int) extends Cache[V] {
 
   private def pathForKey(key: Hash): Path = dir.resolve(key.hexString.slice(0, 2)).resolve(key.hexString)
 
-  override def get(key: Hash): Option[V] = Try { parse(Files.readString(pathForKey(key))) }.toOption
+  override def get(key: Hash): Option[V] = Try { Files.readString(pathForKey(key)) }.toOption.map(parse)
 
   override def put(key: Hash, value: V): Unit = {
     val path = pathForKey(key)

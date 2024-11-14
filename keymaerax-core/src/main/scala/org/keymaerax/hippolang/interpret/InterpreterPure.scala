@@ -50,11 +50,17 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
     case HippoExpression.Function(args, body) => HippoValue.Function(namespace.freeze, args, body)
 
-    case HippoExpression.Theorem(conclusion, premises, proof) =>
+    case HippoExpression.Theorem(verified, conclusion, premises, proof) =>
       val conclusionV = eval(namespace, conclusion).asSequent
       val premisesV = premises.map(eval(namespace, _).asSequent).toIndexedSeq
       val proofV = eval(namespace, proof).asTactic
-      ctx.tactic(Cached(proofV), conclusionV, premisesV).toHValue
+      val proven = ctx.tactic(Cached(proofV), conclusionV, premisesV)
+      if (verified) {
+        val provable = ctx.provableFromLocalProof(proven)
+        require(provable.conclusion == proven.conclusion)
+        require(provable.subgoals == proven.premises.map(_.sequent))
+      }
+      proven.toHValue
 
     case HippoExpression.Sequence(exprs, returnExpr) =>
       for (expr <- exprs) eval(namespace, expr)

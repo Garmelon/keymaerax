@@ -30,8 +30,12 @@ object HippoExpression {
 
   case class Function(args: Seq[HippoIdentifier], body: HippoExpression) extends HippoExpression
 
-  case class Theorem(conclusion: HippoExpression, premises: Seq[HippoExpression], proof: HippoExpression)
-      extends HippoExpression
+  case class Theorem(
+      verified: Boolean,
+      conclusion: HippoExpression,
+      premises: Seq[HippoExpression],
+      proof: HippoExpression,
+  ) extends HippoExpression
 
   case class Sequence(exprs: Seq[HippoExpression], returnExpr: Option[HippoExpression]) extends HippoExpression
 

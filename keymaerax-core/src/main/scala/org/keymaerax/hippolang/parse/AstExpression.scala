@@ -124,7 +124,7 @@ object AstExpression {
    *   by <proof>
    * }}}
    */
-  case class Theorem(conclusion: AstExpression, premises: Seq[AstExpression], proof: AstExpression)
+  case class Theorem(verified: Boolean, conclusion: AstExpression, premises: Seq[AstExpression], proof: AstExpression)
       extends AstExpression
 
   /**

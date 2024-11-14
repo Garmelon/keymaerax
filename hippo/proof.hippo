@@ -4,7 +4,7 @@ val testb = function() core.RewriteAtU(list(), core.testb);
 val assignbAt = function(at) core.RewriteAtU(at, core.assignbAxiom);
 
 val simpleCompositionBackward =
-  theorem dLs{ ==> [x:=*;?x>0;x:=x+1;]x>1 }
+  verified theorem dLs{ ==> [x:=*;?x>0;x:=x+1;]x>1 }
   by backward {
     print("Running backward tactic");
     composeb()[];
@@ -19,7 +19,7 @@ val simpleCompositionBackward =
 print("backward: ", simpleCompositionBackward);
 
 val simpleCompositionGraph =
-  theorem dLs{ ==> [x:=*;?x>0;x:=x+1;]x>1 }
+  verified theorem dLs{ ==> [x:=*;?x>0;x:=x+1;]x>1 }
   by graph {
     print("Creating graph tactic");
     val g1 = core.QE()[];
@@ -30,4 +30,5 @@ val simpleCompositionGraph =
     val g6 = randomb()[g5];
     composeb()[g6]
   };
+
 print("   graph: ", simpleCompositionGraph);

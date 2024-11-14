@@ -208,8 +208,8 @@ object Hash {
         digest("If").digest(condition).digest(ifTrue).digestOpt(ifFalse)(_.digest(_))
       case HippoExpression.While(condition, body) => digest("While").digest(condition).digest(body)
       case HippoExpression.Function(args, body) => digest("Function").digestSeq(args)(_.digest(_)).digest(body)
-      case HippoExpression.Theorem(conclusion, premises, proof) =>
-        digest("Theorem").digest(conclusion).digestSeq(premises)(_.digest(_)).digest(proof)
+      case HippoExpression.Theorem(verified, conclusion, premises, proof) =>
+        digest("Theorem").digest(verified).digest(conclusion).digestSeq(premises)(_.digest(_)).digest(proof)
       case HippoExpression.Sequence(exprs, returnExpr) =>
         digest("Sequence").digestSeq(exprs)(_.digest(_)).digestOpt(returnExpr)(_.digest(_))
       case HippoExpression.Block(inner) => digest("Block").digest(inner)

@@ -32,6 +32,7 @@ object HippoParser {
   private val keywordTrue = "true"
   private val keywordVal = "val"
   private val keywordVar = "var"
+  private val keywordVerified = "verified"
   private val keywordWhile = "while"
   val keywords: Set[String] = Set(
     keywordAs,
@@ -52,6 +53,7 @@ object HippoParser {
     keywordTrue,
     keywordVal,
     keywordVar,
+    keywordVerified,
     keywordWhile,
   )
 
@@ -167,10 +169,12 @@ object HippoParser {
     }
   )
 
-  private def theoremExpression[$: P]: P[AstExpression.Theorem] = P(
-    (keywordTheorem ~/ expression ~ (keywordPremise ~/ expression).rep ~ keywordBy ~/ expression)
-      .map { case (statement, premises, proof) => AstExpression.Theorem(statement, premises, proof) }
-  )
+  private def theoremExpression[$: P]: P[AstExpression.Theorem] = P({
+    def verified = keywordVerified./.!.?.map(_.isDefined)
+    (verified ~ keywordTheorem ~/ expression ~ (keywordPremise ~/ expression).rep ~ keywordBy ~/ expression).map {
+      case (verified, statement, premises, proof) => AstExpression.Theorem(verified, statement, premises, proof)
+    }
+  })
 
   private def parensExpression[$: P]: P[AstExpression.Parens] = P(
     ("(" ~/ (NoCut(expression) ~ ";"./).rep ~ expression.? ~ ")").map { case (exprs, returnExpr) =>

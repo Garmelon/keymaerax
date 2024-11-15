@@ -7,7 +7,7 @@ package org.keymaerax.hippolib.core
 
 import org.keymaerax.core
 import org.keymaerax.core.hippolib.publish
-import org.keymaerax.hippolib.meta.{ProofInfo, TacticArg, TacticArgInfo, TacticConstructor, TacticInfo}
+import org.keymaerax.hippolib.meta.{ProofInfo, TacticArg, TacticArgInfo, TacticInfo}
 import org.keymaerax.hippolib.{core => self, HippoLib}
 import org.keymaerax.hippolochos.run.HippoContext
 
@@ -249,6 +249,9 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
     TacticArgInfo(name = "eq", arg = TacticArg.HippoProof),
     TacticArgInfo(name = "dir", arg = TacticArg.Option(TacticArg.String), default = Some(None)),
   ) { (at, eq, dir) => self.RewriteAtU(at = at, eq = eq, dir = dir.map(self.RewriteAt.Dir.parse)) }
+
+  @publish(name = "core.Sorry")
+  val Sorry: TacticInfo = TacticInfo("core.Sorry") { self.Sorry() }
 
   @publish(name = "core.Unify")
   val Unify: TacticInfo = TacticInfo("core.Unify", TacticArgInfo(name = "proof", arg = TacticArg.HippoProof)) { proof =>

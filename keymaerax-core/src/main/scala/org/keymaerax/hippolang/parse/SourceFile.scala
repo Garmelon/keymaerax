@@ -31,7 +31,7 @@ case class SourceFile(text: String, path: Option[Path] = None) {
 
     def text: String = SourceFile.this.text.slice(start, end)
 
-    def format(label: String): String = {
+    def format(label: String = ""): String = {
       val (startRow, startCol) = rowColAt(start)
       val (endRow, endCol) = rowColAt(end)
       val firstRow = (startRow - 1) max 0
@@ -61,9 +61,10 @@ case class SourceFile(text: String, path: Option[Path] = None) {
         else lines.addOne(s" $lineNumber |   $rowText")
 
         val width = (endCol - startCol) max 1
-        if (row == startRow && row == endRow) lines.addOne(s" $preEmpty | ${" " * startCol}${"^" * width} $label")
+        val labelText = if (label.isBlank) "" else s" $label"
+        if (row == startRow && row == endRow) lines.addOne(s" $preEmpty | ${" " * startCol}${"^" * width}$labelText")
         else if (row == startRow) lines.addOne(s" $preEmpty | ,-${"-" * startCol}^")
-        else if (row == endRow) lines.addOne(s" $preEmpty | '${"-" * endCol}^ $label")
+        else if (row == endRow) lines.addOne(s" $preEmpty | '${"-" * endCol}^$labelText")
       }
 
       lines.addOne(s" $preEmpty-'")

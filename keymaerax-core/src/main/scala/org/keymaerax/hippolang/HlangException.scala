@@ -16,7 +16,7 @@ class HlangException(message: String, cause: Throwable = null)
 
   private val locations: mutable.Buffer[(SourceFile#Slice, String)] = mutable.Buffer.empty
 
-  def addLocation(slice: SourceFile#Slice, label: String): HlangException = {
+  def addLocation(slice: SourceFile#Slice, label: String = ""): HlangException = {
     locations.append((slice, label))
     this
   }
@@ -56,6 +56,8 @@ object HlangException {
 
   def apply(message: String, slice: SourceFile#Slice, label: String): HlangException = new HlangException(message)
     .addLocation(slice, label)
+
+  def apply(message: String, slice: SourceFile#Slice): HlangException = new HlangException(message).addLocation(slice)
 
   def apply(message: String, slice: SourceFile#Slice, label: String, cause: Throwable): HlangException =
     new HlangException(message, cause).addLocation(slice, label)

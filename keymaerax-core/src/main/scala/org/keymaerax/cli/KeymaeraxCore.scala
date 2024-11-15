@@ -151,8 +151,12 @@ object KeymaeraxCore {
           msgOut = System.out,
           resultOut = System.out,
         )
-      case Some(cmd: Command.HRun) => new Hippo(options).run(cmd.file)
-      case Some(cmd: Command.HWatch) => new Hippo(options).watch(cmd.file)
+      case Some(cmd: Command.HRun) =>
+        initializeProver(combineToolConfigs(options.toToolConfig, toolConfigFromFile(ToolName.Z3)))
+        new Hippo().run(cmd.file)
+      case Some(cmd: Command.HWatch) =>
+        initializeProver(combineToolConfigs(options.toToolConfig, toolConfigFromFile(ToolName.Z3)))
+        new Hippo().watch(cmd.file)
       // Unknown or no commands
       case Some(command) => println("WARNING: Unknown command " + command)
       case None =>

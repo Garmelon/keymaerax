@@ -200,8 +200,8 @@ object Hash {
     def digest(expr: HippoExpression): Builder = expr match {
       case HippoExpression.Const(value) => digest("Const").digest(value)
       case HippoExpression.Import(path, slice) => digest("Import").digest(path)
-      case HippoExpression.Declare(exports, mutable, name, value) =>
-        digest("Declare").digest(exports).digest(mutable).digest(name).digest(value)
+      case HippoExpression.Declare(exportSlice, mutable, name, value) =>
+        digest("Declare").digest(exportSlice.isDefined).digest(mutable).digest(name).digest(value)
       case HippoExpression.Assign(name, value) => digest("Assign").digest(name).digest(value)
       case HippoExpression.Lookup(name) => digest("Lookup").digest(name)
       case HippoExpression.If(condition, ifTrue, ifFalse) =>

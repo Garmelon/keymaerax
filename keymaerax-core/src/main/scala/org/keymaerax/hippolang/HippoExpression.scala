@@ -18,8 +18,14 @@ object HippoExpression {
 
   case class Import(path: HippoExpression, slice: SourceFile#Slice) extends HippoExpression
 
-  case class Declare(exports: Boolean, mutable: Boolean, name: HippoIdentifier, value: HippoExpression)
-      extends HippoExpression
+  case class Declare(
+      exportSlice: Option[SourceFile#Slice],
+      mutable: Boolean,
+      name: HippoIdentifier,
+      value: HippoExpression,
+  ) extends HippoExpression {
+    def exports: Boolean = exportSlice.isDefined
+  }
 
   case class Assign(name: HippoIdentifier, value: HippoExpression) extends HippoExpression
 

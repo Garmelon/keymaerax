@@ -25,6 +25,11 @@ class HippoParser(source: SourceFile) {
   }
 
   // https://com-lihaoyi.github.io/fastparse/#HigherOrderParsers
+  private def slice[$: P](inner: => P[_]): P[source.Slice] = P((Index ~~ inner.! ~~ Index).map { case (start, _, end) =>
+    source.Slice(start, end)
+  })
+
+  // https://com-lihaoyi.github.io/fastparse/#HigherOrderParsers
   private def sliced[$: P, T](inner: => P[T]): P[(T, source.Slice)] =
     P((Index ~~ inner ~~ Index).map { case (start, value, end) => (value, source.Slice(start, end)) })
 
@@ -101,10 +106,9 @@ class HippoParser(source: SourceFile) {
   })
 
   private def declareExpression[$: P]: P[AstExpression.Declare] = P({
-    def exports = keywordExport.!.?.map(_.isDefined)
     def const = keywordVal.!.map(_ => false) | keywordVar.!.map(_ => true)
-    (exports ~ const ~/ identifier ~ "=" ~ expression).map { case (exports, mutable, name, value) =>
-      AstExpression.Declare(exports, mutable, name, value)
+    (slice(keywordExport./).? ~ const ~/ identifier ~ "=" ~ expression).map {
+      case (exportSlice, mutable, name, value) => AstExpression.Declare(exportSlice = exportSlice, mutable, name, value)
     }
   })
 

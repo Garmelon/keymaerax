@@ -25,9 +25,9 @@ class InterpreterFile(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
         else file.getOrElse(throw new UnsupportedOperationException("code has no path")).getParent.resolve(path)
       ictx.importCached(importFile).toHValue
 
-    case HippoExpression.Declare(true, mutable, name, value) =>
-      val valueV = eval(namespace, HippoExpression.Declare(exports = false, mutable, name, value))
-      exported.declare(name, valueV, mutable = true)
+    case e: HippoExpression.Declare if e.exports =>
+      val valueV = eval(namespace, HippoExpression.Declare(exportSlice = None, e.mutable, e.name, e.value))
+      exported.declare(e.name, valueV, mutable = true)
       valueV
 
     case _ => super.eval(namespace, expr)

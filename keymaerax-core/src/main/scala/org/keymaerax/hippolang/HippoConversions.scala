@@ -107,7 +107,8 @@ object HippoConversions {
       case AstExpression.DlSequent(value) => HippoValue.DlSequent(value).toHExpr
       case AstExpression.BuiltinFunction(value) => HippoValue.BuiltinFunction(value).toHExpr
       case e: AstExpression.Import => Import(path = e.path.toHExpr, slice = e.slice)
-      case AstExpression.Declare(exports, mutable, name, value) => Declare(exports, mutable, name.name, value.toHExpr)
+      case e: AstExpression.Declare =>
+        Declare(exportSlice = e.exportSlice, mutable = e.mutable, name = e.name.name, value = e.value.toHExpr)
       case AstExpression.Assign(name, value) => Assign(name.name, value.toHExpr)
       case AstExpression.Lookup(name) => Lookup(name.name)
       case AstExpression.If(condition, ifTrue, ifFalse) => If(condition.toHExpr, ifTrue.toHExpr, ifFalse.map(_.toHExpr))

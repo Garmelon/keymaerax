@@ -7,7 +7,7 @@ package org.keymaerax.cli
 
 import org.keymaerax.FileConfiguration
 import org.keymaerax.btactics.ToolProvider
-import org.keymaerax.cli.KeymaeraxCore.{exit, initializeBackend}
+import org.keymaerax.cli.KeymaeraxCore.exit
 import org.keymaerax.hippolang.interpret.HippoInterpreterContext
 import org.keymaerax.hippolang.parse.HlParseError
 import org.keymaerax.hippolochos.run.HippoContext
@@ -15,8 +15,7 @@ import org.keymaerax.hippolochos.run.HippoContext
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
 
 /** Initialize a context in which hippolang programs can be executed, and implement hippolang-related CLI programs. */
-class Hippo(options: Options) {
-  initializeBackend(options.toToolConfig)
+class Hippo {
   private val home = Path.of(FileConfiguration.KEYMAERAX_HOME_PATH)
   private val cacheDir = home.resolve("hippo").resolve("cache")
   private val ctx = HippoContext.withCacheDir(ToolProvider.provider, cacheDir)
@@ -36,6 +35,17 @@ class Hippo(options: Options) {
     }
   }
 
+  def runOrPrintError(file: Path): Unit = {
+    try interpreter.run(file)
+    catch {
+      case e: HlParseError => e.print()
+      case e: Throwable =>
+        println("An exception occurred during hippo evaluation:")
+        println(e.getMessage)
+        e.printStackTrace()
+    }
+  }
+
   def watch(file: Path): Unit = {
     import scala.jdk.CollectionConverters._
 
@@ -49,7 +59,7 @@ class Hippo(options: Options) {
         StandardWatchEventKinds.ENTRY_MODIFY,
       )
 
-    run(file)
+    runOrPrintError(file)
 
     while (true) {
       val key = watchService.take()
@@ -71,7 +81,7 @@ class Hippo(options: Options) {
         println("## File was changed, re-executing... ##")
         println("#######################################")
         println()
-        run(file)
+        runOrPrintError(file)
       }
     }
   }

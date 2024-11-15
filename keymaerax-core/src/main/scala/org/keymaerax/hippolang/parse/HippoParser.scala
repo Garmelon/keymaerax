@@ -14,7 +14,6 @@ object HippoParser {
   // When the parser is changed, this alphabetically sorted list of keywords must be kept up-to-date.
   // To parse a keyword, always use the corresponding constant instead of a magic string value.
   // This helps ensure the list does not become outdated.
-  private val keywordAs = "as"
   private val keywordBackward = "backward"
   private val keywordBy = "by"
   private val keywordDlExpression = "dL"
@@ -35,7 +34,6 @@ object HippoParser {
   private val keywordVerified = "verified"
   private val keywordWhile = "while"
   val keywords: Set[String] = Set(
-    keywordAs,
     keywordBackward,
     keywordBy,
     keywordDlExpression,

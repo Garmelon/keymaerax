@@ -8,8 +8,8 @@ package org.keymaerax.cli
 import org.keymaerax.FileConfiguration
 import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.cli.KeymaeraxCore.exit
+import org.keymaerax.hippolang.HlangException
 import org.keymaerax.hippolang.interpret.HippoInterpreterContext
-import org.keymaerax.hippolang.parse.HlParseError
 import org.keymaerax.hippolochos.run.HippoContext
 
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
@@ -24,10 +24,11 @@ class Hippo {
   def run(file: Path): Unit = {
     try interpreter.run(file)
     catch {
-      case e: HlParseError =>
-        e.print()
+      case e: HlangException =>
+        println()
+        e.printBackwards()
         exit(1)
-      case e: Exception =>
+      case e: Throwable =>
         println("An exception occurred during hippo evaluation:")
         println(e.getMessage)
         e.printStackTrace()
@@ -38,7 +39,9 @@ class Hippo {
   def runOrPrintError(file: Path): Unit = {
     try interpreter.run(file)
     catch {
-      case e: HlParseError => e.print()
+      case e: HlangException =>
+        println()
+        e.printBackwards()
       case e: Throwable =>
         println("An exception occurred during hippo evaluation:")
         println(e.getMessage)

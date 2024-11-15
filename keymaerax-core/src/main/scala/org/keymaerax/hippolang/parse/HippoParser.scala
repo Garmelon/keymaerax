@@ -7,7 +7,7 @@ package org.keymaerax.hippolang.parse
 
 import fastparse.ScalaWhitespace._
 import fastparse._
-import org.keymaerax.hippolang.{BuiltinFunction, BuiltinMemberFunction, HippoIdentifier}
+import org.keymaerax.hippolang.{BuiltinFunction, BuiltinMemberFunction, HippoIdentifier, HlangException}
 import org.keymaerax.parser.DLParser
 
 object HippoParser {
@@ -61,10 +61,10 @@ object HippoParser {
   def parse(source: SourceFile): AstExpression =
     fastparse.parse[AstExpression](source.text, program(_), verboseFailures = true) match {
       case success: Parsed.Success[AstExpression] => success.value
-      case failure: Parsed.Failure => throw new HlParseError(
-          slice = source.Slice(failure.index),
-          error = "Parsing failed",
+      case failure: Parsed.Failure => throw HlangException(
+          message = "Parsing failed",
           label = s"expected ${failure.label}",
+          slice = source.Slice(failure.index),
         )
     }
 

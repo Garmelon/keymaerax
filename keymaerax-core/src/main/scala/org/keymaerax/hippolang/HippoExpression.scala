@@ -39,10 +39,11 @@ object HippoExpression {
   case class Function(args: Seq[HippoIdentifier], body: HippoExpression) extends HippoExpression
 
   case class Theorem(
-      verified: Boolean,
+      verifySlice: Option[SourceFile#Slice],
       conclusion: HippoExpression,
       premises: Seq[HippoExpression],
       proof: HippoExpression,
+      proofSlice: SourceFile#Slice,
   ) extends HippoExpression
 
   case class Sequence(exprs: Seq[HippoExpression], returnExpr: Option[HippoExpression]) extends HippoExpression

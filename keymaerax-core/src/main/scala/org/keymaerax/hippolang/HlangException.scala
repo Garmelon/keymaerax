@@ -63,7 +63,7 @@ object HlangException {
     new HlangException(message, cause).addLocation(slice, label)
 
   @inline
-  def at[T](slice: SourceFile#Slice, label: String)(body: => T): T =
+  def at[T](slice: SourceFile#Slice, label: String = "")(body: => T): T =
     try body
     catch {
       case e: HlangException => throw e.addLocation(slice, label)

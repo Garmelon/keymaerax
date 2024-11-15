@@ -133,9 +133,15 @@ class HippoParser(source: SourceFile) {
   )
 
   private def theoremExpression[$: P]: P[AstExpression.Theorem] = P({
-    def verified = keywordVerified./.!.?.map(_.isDefined)
-    (verified ~ keywordTheorem ~/ expression ~ (keywordPremise ~/ expression).rep ~ keywordBy ~/ expression).map {
-      case (verified, statement, premises, proof) => AstExpression.Theorem(verified, statement, premises, proof)
+    (slice(keywordVerified./)
+      .? ~ keywordTheorem ~/ expression ~ (keywordPremise ~/ expression).rep ~ keywordBy ~/ sliced(expression)).map {
+      case (verifySlice, conclusion, premises, (proof, proofSlice)) => AstExpression.Theorem(
+          verifySlice = verifySlice,
+          conclusion = conclusion,
+          premises = premises,
+          proof = proof,
+          proofSlice = proofSlice,
+        )
     }
   })
 

@@ -7,66 +7,26 @@ package org.keymaerax.hippolang.parse
 
 import fastparse.ScalaWhitespace._
 import fastparse._
+import org.keymaerax.hippolang.parse.HippoParser._
 import org.keymaerax.hippolang.{BuiltinFunction, BuiltinMemberFunction, HippoIdentifier, HlangException}
 import org.keymaerax.parser.DLParser
 
-object HippoParser {
-  // When the parser is changed, this alphabetically sorted list of keywords must be kept up-to-date.
-  // To parse a keyword, always use the corresponding constant instead of a magic string value.
-  // This helps ensure the list does not become outdated.
-  private val keywordBackward = "backward"
-  private val keywordBy = "by"
-  private val keywordDlExpression = "dL"
-  private val keywordDlSequent = "dLs"
-  private val keywordElse = "else"
-  private val keywordExport = "export"
-  private val keywordFalse = "false"
-  private val keywordFunction = "function"
-  private val keywordGraph = "graph"
-  private val keywordIf = "if"
-  private val keywordImport = "import"
-  private val keywordNull = "null"
-  private val keywordPremise = "premise"
-  private val keywordTheorem = "theorem"
-  private val keywordTrue = "true"
-  private val keywordVal = "val"
-  private val keywordVar = "var"
-  private val keywordVerified = "verified"
-  private val keywordWhile = "while"
-  val keywords: Set[String] = Set(
-    keywordBackward,
-    keywordBy,
-    keywordDlExpression,
-    keywordDlSequent,
-    keywordElse,
-    keywordExport,
-    keywordFalse,
-    keywordFunction,
-    keywordGraph,
-    keywordIf,
-    keywordImport,
-    keywordNull,
-    keywordPremise,
-    keywordTheorem,
-    keywordTrue,
-    keywordVal,
-    keywordVar,
-    keywordVerified,
-    keywordWhile,
-  )
-
+class HippoParser(source: SourceFile) {
   // This dlParser instance does not depend on global state.
   private val dlParser = new DLParser
 
-  def parse(source: SourceFile): AstExpression =
-    fastparse.parse[AstExpression](source.text, program(_), verboseFailures = true) match {
-      case success: Parsed.Success[AstExpression] => success.value
-      case failure: Parsed.Failure => throw HlangException(
-          message = "Parsing failed",
-          label = s"expected ${failure.label}",
-          slice = source.Slice(failure.index),
-        )
-    }
+  def parse(): AstExpression = fastparse.parse[AstExpression](source.text, program(_), verboseFailures = true) match {
+    case success: Parsed.Success[AstExpression] => success.value
+    case failure: Parsed.Failure => throw HlangException(
+        message = "Parsing failed",
+        label = s"expected ${failure.label}",
+        slice = source.Slice(failure.index),
+      )
+  }
+
+  // https://com-lihaoyi.github.io/fastparse/#HigherOrderParsers
+  private def sliced[$: P, T](inner: => P[T]): P[(T, source.Slice)] =
+    P((Index ~~ inner ~~ Index).map { case (start, value, end) => (value, source.Slice(start, end)) })
 
   /**
    * An identifier consists of one or more characters from the set `a-zA-Z0-9_`. The first character must not be a
@@ -136,8 +96,9 @@ object HippoParser {
       .map(foo => AstExpression.BuiltinFunction(foo))
   ).opaque("builtin function")
 
-  private def importExpression[$: P]: P[AstExpression.Import] =
-    P((keywordImport ~/ expression).map(AstExpression.Import))
+  private def importExpression[$: P]: P[AstExpression.Import] = P(sliced(keywordImport ~/ expression).map {
+    case (path, slice) => AstExpression.Import(path = path, slice = slice)
+  })
 
   private def declareExpression[$: P]: P[AstExpression.Declare] = P({
     def exports = keywordExport.!.?.map(_.isDefined)
@@ -298,4 +259,50 @@ object HippoParser {
 
   private def program[$: P]: P[AstExpression.Block] =
     P((Start ~ (expression ~ ";"./).rep ~ End).map(AstExpression.Block(_, returnExpr = None)))
+}
+
+object HippoParser {
+  // When the parser is changed, this alphabetically sorted list of keywords must be kept up-to-date.
+  // To parse a keyword, always use the corresponding constant instead of a magic string value.
+  // This helps ensure the list does not become outdated.
+  private val keywordBackward = "backward"
+  private val keywordBy = "by"
+  private val keywordDlExpression = "dL"
+  private val keywordDlSequent = "dLs"
+  private val keywordElse = "else"
+  private val keywordExport = "export"
+  private val keywordFalse = "false"
+  private val keywordFunction = "function"
+  private val keywordGraph = "graph"
+  private val keywordIf = "if"
+  private val keywordImport = "import"
+  private val keywordNull = "null"
+  private val keywordPremise = "premise"
+  private val keywordTheorem = "theorem"
+  private val keywordTrue = "true"
+  private val keywordVal = "val"
+  private val keywordVar = "var"
+  private val keywordVerified = "verified"
+  private val keywordWhile = "while"
+  val keywords: Set[String] = Set(
+    keywordBackward,
+    keywordBy,
+    keywordDlExpression,
+    keywordDlSequent,
+    keywordElse,
+    keywordExport,
+    keywordFalse,
+    keywordFunction,
+    keywordGraph,
+    keywordIf,
+    keywordImport,
+    keywordNull,
+    keywordPremise,
+    keywordTheorem,
+    keywordTrue,
+    keywordVal,
+    keywordVar,
+    keywordVerified,
+    keywordWhile,
+  )
 }

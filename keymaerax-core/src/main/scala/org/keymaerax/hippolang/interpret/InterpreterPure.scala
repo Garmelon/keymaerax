@@ -7,7 +7,14 @@ package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.hippolang.HippoConversions._
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
-import org.keymaerax.hippolang.{BuiltinFunction, BuiltinMemberFunction, HippoExpression, HippoIdentifier, HippoValue}
+import org.keymaerax.hippolang.{
+  BuiltinFunction,
+  BuiltinMemberFunction,
+  HippoExpression,
+  HippoIdentifier,
+  HippoValue,
+  HlangException,
+}
 import org.keymaerax.hippolib.meta.TacticInfo
 import org.keymaerax.hippolib.primitive.Cached
 import org.keymaerax.hippolochos.run.HippoContext
@@ -17,8 +24,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
   def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {
     case HippoExpression.Const(value) => value
 
-    case HippoExpression.Import(_) =>
-      throw new UnsupportedOperationException("import not allowed during pure evaluation")
+    case e: HippoExpression.Import => throw HlangException("import not allowed during pure evaluation", e.slice)
 
     case HippoExpression.Declare(true, _, _, _) =>
       throw new UnsupportedOperationException("export not allowed during pure evaluation")

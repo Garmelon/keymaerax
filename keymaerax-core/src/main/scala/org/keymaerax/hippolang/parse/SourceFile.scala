@@ -31,7 +31,7 @@ case class SourceFile(text: String, path: Option[Path] = None) {
 
     def text: String = SourceFile.this.text.slice(start, end)
 
-    def formatError(error: String, label: String): String = {
+    def format(label: String): String = {
       val (startRow, startCol) = rowColAt(start)
       val (endRow, endCol) = rowColAt(end)
       val firstRow = (startRow - 1) max 0
@@ -42,7 +42,6 @@ case class SourceFile(text: String, path: Option[Path] = None) {
       def preOf(line: Int): String = line.toString.reverse.padTo(lineNumberWidth, ' ').reverse
 
       val lines = Seq.newBuilder[String]
-      lines.addOne(s"Error: $error")
 
       val location = s"[${startRow + 1}:${startCol + 1}]"
       path match {

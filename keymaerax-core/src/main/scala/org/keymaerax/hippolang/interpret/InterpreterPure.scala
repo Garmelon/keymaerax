@@ -54,16 +54,19 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
     case HippoExpression.Function(args, body) => HippoValue.Function(namespace.freeze, args, body)
 
-    case HippoExpression.Theorem(verified, conclusion, premises, proof) =>
-      val conclusionV = eval(namespace, conclusion).asSequent
-      val premisesV = premises.map(eval(namespace, _).asSequent).toIndexedSeq
-      val proofV = eval(namespace, proof).asTactic
-      val proven = ctx.tactic(Cached(proofV), conclusionV, premisesV)
-      if (verified) {
+    case e: HippoExpression.Theorem =>
+      val conclusion = eval(namespace, e.conclusion).asSequent
+      val premises = e.premises.map(eval(namespace, _).asSequent).toIndexedSeq
+      val proof = eval(namespace, e.proof).asTactic
+      val proven = HlangException
+        .at(e.proofSlice, "while running this tactic") { ctx.tactic(Cached(proof), conclusion, premises) }
+
+      for (slice <- e.verifySlice) HlangException.at(slice, "while verifying this theorem") {
         val provable = ctx.provableFromLocalProof(proven)
-        require(provable.conclusion == proven.conclusion)
-        require(provable.subgoals == proven.premises.map(_.sequent))
+        require(provable.conclusion == proven.conclusion, "Provable conclusion does not match")
+        require(provable.subgoals == proven.premises.map(_.sequent), "Provable subgoals don't match")
       }
+
       proven.toHValue
 
     case HippoExpression.Sequence(exprs, returnExpr) =>

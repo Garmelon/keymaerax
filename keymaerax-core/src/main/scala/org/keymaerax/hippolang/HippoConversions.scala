@@ -114,8 +114,13 @@ object HippoConversions {
       case AstExpression.If(condition, ifTrue, ifFalse) => If(condition.toHExpr, ifTrue.toHExpr, ifFalse.map(_.toHExpr))
       case AstExpression.While(condition, body) => While(condition.toHExpr, body.toHExpr)
       case AstExpression.Function(args, body) => Function(args.map(_.name), body.toHExpr)
-      case AstExpression.Theorem(verified, conclusion, premises, proof) =>
-        Theorem(verified, conclusion.toHExpr, premises.map(_.toHExpr), proof.toHExpr)
+      case e: AstExpression.Theorem => Theorem(
+          verifySlice = e.verifySlice,
+          conclusion = e.conclusion.toHExpr,
+          premises = e.premises.map(_.toHExpr),
+          proof = e.proof.toHExpr,
+          proofSlice = e.proofSlice,
+        )
       case AstExpression.Parens(exprs, returnExpr) => Sequence(exprs.map(_.toHExpr), returnExpr.map(_.toHExpr))
       case AstExpression.Block(exprs, returnExpr) => Block(Sequence(exprs.map(_.toHExpr), returnExpr.map(_.toHExpr)))
       case AstExpression.BackwardBlock(inner) => BackwardBlock(inner.toHExpr)

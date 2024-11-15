@@ -124,8 +124,13 @@ object AstExpression {
    *   by <proof>
    * }}}
    */
-  case class Theorem(verified: Boolean, conclusion: AstExpression, premises: Seq[AstExpression], proof: AstExpression)
-      extends AstExpression
+  case class Theorem(
+      verifySlice: Option[SourceFile#Slice],
+      conclusion: AstExpression,
+      premises: Seq[AstExpression],
+      proof: AstExpression,
+      proofSlice: SourceFile#Slice,
+  ) extends AstExpression
 
   /**
    * {{{

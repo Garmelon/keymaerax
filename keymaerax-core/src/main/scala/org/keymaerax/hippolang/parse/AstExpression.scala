@@ -67,7 +67,7 @@ object AstExpression {
    *   import <path>
    * }}}
    */
-  case class Import(path: AstExpression) extends AstExpression
+  case class Import(path: AstExpression, slice: SourceFile#Slice) extends AstExpression
 
   /**
    * {{{

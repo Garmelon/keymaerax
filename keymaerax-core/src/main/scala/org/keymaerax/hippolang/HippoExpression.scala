@@ -5,6 +5,8 @@
 
 package org.keymaerax.hippolang
 
+import org.keymaerax.hippolang.parse.SourceFile
+
 sealed trait HippoExpression
 
 object HippoExpression {
@@ -14,7 +16,7 @@ object HippoExpression {
 
   case class Const(value: HippoValue) extends HippoExpression
 
-  case class Import(path: HippoExpression) extends HippoExpression
+  case class Import(path: HippoExpression, slice: SourceFile#Slice) extends HippoExpression
 
   case class Declare(exports: Boolean, mutable: Boolean, name: HippoIdentifier, value: HippoExpression)
       extends HippoExpression

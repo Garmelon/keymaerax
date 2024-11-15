@@ -199,7 +199,7 @@ object Hash {
 
     def digest(expr: HippoExpression): Builder = expr match {
       case HippoExpression.Const(value) => digest("Const").digest(value)
-      case HippoExpression.Import(path) => digest("Import").digest(path)
+      case HippoExpression.Import(path, slice) => digest("Import").digest(path)
       case HippoExpression.Declare(exports, mutable, name, value) =>
         digest("Declare").digest(exports).digest(mutable).digest(name).digest(value)
       case HippoExpression.Assign(name, value) => digest("Assign").digest(name).digest(value)

@@ -180,24 +180,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
     case BuiltinFunction.List => HippoValue.List(args)
 
     case BuiltinFunction.Print =>
-      val argStrs = args.map {
-        case HippoValue.Null => "null"
-        case HippoValue.Bool(value) => value.toString
-        case HippoValue.Int(value) => value.toString
-        case HippoValue.String(value) => value
-        case HippoValue.List(values) => "<list>"
-        case HippoValue.DlExpression(value) => value.toString
-        case HippoValue.DlSequent(value) => value.toString
-        case HippoValue.Namespace(value) => "<namespace>"
-        case HippoValue.Proof(value) => "<proof>"
-        case HippoValue.Tactic(value) => "<tactic>"
-        case HippoValue.ProofInfo(value) => "<proof info>"
-        case HippoValue.TacticInfo(value) => "<tactic info>"
-        case HippoValue.BuiltinFunction(value) => s"<builtin function ${value.name}>"
-        case HippoValue.BuiltinMemberFunction(target, value) => s"<builtin member function ${value.name}>"
-        case HippoValue.Function(env, args, body) => s"<function>"
-      }
-      println(argStrs.mkString)
+      println(args.map(_.format).mkString)
       HippoValue.Null
 
     case BuiltinFunction.Premise => throw new UnsupportedOperationException(

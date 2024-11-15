@@ -77,7 +77,7 @@ object AstExpression {
    * export var <name> = <value>
    * }}}
    */
-  case class Declare(exports: Boolean, mutable: Boolean, name: AstIdentifier, value: AstExpression)
+  case class Declare(exportSlice: Option[SourceFile#Slice], mutable: Boolean, name: AstIdentifier, value: AstExpression)
       extends AstExpression
 
   /**

@@ -26,13 +26,11 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
     case e: HippoExpression.Import => throw HlangException("import not allowed during pure evaluation", e.slice)
 
-    case HippoExpression.Declare(true, _, _, _) =>
-      throw new UnsupportedOperationException("export not allowed during pure evaluation")
-
-    case HippoExpression.Declare(false, mutable, name, value) =>
-      val valueV = eval(namespace, value)
-      namespace.declare(name, valueV, mutable)
-      valueV
+    case e: HippoExpression.Declare =>
+      for (slice <- e.exportSlice) throw HlangException("export not allowed during pure evaluation", slice)
+      val value = eval(namespace, e.value)
+      namespace.declare(e.name, value, e.mutable)
+      value
 
     case HippoExpression.Assign(name, value) =>
       val valueV = eval(namespace, value)

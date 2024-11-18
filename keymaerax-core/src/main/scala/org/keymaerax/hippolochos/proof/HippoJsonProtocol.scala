@@ -6,7 +6,7 @@
 package org.keymaerax.hippolochos.proof
 
 import org.keymaerax.core.{Formula, Program, SubstitutionPair, Term}
-import org.keymaerax.hippolochos.tools.Hash
+import org.keymaerax.hippolochos.tools.{Hash, SequentPrinter}
 import org.keymaerax.parser.FullPrettyPrinter
 import org.keymaerax.{core, GlobalState}
 import spray.json._
@@ -66,9 +66,7 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
       // For now, I'm choosing the former since it should be more compact.
       // However, it might lead to issues if there's unforeseen interactions in the syntax.
       // Should that happen, encoding sequents as expressions in a JSON structure should be more robust.
-      val ante = obj.ante.map(printer).mkString(", ")
-      val succ = obj.succ.map(printer).mkString(", ")
-      JsString(s"$ante ==> $succ".trim)
+      SequentPrinter.oneline(obj).toJson
     }
     override def read(json: JsValue): core.Sequent = parser.sequentParser(json.convertTo[String])
   }

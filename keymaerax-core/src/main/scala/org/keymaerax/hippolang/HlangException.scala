@@ -9,6 +9,7 @@ import org.keymaerax.hippolang.parse.SourceFile
 import org.keymaerax.hippolochos.HippoException
 
 import java.io.{PrintWriter, StringWriter}
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 class HlangException(message: String, cause: Throwable = null)
@@ -21,28 +22,41 @@ class HlangException(message: String, cause: Throwable = null)
     this
   }
 
-  def formatForwards: String = {
-    val blocks = mutable.Buffer.empty[String]
+  private def differingCauseTrace(cause: Throwable): Seq[StackTraceElement] = {
+    require(cause != null)
 
-    blocks.append(s"Error: $message")
-    for ((slice, label) <- locations) blocks.append(slice.format(label))
-    if (cause != null) blocks.append(HlangException.formatCause(cause))
+    var ownTrace = getStackTrace.reverseIterator.toList
+    var causeTrace = cause.getStackTrace.reverseIterator.toList
 
-    blocks.mkString("\n\n")
+    while (ownTrace.nonEmpty && causeTrace.nonEmpty && ownTrace.head == causeTrace.head) {
+      ownTrace = ownTrace.tail
+      causeTrace = causeTrace.tail
+    }
+
+    causeTrace.reverse
   }
 
-  def formatBackwards: String = {
+  @tailrec
+  private def formatCauses(cause: Throwable, blocks: mutable.Buffer[String]): Unit = {
+    if (cause == null) return
+    val trace = differingCauseTrace(cause).map(_.toString).mkString("\n")
+    val block = s"${cause.getMessage.stripLineEnd}\n$trace"
+    blocks.prepend("Led to:")
+    blocks.prepend(block)
+    formatCauses(cause.getCause, blocks)
+  }
+
+  def format: String = {
     val blocks = mutable.Buffer.empty[String]
 
-    if (cause != null) blocks.append(HlangException.formatCause(cause))
+    formatCauses(cause, blocks)
     for ((slice, label) <- locations.reverse) blocks.append(slice.format(label))
     blocks.append(s"Error: $message")
 
     blocks.mkString("\n\n")
   }
 
-  def printForwards(): Unit = println(formatForwards)
-  def printBackwards(): Unit = println(formatBackwards)
+  def print(): Unit = println(format)
 }
 
 object HlangException {

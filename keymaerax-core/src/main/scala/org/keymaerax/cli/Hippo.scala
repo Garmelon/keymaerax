@@ -26,7 +26,7 @@ class Hippo {
     catch {
       case e: HlangException =>
         println()
-        e.printBackwards()
+        e.print()
         exit(1)
       case e: Throwable =>
         println("An exception occurred during hippo evaluation:")
@@ -41,7 +41,7 @@ class Hippo {
     catch {
       case e: HlangException =>
         println()
-        e.printBackwards()
+        e.print()
       case e: Throwable =>
         println("An exception occurred during hippo evaluation:")
         println(e.getMessage)

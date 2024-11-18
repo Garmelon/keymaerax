@@ -129,39 +129,100 @@ object HippoConversions {
       case e: AstExpression.BuiltinAccess =>
         BuiltinAccess(slice = e.slice, target = e.target.toHExpr, member = e.member)
       case e: AstExpression.Access => Access(slice = e.slice, target = e.target.toHExpr, name = e.name.name)
-      case e: AstExpression.Apply => Apply(slice = e.slice, target = e.target.toHExpr, args = e.args.map(_.toHExpr))
+      case e: AstExpression.Apply =>
+        Apply(slice = e.slice, target = e.target.toHExpr, args = e.args.map(_.toHExpr), argsSlice = e.argsSlice)
       case e: AstExpression.ApplyTactic =>
         ApplyTactic(slice = e.slice, target = e.target.toHExpr, args = e.args.map(_.toHExpr), argsSlice = e.argsSlice)
-      case e: AstExpression.Not =>
-        Apply(slice = e.slice, BuiltinFunction.Not.toHValue.toHExpr(e.opSlice), e.target.toHExpr)
-      case e: AstExpression.Neg =>
-        Apply(slice = e.slice, BuiltinFunction.Neg.toHValue.toHExpr(e.opSlice), e.target.toHExpr)
-      case e: AstExpression.Mul =>
-        Apply(slice = e.slice, BuiltinFunction.Mul.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.Div =>
-        Apply(slice = e.slice, BuiltinFunction.Div.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.Add =>
-        Apply(slice = e.slice, BuiltinFunction.Add.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.Sub =>
-        Apply(slice = e.slice, BuiltinFunction.Sub.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.Gt =>
-        Apply(slice = e.slice, BuiltinFunction.Gt.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.Gte =>
-        Apply(slice = e.slice, BuiltinFunction.Gte.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.Lt =>
-        Apply(slice = e.slice, BuiltinFunction.Lt.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.Lte =>
-        Apply(slice = e.slice, BuiltinFunction.Lte.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.Eq =>
-        Apply(slice = e.slice, BuiltinFunction.Eq.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.Neq =>
-        Apply(slice = e.slice, BuiltinFunction.Neq.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.And =>
-        Apply(slice = e.slice, BuiltinFunction.And.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.Or =>
-        Apply(slice = e.slice, BuiltinFunction.Or.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
-      case e: AstExpression.MapsTo =>
-        Apply(slice = e.slice, BuiltinFunction.List.toHValue.toHExpr(e.opSlice), e.left.toHExpr, e.right.toHExpr)
+      case e: AstExpression.Not => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Not.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.target.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Neg => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Neg.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.target.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Mul => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Mul.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Div => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Div.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Add => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Add.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Sub => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Sub.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Gt => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Gt.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Gte => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Gte.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Lt => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Lt.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Lte => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Lte.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Eq => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Eq.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Neq => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Neq.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.And => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.And.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.Or => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.Or.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
+      case e: AstExpression.MapsTo => Apply(
+          slice = e.slice,
+          target = BuiltinFunction.List.toHValue.toHExpr(e.opSlice),
+          args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
+          argsSlice = e.slice,
+        )
     }
   }
 }

@@ -220,7 +220,8 @@ object Hash {
       case HippoExpression.GraphBlock(slice, inner) => digest("GraphBlock").digest(inner)
       case HippoExpression.BuiltinAccess(slice, target, member) => digest("BuiltinAccess").digest(target).digest(member)
       case HippoExpression.Access(slice, target, name) => digest("Access").digest(target).digest(name)
-      case HippoExpression.Apply(slice, target, args) => digest("Apply").digest(target).digestSeq(args)(_.digest(_))
+      case HippoExpression.Apply(slice, target, args, argsSlice) =>
+        digest("Apply").digest(target).digestSeq(args)(_.digest(_))
       case HippoExpression.ApplyTactic(slice, target, args, argsSlice) =>
         digest("ApplyTactic").digest(target).digestSeq(args)(_.digest(_))
     }

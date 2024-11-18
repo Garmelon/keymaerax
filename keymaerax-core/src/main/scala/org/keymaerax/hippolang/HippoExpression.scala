@@ -76,13 +76,12 @@ object HippoExpression {
 
   case class Access(slice: SourceFile#Slice, target: HippoExpression, name: HippoIdentifier) extends HippoExpression
 
-  case class Apply(slice: SourceFile#Slice, target: HippoExpression, args: IndexedSeq[HippoExpression])
-      extends HippoExpression
-
-  object Apply {
-    def apply(slice: SourceFile#Slice, target: HippoExpression, args: HippoExpression*): Apply =
-      Apply(slice, target, args.toIndexedSeq)
-  }
+  case class Apply(
+      slice: SourceFile#Slice,
+      target: HippoExpression,
+      args: IndexedSeq[HippoExpression],
+      argsSlice: SourceFile#Slice,
+  ) extends HippoExpression
 
   case class ApplyTactic(
       slice: SourceFile#Slice,

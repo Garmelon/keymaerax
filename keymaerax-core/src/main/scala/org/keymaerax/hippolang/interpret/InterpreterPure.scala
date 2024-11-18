@@ -123,8 +123,10 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       case _ => throw new IllegalArgumentException("can only apply builtin")
     }
 
-  private def applyTacticInfo(e: HippoExpression.Apply, info: TacticInfo, args: IndexedSeq[HippoValue]): HippoValue =
-    info.constructor.constructPositional(args.map(InterpreterPure.hippoValToTacticArg)).toHValue
+  private def applyTacticInfo(e: HippoExpression.Apply, info: TacticInfo, args: IndexedSeq[HippoValue]): HippoValue = {
+    val tacticArgs = args.map(InterpreterPure.hippoValToTacticArg)
+    HlangException.at(e.argsSlice, "while constructing the tactic") { info.constructor.constructPositional(tacticArgs).toHValue }
+  }
 
   private def applyBuiltinFunction(
       e: HippoExpression.Apply,

@@ -52,17 +52,18 @@ class InterpreterGraph(ictx: HippoInterpreterContext, ctx: HippoContext) extends
     case _ => super.eval(namespace, expr)
   }
 
-  override def applyValue(target: HippoValue, args: IndexedSeq[HippoValue]): HippoValue = target match {
-    case HippoValue.BuiltinFunction(BuiltinFunction.Premise) => args match {
-        case Seq(HippoValue.Int(i)) if i >= 0 =>
-          HippoValue.Int(premises.getOrElseUpdate(i, registerNode(graph.premise(i))))
-        case Seq(HippoValue.Int(_)) => throw new IllegalArgumentException("premise id must not be negative")
-        case Seq(_) => throw new IllegalArgumentException("premise id must be a nonnegative integer")
-        case _ => throw new IllegalArgumentException("exactly one argument required")
-      }
+  override def applyValue(e: HippoExpression.Apply, target: HippoValue, args: IndexedSeq[HippoValue]): HippoValue =
+    target match {
+      case HippoValue.BuiltinFunction(BuiltinFunction.Premise) => args match {
+          case Seq(HippoValue.Int(i)) if i >= 0 =>
+            HippoValue.Int(premises.getOrElseUpdate(i, registerNode(graph.premise(i))))
+          case Seq(HippoValue.Int(_)) => throw new IllegalArgumentException("premise id must not be negative")
+          case Seq(_) => throw new IllegalArgumentException("premise id must be a nonnegative integer")
+          case _ => throw new IllegalArgumentException("exactly one argument required")
+        }
 
-    case _ => super.applyValue(target, args)
-  }
+      case _ => super.applyValue(e, target, args)
+    }
 }
 
 object InterpreterGraph {

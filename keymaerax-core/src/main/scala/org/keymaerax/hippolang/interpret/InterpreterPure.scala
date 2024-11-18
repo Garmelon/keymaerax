@@ -94,7 +94,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
     case e: HippoExpression.Apply =>
       val target = eval(namespace, e.target)
       val args = e.args.map(eval(namespace, _))
-      applyValue(target, args)
+      applyValue(e, target, args)
 
     case e: HippoExpression.ApplyTactic =>
       throw HlangException("tactic application not allowed in normal mode", slice = e.slice)
@@ -114,20 +114,23 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
   }
 
   // Protected because otherwise the values would have to be computed twice.
-  protected def applyValue(target: HippoValue, args: IndexedSeq[HippoValue]): HippoValue = target match {
-    case HippoValue.TacticInfo(value) => applyTacticInfo(value, args)
-    case HippoValue.BuiltinFunction(value) => applyBuiltinFunction(value, args)
-    case HippoValue.BuiltinMemberFunction(target, value) => applyBuiltinMemberFunction(target, value, args)
-    case HippoValue.Function(env, argNames, body) => applyFunction(env, argNames, body, args)
-    case _ => throw new IllegalArgumentException("can only apply builtin")
-  }
+  protected def applyValue(e: HippoExpression.Apply, target: HippoValue, args: IndexedSeq[HippoValue]): HippoValue =
+    target match {
+      case HippoValue.TacticInfo(value) => applyTacticInfo(e, value, args)
+      case HippoValue.BuiltinFunction(value) => applyBuiltinFunction(e, value, args)
+      case HippoValue.BuiltinMemberFunction(target, value) => applyBuiltinMemberFunction(e, target, value, args)
+      case HippoValue.Function(env, argNames, body) => applyFunction(e, env, argNames, body, args)
+      case _ => throw new IllegalArgumentException("can only apply builtin")
+    }
 
-  private def applyTacticInfo(info: TacticInfo, args: IndexedSeq[HippoValue]): HippoValue = info
-    .constructor
-    .constructPositional(args.map(InterpreterPure.hippoValToTacticArg))
-    .toHValue
+  private def applyTacticInfo(e: HippoExpression.Apply, info: TacticInfo, args: IndexedSeq[HippoValue]): HippoValue =
+    info.constructor.constructPositional(args.map(InterpreterPure.hippoValToTacticArg)).toHValue
 
-  private def applyBuiltinFunction(target: BuiltinFunction, args: IndexedSeq[HippoValue]): HippoValue = target match {
+  private def applyBuiltinFunction(
+      e: HippoExpression.Apply,
+      target: BuiltinFunction,
+      args: IndexedSeq[HippoValue],
+  ): HippoValue = target match {
     case BuiltinFunction.Not =>
       val Seq(arg) = args
       (!arg.isTruthy).toHValue
@@ -142,7 +145,10 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
     case BuiltinFunction.Div =>
       val Seq(left, right) = args
-      (left.asInt / right.asInt).toHValue
+      val leftI = left.asInt
+      val rightI = right.asInt
+      if (rightI == 0) throw HlangException("division by zero", e.args(1).slice, "this divisor is zero")
+      (leftI / rightI).toHValue
 
     case BuiltinFunction.Add =>
       val Seq(left, right) = args
@@ -196,6 +202,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
   }
 
   private def applyBuiltinMemberFunction(
+      e: HippoExpression.Apply,
       target: HippoValue,
       value: BuiltinMemberFunction,
       args: IndexedSeq[HippoValue],
@@ -219,6 +226,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
   }
 
   private def applyFunction(
+      e: HippoExpression.Apply,
       env: ImmutableNamespace,
       argNames: Seq[HippoIdentifier],
       body: HippoExpression,

@@ -9,4 +9,10 @@ class HippoException(message: String, cause: Throwable = null) extends Exception
 
 object HippoException {
   def apply(message: String, cause: Throwable = null): HippoException = new HippoException(message, cause)
+
+  @inline
+  def fail(message: String, cause: Throwable = null): Nothing = throw new HippoException(message, cause)
+
+  @inline
+  def require(condition: Boolean, message: => String): Unit = if (!condition) throw new HippoException(message)
 }

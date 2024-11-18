@@ -37,7 +37,7 @@ case class SourceFile(text: String, path: Option[Path] = None) {
       val firstRow = (startRow - 1) max 0
       val lastRow = (endRow + 1) min (SourceFile.this.lines - 1)
 
-      val lineNumberWidth = lastRow.toString.length
+      val lineNumberWidth = (lastRow + 1).toString.length
       val preEmpty = " " * lineNumberWidth
       def preOf(line: Int): String = line.toString.reverse.padTo(lineNumberWidth, ' ').reverse
 

@@ -58,11 +58,7 @@ case class RewriteAtU(at: ExprPath, eq: HippoProof, dir: Option[RewriteAt.Dir] =
       case Some(Dir.Ltr) => (Dir.Ltr, UnificationMatch(leftE, beforeInner))
       case None =>
         try (Dir.Rtl, UnificationMatch(rightE, beforeInner))
-        catch {
-          case _: UnificationException =>
-            try (Dir.Ltr, UnificationMatch(leftE, beforeInner))
-            catch { case _: UnificationException => ??? }
-        }
+        catch { case _: UnificationException => (Dir.Ltr, UnificationMatch(leftE, beforeInner)) }
     }
 
     ctx.chain(before).forwardJoin(RewriteAt(at, dir = Some(actualDir)), subst.toHippo(eq)).proof
@@ -80,11 +76,7 @@ case class RewriteAtU(at: ExprPath, eq: HippoProof, dir: Option[RewriteAt.Dir] =
       case Some(Dir.Ltr) => (Dir.Ltr, UnificationMatch(rightE, afterInner))
       case None =>
         try (Dir.Rtl, UnificationMatch(leftE, afterInner))
-        catch {
-          case _: UnificationException =>
-            try (Dir.Ltr, UnificationMatch(rightE, afterInner))
-            catch { case _: UnificationException => ??? }
-        }
+        catch { case _: UnificationException => (Dir.Ltr, UnificationMatch(rightE, afterInner)) }
     }
 
     ctx.chain(after).backwardJoin(RewriteAt(at, dir = Some(actualDir)), 1 -> subst.toHippo(eq)).proof

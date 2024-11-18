@@ -8,7 +8,7 @@ package org.keymaerax.hippolang.interpret
 import org.keymaerax.core.Sequent
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.{HippoExpression, HippoValue, HlangException}
-import org.keymaerax.hippolochos.BackwardTactic
+import org.keymaerax.hippolochos.{BackwardTactic, HippoException}
 import org.keymaerax.hippolochos.run.{HippoContext, ProofChain}
 
 class InterpreterBackward(ictx: HippoInterpreterContext, ctx: HippoContext, conclusion: Sequent)
@@ -33,7 +33,7 @@ class InterpreterBackward(ictx: HippoInterpreterContext, ctx: HippoContext, conc
         case _ => throw HlangException("too many arguments", slice = e.argsSlice, label = "only 0 or 1 args allowed")
       }
 
-      chain = chain.backwardAt(arg)(target)
+      chain = HlangException.at(e.slice, "while running this tactic") { chain.backwardAt(arg)(target) }
 
       HippoValue.Null
 

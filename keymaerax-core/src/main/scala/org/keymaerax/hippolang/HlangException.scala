@@ -54,10 +54,10 @@ object HlangException {
 
   def apply(message: String, cause: Throwable = null): HlangException = new HlangException(message, cause)
 
+  def apply(message: String, slice: SourceFile#Slice): HlangException = new HlangException(message).addLocation(slice)
+
   def apply(message: String, slice: SourceFile#Slice, label: String): HlangException = new HlangException(message)
     .addLocation(slice, label)
-
-  def apply(message: String, slice: SourceFile#Slice): HlangException = new HlangException(message).addLocation(slice)
 
   def apply(message: String, slice: SourceFile#Slice, label: String, cause: Throwable): HlangException =
     new HlangException(message, cause).addLocation(slice, label)

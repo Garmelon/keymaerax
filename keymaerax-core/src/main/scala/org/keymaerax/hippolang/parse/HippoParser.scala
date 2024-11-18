@@ -25,13 +25,12 @@ class HippoParser(source: SourceFile) {
   }
 
   // https://com-lihaoyi.github.io/fastparse/#HigherOrderParsers
-  private def slice[$: P](inner: => P[_]): P[source.Slice] = P((Index ~~ inner.! ~~ Index).map { case (start, _, end) =>
-    source.Slice(start, end)
-  })
+  private def slice[$: P](inner: => P[_]): P[source.Slice] =
+    P { (Index ~~ inner.! ~~ Index).map { case (start, _, end) => source.Slice(start, end) } }
 
   // https://com-lihaoyi.github.io/fastparse/#HigherOrderParsers
   private def sliced[$: P, T](inner: => P[T]): P[(T, source.Slice)] =
-    P((Index ~~ inner ~~ Index).map { case (start, value, end) => (value, source.Slice(start, end)) })
+    P { (Index ~~ inner ~~ Index).map { case (start, value, end) => (value, source.Slice(start, end)) } }
 
   /**
    * An identifier consists of one or more characters from the set `a-zA-Z0-9_`. The first character must not be a
@@ -40,23 +39,26 @@ class HippoParser(source: SourceFile) {
    * @see
    *   [[HippoIdentifier]], [[intExpression]]
    */
-  private def identifier[$: P]: P[AstIdentifier] = P({
+  private def identifier[$: P]: P[AstIdentifier] = P {
     def startChar = CharPred(HippoIdentifier.isValidStartChar(_))
     def restChars = CharsWhile(HippoIdentifier.isValidChar(_)).?
     def identifier = (startChar ~~ restChars).!.map(HippoIdentifier(_))
     def quotedIdentifier = "'" ~~ identifier ~~ "'"
     (quotedIdentifier | identifier).map(AstIdentifier)
-  }).opaque("identifier")
+  }.opaque("identifier")
 
   ///////////////////////////
   // Primitive expressions //
   ///////////////////////////
 
-  private def nullExpression[$: P]: P[AstExpression.Null] = P(keywordNull.!.map(_ => AstExpression.Null()))
+  private def nullExpression[$: P]: P[AstExpression.Null] =
+    P { slice(keywordNull).map(slice => AstExpression.Null(slice = slice)) }
 
   /** A boolean literal is either `true` or `false`. */
-  private def boolExpression[$: P]: P[AstExpression.Bool] =
-    P(keywordTrue.!.map(_ => AstExpression.Bool(true)) | keywordFalse.!.map(_ => AstExpression.Bool(false)))
+  private def boolExpression[$: P]: P[AstExpression.Bool] = P {
+    def literal = keywordTrue.!.map(_ => true) | keywordFalse.!.map(_ => false)
+    sliced(literal).map { case (value, slice) => AstExpression.Bool(slice = slice, value = value) }
+  }
 
   /**
    * An integer literal is an optional sign (`+` or `-`), followed directly with no spaces by one or more decimal
@@ -69,14 +71,14 @@ class HippoParser(source: SourceFile) {
    * @see
    *   [[identifier]], [[negExpression]]
    */
-  private def intExpression[$: P]: P[AstExpression.Int] = P({
+  private def intExpression[$: P]: P[AstExpression.Int] = P {
     def sign = ("+" | "-").?
     def body = CharIn("0-9") ~~/ CharsWhileIn("0-9_").?
     def value = (sign ~~ body).!.map(_.replaceAll("_", "")).map(Integer.parseInt)
-    value.map(AstExpression.Int)
-  }).opaque("integer")
+    sliced(value).map { case (value, slice) => AstExpression.Int(slice = slice, value = value) }
+  }.opaque("integer")
 
-  private def stringExpression[$: P]: P[AstExpression.String] = P({
+  private def stringExpression[$: P]: P[AstExpression.String] = P {
     def unescapedChars = CharsWhile(c => !(c == '\\' || c == '"')).!
     def escapedChar = "\\" ~~ SingleChar.map {
       case 'b' => '\b'
@@ -86,85 +88,109 @@ class HippoParser(source: SourceFile) {
       case 't' => '\t'
       case c => c
     }
-    ("\"" ~~/ (unescapedChars | escapedChar).repX ~~ "\"").map(_.mkString).map(AstExpression.String)
-  }).opaque("string")
+    sliced("\"" ~~/ (unescapedChars | escapedChar).repX ~~ "\"").map { case (segments, slice) =>
+      AstExpression.String(slice = slice, value = segments.mkString)
+    }
+  }.opaque("string")
 
-  private def dlExpressionExpression[$: P]: P[AstExpression.DlExpression] =
-    P((keywordDlExpression ~/ "{" ~ dlParser.expression ~ "}").map(AstExpression.DlExpression))
+  private def dlExpressionExpression[$: P]: P[AstExpression.DlExpression] = P {
+    sliced(keywordDlExpression ~/ "{" ~ dlParser.expression ~ "}").map { case (value, slice) =>
+      AstExpression.DlExpression(slice = slice, value = value)
+    }
+  }
 
-  private def dlSequentExpression[$: P]: P[AstExpression.DlSequent] =
-    P((keywordDlSequent ~/ "{" ~ dlParser.sequent ~ "}").map(AstExpression.DlSequent))
+  private def dlSequentExpression[$: P]: P[AstExpression.DlSequent] = P {
+    sliced(keywordDlSequent ~/ "{" ~ dlParser.sequent ~ "}").map { case (value, slice) =>
+      AstExpression.DlSequent(slice = slice, value = value)
+    }
+  }
 
-  private def builtinFunctionExpression[$: P]: P[AstExpression.BuiltinFunction] = P(
-    ("#" ~~/ identifier)
+  private def builtinFunctionExpression[$: P]: P[AstExpression.BuiltinFunction] = P {
+    def builtinFunction = ("#" ~~/ identifier)
       .flatMapX(name => BuiltinFunction.byName.get(name.name).map(Pass(_)).getOrElse(Fail))
-      .map(foo => AstExpression.BuiltinFunction(foo))
-  ).opaque("builtin function")
+    sliced(builtinFunction).map { case (value, slice) => AstExpression.BuiltinFunction(slice = slice, value = value) }
+  }.opaque("builtin function")
 
-  private def importExpression[$: P]: P[AstExpression.Import] = P(sliced(keywordImport ~/ expression).map {
-    case (path, slice) => AstExpression.Import(path = path, slice = slice)
-  })
+  private def importExpression[$: P]: P[AstExpression.Import] = P {
+    sliced(keywordImport ~/ expression).map { case (path, slice) => AstExpression.Import(path = path, slice = slice) }
+  }
 
-  private def declareExpression[$: P]: P[AstExpression.Declare] = P({
-    def const = keywordVal.!.map(_ => false) | keywordVar.!.map(_ => true)
-    (slice(keywordExport./).? ~ const ~/ identifier ~ "=" ~ expression).map {
-      case (exportSlice, mutable, name, value) => AstExpression.Declare(exportSlice = exportSlice, mutable, name, value)
+  private def declareExpression[$: P]: P[AstExpression.Declare] = P {
+    def mutable = keywordVal.!.map(_ => false) | keywordVar.!.map(_ => true)
+    sliced(slice(keywordExport./).? ~ mutable ~/ identifier ~ "=" ~ expression).map {
+      case ((exportSlice, mutable, name, value), slice) => AstExpression
+          .Declare(slice = slice, exportSlice = exportSlice, mutable = mutable, name = name, value = value)
     }
-  })
+  }
 
-  private def assignExpression[$: P]: P[AstExpression.Assign] =
-    P((identifier ~ "=" ~/ expression).map { case (name, value) => AstExpression.Assign(name, value) })
-
-  private def lookupExpression[$: P]: P[AstExpression.Lookup] = P(identifier.map(AstExpression.Lookup))
-
-  private def ifExpression[$: P]: P[AstExpression.If] = P(
-    (keywordIf ~/ parensExpression ~ expression ~ (keywordElse ~/ expression).?)
-      .map { case (condition, ifTrue, ifFalse) => AstExpression.If(condition, ifTrue, ifFalse) }
-  )
-
-  private def whileExpression[$: P]: P[AstExpression.While] = P((keywordWhile ~/ parensExpression ~ expression).map {
-    case (condition, body) => AstExpression.While(condition, body)
-  })
-
-  private def functionExpression[$: P]: P[AstExpression.Function] = P(
-    (keywordFunction ~/ "(" ~ identifier.rep(sep = ","./) ~ ",".? ~ ")" ~/ expression).map { case (args, body) =>
-      AstExpression.Function(args, body)
+  private def assignExpression[$: P]: P[AstExpression.Assign] = P {
+    sliced(identifier ~ "=" ~/ expression).map { case ((name, value), slice) =>
+      AstExpression.Assign(slice = slice, name = name, value = value)
     }
-  )
+  }
 
-  private def theoremExpression[$: P]: P[AstExpression.Theorem] = P({
-    (slice(keywordVerified./)
-      .? ~ keywordTheorem ~/ expression ~ (keywordPremise ~/ expression).rep ~ keywordBy ~/ sliced(expression)).map {
-      case (verifySlice, conclusion, premises, (proof, proofSlice)) => AstExpression.Theorem(
-          verifySlice = verifySlice,
-          conclusion = conclusion,
-          premises = premises,
-          proof = proof,
-          proofSlice = proofSlice,
-        )
+  private def lookupExpression[$: P]: P[AstExpression.Lookup] =
+    P { sliced(identifier).map { case (name, slice) => AstExpression.Lookup(slice = slice, name = name) } }
+
+  private def ifExpression[$: P]: P[AstExpression.If] = P {
+    sliced(keywordIf ~/ parensExpression ~ expression ~ (keywordElse ~/ expression).?)
+      .map { case ((condition, ifTrue, ifFalse), slice) =>
+        AstExpression.If(slice = slice, condition = condition, ifTrue = ifTrue, ifFalse = ifFalse)
+      }
+  }
+
+  private def whileExpression[$: P]: P[AstExpression.While] = P {
+    sliced(keywordWhile ~/ parensExpression ~ expression).map { case ((condition, body), slice) =>
+      AstExpression.While(slice = slice, condition = condition, body = body)
     }
-  })
+  }
 
-  private def parensExpression[$: P]: P[AstExpression.Parens] = P(
-    ("(" ~/ (NoCut(expression) ~ ";"./).rep ~ expression.? ~ ")").map { case (exprs, returnExpr) =>
-      AstExpression.Parens(exprs, returnExpr)
+  private def functionExpression[$: P]: P[AstExpression.Function] = P {
+    sliced(keywordFunction ~/ "(" ~ identifier.rep(sep = ","./) ~ ",".? ~ ")" ~/ expression)
+      .map { case ((args, body), slice) => AstExpression.Function(slice = slice, args = args, body = body) }
+  }
+
+  private def theoremExpression[$: P]: P[AstExpression.Theorem] = P {
+    sliced(
+      slice(keywordVerified./).? ~ keywordTheorem ~/ expression ~ (keywordPremise ~/ expression)
+        .rep ~ keywordBy ~/ sliced(expression)
+    ).map { case ((verifySlice, conclusion, premises, (proof, proofSlice)), slice) =>
+      AstExpression.Theorem(
+        slice = slice,
+        verifySlice = verifySlice,
+        conclusion = conclusion,
+        premises = premises,
+        proof = proof,
+        proofSlice = proofSlice,
+      )
     }
-  )
+  }
 
-  private def blockExpression[$: P]: P[AstExpression.Block] = P(
-    ("{" ~/ (NoCut(expression) ~ ";"./).rep ~ expression.? ~ "}").map { case (exprs, returnExpr) =>
-      AstExpression.Block(exprs, returnExpr)
+  private def parensExpression[$: P]: P[AstExpression.Parens] = P {
+    sliced("(" ~/ (NoCut(expression) ~ ";"./).rep ~ expression.? ~ ")").map { case ((exprs, returnExpr), slice) =>
+      AstExpression.Parens(slice = slice, exprs = exprs, returnExpr = returnExpr)
     }
-  )
+  }
 
-  private def backwardBlockExpression[$: P]: P[AstExpression.BackwardBlock] =
-    P((keywordBackward ~/ blockExpression).map(AstExpression.BackwardBlock))
+  private def blockExpression[$: P]: P[AstExpression.Block] = P {
+    sliced("{" ~/ (NoCut(expression) ~ ";"./).rep ~ expression.? ~ "}").map { case ((exprs, returnExpr), slice) =>
+      AstExpression.Block(slice = slice, exprs = exprs, returnExpr = returnExpr)
+    }
+  }
 
-  private def graphBlockExpression[$: P]: P[AstExpression.GraphBlock] =
-    P((keywordGraph ~/ blockExpression).map(AstExpression.GraphBlock))
+  private def backwardBlockExpression[$: P]: P[AstExpression.BackwardBlock] = P {
+    sliced(keywordBackward ~/ blockExpression).map { case (inner, slice) =>
+      AstExpression.BackwardBlock(slice = slice, inner = inner)
+    }
+  }
 
-  private def primitiveExpression[$: P]: P[AstExpression] = P(
-    // dlSequentExpression must come before dlExpressionExpression since "dL" is a prefix of "dLs".
+  private def graphBlockExpression[$: P]: P[AstExpression.GraphBlock] = P {
+    sliced(keywordGraph ~/ blockExpression).map { case (inner, slice) =>
+      AstExpression.GraphBlock(slice = slice, inner = inner)
+    }
+  }
+
+  private def primitiveExpression[$: P]: P[AstExpression] = P {
     nullExpression | boolExpression | intExpression | stringExpression | dlSequentExpression | dlExpressionExpression |
       builtinFunctionExpression | importExpression | declareExpression | ifExpression | whileExpression |
       functionExpression | theoremExpression | parensExpression | blockExpression | backwardBlockExpression |
@@ -173,7 +199,7 @@ class HippoParser(source: SourceFile) {
       // Otherwise, "while (foo) ..." is interpreted as an apply on the literal "while",
       // and due to cuts, results in a parse error because it expects a ";" to follow.
       assignExpression | lookupExpression
-  )
+  }
 
   ////////////////////////
   // Atomic expressions //
@@ -181,29 +207,41 @@ class HippoParser(source: SourceFile) {
 
   // An atomic expression is a primitive expression with suffixes and prefixes, for example negation.
 
-  private def builtinAccessExpression[$: P]: P[AstExpression => AstExpression.BuiltinAccess] = P(
+  private type SuffixOpConstructor = (SourceFile#Slice, AstExpression) => AstExpression
+
+  private def builtinAccessExpression[$: P]: P[SuffixOpConstructor] = P {
     (".#" ~/ identifier)
       .flatMapX(name => BuiltinMemberFunction.byName.get(name.name).map(Pass(_)).getOrElse(Fail))
-      .map(builtin => (inner: AstExpression) => AstExpression.BuiltinAccess(target = inner, member = builtin))
-  ).opaque("builtin member function")
+      .map(member =>
+        (slice: SourceFile#Slice, inner: AstExpression) =>
+          AstExpression.BuiltinAccess(slice = slice, target = inner, member = member)
+      )
+  }.opaque("builtin member function")
 
-  private def accessExpression[$: P]: P[AstExpression => AstExpression.Access] =
-    P(("." ~/ identifier).map(name => inner => AstExpression.Access(target = inner, name = name)))
+  private def accessExpression[$: P]: P[SuffixOpConstructor] = P {
+    ("." ~/ identifier).map(name => (slice, inner) => AstExpression.Access(slice = slice, target = inner, name = name))
+  }
 
-  private def applyExpression[$: P]: P[AstExpression => AstExpression.Apply] = P(
+  private def applyExpression[$: P]: P[SuffixOpConstructor] = P {
     ("(" ~/ expression.rep(sep = ","./) ~ ",".? ~ ")")
-      .map(args => inner => AstExpression.Apply(target = inner, args = args.toIndexedSeq))
-  )
+      .map(args => (slice, inner) => AstExpression.Apply(slice = slice, target = inner, args = args.toIndexedSeq))
+  }
 
-  private def applyTacticExpression[$: P]: P[AstExpression => AstExpression.ApplyTactic] = P(
-    ("[" ~/ expression.rep(sep = ","./) ~ ",".? ~ "]")
-      .map(args => inner => AstExpression.ApplyTactic(target = inner, args = args.toIndexedSeq))
-  )
+  private def applyTacticExpression[$: P]: P[SuffixOpConstructor] = P {
+    ("[" ~/ sliced(expression.rep(sep = ","./) ~ ",".?) ~ "]").map { case (args, argsSlice) =>
+      (slice, inner) =>
+        AstExpression.ApplyTactic(slice = slice, target = inner, args = args.toIndexedSeq, argsSlice = argsSlice)
+    }
+  }
 
-  private def suffixExpression[$: P]: P[AstExpression => AstExpression] =
-    P(builtinAccessExpression | accessExpression | applyExpression | applyTacticExpression)
+  private def suffixExpression[$: P]: P[SuffixOpConstructor] =
+    P { builtinAccessExpression | accessExpression | applyExpression | applyTacticExpression }
 
-  private def notExpression[$: P]: P[AstExpression => AstExpression.Not] = P("!".!.map(_ => AstExpression.Not))
+  private type PrefixOpConstructor = (SourceFile#Slice, AstExpression) => AstExpression
+
+  private def notExpression[$: P]: P[PrefixOpConstructor] = P {
+    slice("!").map(opSlice => (slice, target) => AstExpression.Not(slice = slice, opSlice = opSlice, target = target))
+  }
 
   /**
    * Negate an expression via prefixed `-`.
@@ -215,60 +253,84 @@ class HippoParser(source: SourceFile) {
    * @see
    *   [[intExpression]]
    */
-  private def negExpression[$: P]: P[AstExpression => AstExpression.Neg] =
-    P(("-" ~~ !CharIn("0-9")).!.map(_ => AstExpression.Neg))
+  private def negExpression[$: P]: P[PrefixOpConstructor] = P {
+    slice("-" ~~ !CharIn("0-9"))
+      .map(opSlice => (slice, target) => AstExpression.Neg(slice = slice, opSlice = opSlice, target = target))
+  }
 
-  private def prefixExpression[$: P]: P[AstExpression => AstExpression] = P(notExpression | negExpression)
+  private def prefixExpression[$: P]: P[PrefixOpConstructor] = P { notExpression | negExpression }
 
-  private def atomicExpression[$: P]: P[AstExpression] = P(
-    (prefixExpression.rep ~ primitiveExpression ~ suffixExpression.rep).map { case (prefixes, atom, suffixes) =>
-      val suffixed = suffixes.foldLeft(atom)((inner, suffix) => suffix(inner))
-      prefixes.foldRight(suffixed)((prefix, inner) => prefix(inner))
-    }
-  )
+  private def atomicExpression[$: P]: P[AstExpression] = P {
+    (sliced(prefixExpression).rep ~ primitiveExpression ~ sliced(suffixExpression).rep)
+      .map { case (prefixes, atom, suffixes) =>
+        val suffixed = suffixes.foldLeft(atom) { case (inner, (suffix, suffixSlice)) =>
+          suffix(source.Slice(inner.slice.start, suffixSlice.end), inner)
+        }
+        prefixes.foldRight(suffixed) { case ((prefix, prefixSlice), inner) =>
+          prefix(source.Slice(prefixSlice.start, inner.slice.end), inner)
+        }
+      }
+  }
 
   ///////////////////////////
   // Composite expressions //
   ///////////////////////////
 
-  private type InfixOpConstructor = (AstExpression, AstExpression) => AstExpression
-
-  private def infixOp[$: P](symbol: String, constructor: InfixOpConstructor): P[InfixOpConstructor] =
-    P(symbol.!.map(_ => constructor))
+  private def infixOp[$: P](
+      symbol: String,
+      constructor: (SourceFile#Slice, SourceFile#Slice, AstExpression, AstExpression) => AstExpression,
+  ): P[(SourceFile#Slice, AstExpression, AstExpression) => AstExpression] =
+    P { slice(symbol).map(opSlice => (slice, left, right) => constructor(slice, opSlice, left, right)) }
 
   private def leftAssociativeInfixOpExpression[$: P](
       atom: => P[AstExpression],
-      op: => P[InfixOpConstructor],
-  ): P[AstExpression] = P((atom ~ (op./ ~ atom).rep).map { case (atom, ops) =>
-    ops.foldLeft(atom) { case (left, (op, right)) => op(left, right) }
-  })
+      op: => P[(SourceFile#Slice, AstExpression, AstExpression) => AstExpression],
+  ): P[AstExpression] = P {
+    (atom ~ (op./ ~ atom).rep).map { case (atom, ops) =>
+      val start = atom.slice.start
+      var end = atom.slice.end
+      var result = atom
 
-  private def expression[$: P]: P[AstExpression] = P(leftAssociativeInfixOpExpression(
+      for ((op, right) <- ops) {
+        end = right.slice.end
+        result = op(source.Slice(start, end), result, right)
+      }
+
+      result
+    }
+  }
+
+  private def expression[$: P]: P[AstExpression] = P {
     leftAssociativeInfixOpExpression(
       leftAssociativeInfixOpExpression(
         leftAssociativeInfixOpExpression(
           leftAssociativeInfixOpExpression(
             leftAssociativeInfixOpExpression(
               leftAssociativeInfixOpExpression(
-                atomicExpression,
-                infixOp("*", AstExpression.Mul) | infixOp("/", AstExpression.Div),
+                leftAssociativeInfixOpExpression(
+                  atomicExpression,
+                  infixOp("*", AstExpression.Mul) | infixOp("/", AstExpression.Div),
+                ),
+                infixOp("+", AstExpression.Add) | infixOp("-", AstExpression.Sub),
               ),
-              infixOp("+", AstExpression.Add) | infixOp("-", AstExpression.Sub),
+              infixOp(">=", AstExpression.Gte) | infixOp(">", AstExpression.Gt) | infixOp("<=", AstExpression.Lte) |
+                infixOp("<", AstExpression.Lt),
             ),
-            infixOp(">=", AstExpression.Gte) | infixOp(">", AstExpression.Gt) | infixOp("<=", AstExpression.Lte) |
-              infixOp("<", AstExpression.Lt),
+            infixOp("==", AstExpression.Eq) | infixOp("!=", AstExpression.Neq),
           ),
-          infixOp("==", AstExpression.Eq) | infixOp("!=", AstExpression.Neq),
+          infixOp("&&", AstExpression.And),
         ),
-        infixOp("&&", AstExpression.And),
+        infixOp("||", AstExpression.Or),
       ),
-      infixOp("||", AstExpression.Or),
-    ),
-    infixOp("->", AstExpression.MapsTo),
-  ))
+      infixOp("->", AstExpression.MapsTo),
+    )
+  }
 
-  private def program[$: P]: P[AstExpression.Block] =
-    P((Start ~ (expression ~ ";"./).rep ~ End).map(AstExpression.Block(_, returnExpr = None)))
+  private def program[$: P]: P[AstExpression.Block] = P {
+    sliced(Start ~ (expression ~ ";"./).rep ~ End).map { case (exprs, slice) =>
+      AstExpression.Block(slice = slice, exprs = exprs, returnExpr = None)
+    }
+  }
 }
 
 object HippoParser {

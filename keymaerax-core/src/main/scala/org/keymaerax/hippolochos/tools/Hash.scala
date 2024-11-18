@@ -198,30 +198,30 @@ object Hash {
     }
 
     def digest(expr: HippoExpression): Builder = expr match {
-      case HippoExpression.Const(value) => digest("Const").digest(value)
-      case HippoExpression.Import(path, slice) => digest("Import").digest(path)
-      case HippoExpression.Declare(exportSlice, mutable, name, value) =>
+      case HippoExpression.Const(slice, value) => digest("Const").digest(value)
+      case HippoExpression.Import(slice, path) => digest("Import").digest(path)
+      case HippoExpression.Declare(slice, exportSlice, mutable, name, value) =>
         digest("Declare").digest(exportSlice.isDefined).digest(mutable).digest(name).digest(value)
-      case HippoExpression.Assign(name, value) => digest("Assign").digest(name).digest(value)
-      case HippoExpression.Lookup(name) => digest("Lookup").digest(name)
-      case HippoExpression.If(condition, ifTrue, ifFalse) =>
+      case HippoExpression.Assign(slice, name, value) => digest("Assign").digest(name).digest(value)
+      case HippoExpression.Lookup(slice, name) => digest("Lookup").digest(name)
+      case HippoExpression.If(slice, condition, ifTrue, ifFalse) =>
         digest("If").digest(condition).digest(ifTrue).digestOpt(ifFalse)(_.digest(_))
-      case HippoExpression.While(condition, body) => digest("While").digest(condition).digest(body)
-      case HippoExpression.Function(args, body) => digest("Function").digestSeq(args)(_.digest(_)).digest(body)
-      case HippoExpression.Theorem(verifySlice, conclusion, premises, proof, proofSlice) => digest("Theorem")
+      case HippoExpression.While(slice, condition, body) => digest("While").digest(condition).digest(body)
+      case HippoExpression.Function(slice, args, body) => digest("Function").digestSeq(args)(_.digest(_)).digest(body)
+      case HippoExpression.Theorem(slice, verifySlice, conclusion, premises, proof, proofSlice) => digest("Theorem")
           .digest(verifySlice.isDefined)
           .digest(conclusion)
           .digestSeq(premises)(_.digest(_))
           .digest(proof)
-      case HippoExpression.Sequence(exprs, returnExpr) =>
+      case HippoExpression.Sequence(slice, exprs, returnExpr) =>
         digest("Sequence").digestSeq(exprs)(_.digest(_)).digestOpt(returnExpr)(_.digest(_))
-      case HippoExpression.Block(inner) => digest("Block").digest(inner)
-      case HippoExpression.BackwardBlock(inner) => digest("BackwardBlock").digest(inner)
-      case HippoExpression.GraphBlock(inner) => digest("GraphBlock").digest(inner)
-      case HippoExpression.BuiltinAccess(target, member) => digest("BuiltinAccess").digest(target).digest(member)
-      case HippoExpression.Access(target, name) => digest("Access").digest(target).digest(name)
-      case HippoExpression.Apply(target, args) => digest("Apply").digest(target).digestSeq(args)(_.digest(_))
-      case HippoExpression.ApplyTactic(target, args) =>
+      case HippoExpression.Block(slice, inner) => digest("Block").digest(inner)
+      case HippoExpression.BackwardBlock(slice, inner) => digest("BackwardBlock").digest(inner)
+      case HippoExpression.GraphBlock(slice, inner) => digest("GraphBlock").digest(inner)
+      case HippoExpression.BuiltinAccess(slice, target, member) => digest("BuiltinAccess").digest(target).digest(member)
+      case HippoExpression.Access(slice, target, name) => digest("Access").digest(target).digest(name)
+      case HippoExpression.Apply(slice, target, args) => digest("Apply").digest(target).digestSeq(args)(_.digest(_))
+      case HippoExpression.ApplyTactic(slice, target, args, argsSlice) =>
         digest("ApplyTactic").digest(target).digestSeq(args)(_.digest(_))
     }
 

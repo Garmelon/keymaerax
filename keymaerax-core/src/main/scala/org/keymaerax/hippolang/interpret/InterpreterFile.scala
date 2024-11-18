@@ -26,7 +26,7 @@ class InterpreterFile(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
       ictx.importCached(importFile).toHValue
 
     case e: HippoExpression.Declare if e.exports =>
-      val valueV = eval(namespace, HippoExpression.Declare(exportSlice = None, e.mutable, e.name, e.value))
+      val valueV = eval(namespace, e.copy(exportSlice = None))
       exported.declare(e.name, valueV, mutable = true)
       valueV
 

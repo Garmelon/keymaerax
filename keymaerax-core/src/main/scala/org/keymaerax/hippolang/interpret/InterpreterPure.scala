@@ -22,37 +22,37 @@ import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
 class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
   def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {
-    case HippoExpression.Const(value) => value
+    case e: HippoExpression.Const => e.value
 
-    case e: HippoExpression.Import => throw HlangException("import not allowed during pure evaluation", e.slice)
+    case e: HippoExpression.Import => throw HlangException("import not allowed during pure evaluation", slice = e.slice)
 
     case e: HippoExpression.Declare =>
-      for (slice <- e.exportSlice) throw HlangException("export not allowed during pure evaluation", slice)
+      for (slice <- e.exportSlice) throw HlangException("export not allowed during pure evaluation", slice = slice)
       val value = eval(namespace, e.value)
       namespace.declare(e.name, value, e.mutable)
       value
 
-    case HippoExpression.Assign(name, value) =>
-      val valueV = eval(namespace, value)
-      namespace.assign(name, valueV)
-      valueV
+    case e: HippoExpression.Assign =>
+      val value = eval(namespace, e.value)
+      HlangException.at(e.slice) { namespace.assign(e.name, value) }
+      value
 
-    case HippoExpression.Lookup(name) => namespace.lookup(name)
+    case e: HippoExpression.Lookup => HlangException.at(e.slice) { namespace.lookup(e.name) }
 
-    case HippoExpression.If(condition, ifTrue, ifFalse) =>
-      val conditionV = eval(namespace, condition)
-      if (conditionV.isTruthy) eval(namespace, ifTrue) else ifFalse.map(eval(namespace, _)).toHValue
+    case e: HippoExpression.If =>
+      val condition = eval(namespace, e.condition)
+      if (condition.isTruthy) eval(namespace, e.ifTrue) else e.ifFalse.map(eval(namespace, _)).toHValue
 
-    case HippoExpression.While(condition, body) =>
+    case e: HippoExpression.While =>
       var lastValue: HippoValue = HippoValue.Null
       while (true) {
-        val conditionV = eval(namespace, condition)
-        if (!conditionV.isTruthy) return lastValue
-        lastValue = eval(namespace, body)
+        val condition = eval(namespace, e.condition)
+        if (!condition.isTruthy) return lastValue
+        lastValue = eval(namespace, e.body)
       }
       lastValue
 
-    case HippoExpression.Function(args, body) => HippoValue.Function(namespace.freeze, args, body)
+    case e: HippoExpression.Function => HippoValue.Function(namespace.freeze, e.args, e.body)
 
     case e: HippoExpression.Theorem =>
       val conclusion = eval(namespace, e.conclusion).asSequent
@@ -69,35 +69,35 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
       proven.toHValue
 
-    case HippoExpression.Sequence(exprs, returnExpr) =>
-      for (expr <- exprs) eval(namespace, expr)
-      returnExpr.map(eval(namespace, _)).toHValue
+    case e: HippoExpression.Sequence =>
+      for (expr <- e.exprs) eval(namespace, expr)
+      e.returnExpr.map(eval(namespace, _)).toHValue
 
-    case HippoExpression.Block(inner) =>
+    case e: HippoExpression.Block =>
       val nestedNamespace = new MutableNamespace(Some(namespace))
-      eval(nestedNamespace, inner)
+      eval(nestedNamespace, e.inner)
 
-    case HippoExpression.BackwardBlock(inner) =>
-      HippoValue.Tactic(InterpreterBackward.tactic(ictx = ictx, namespace = namespace.freeze, expr = inner))
+    case e: HippoExpression.BackwardBlock =>
+      HippoValue.Tactic(InterpreterBackward.tactic(ictx = ictx, namespace = namespace.freeze, expr = e.inner))
 
-    case HippoExpression.GraphBlock(inner) =>
-      HippoValue.Tactic(InterpreterGraph.tactic(ictx = ictx, ctx = ctx, namespace = namespace.freeze, expr = inner))
+    case e: HippoExpression.GraphBlock =>
+      HippoValue.Tactic(InterpreterGraph.tactic(ictx = ictx, ctx = ctx, namespace = namespace.freeze, expr = e.inner))
 
-    case HippoExpression.BuiltinAccess(target, member) =>
-      val targetV = eval(namespace, target)
-      HippoValue.BuiltinMemberFunction(targetV, member)
+    case e: HippoExpression.BuiltinAccess =>
+      val target = eval(namespace, e.target)
+      HippoValue.BuiltinMemberFunction(target, e.member)
 
-    case HippoExpression.Access(target, name) =>
-      val targetV = eval(namespace, target)
-      accessValue(targetV, name)
+    case e: HippoExpression.Access =>
+      val target = eval(namespace, e.target)
+      accessValue(target, e.name)
 
-    case HippoExpression.Apply(target, args) =>
-      val targetV = eval(namespace, target)
-      val argsV = args.map(eval(namespace, _))
-      applyValue(targetV, argsV)
+    case e: HippoExpression.Apply =>
+      val target = eval(namespace, e.target)
+      val args = e.args.map(eval(namespace, _))
+      applyValue(target, args)
 
-    case HippoExpression.ApplyTactic(_, _) =>
-      throw new UnsupportedOperationException("tactic application not allowed in normal mode")
+    case e: HippoExpression.ApplyTactic =>
+      throw HlangException("tactic application not allowed in normal mode", slice = e.slice)
   }
 
   // Protected because otherwise the value would have to be computed twice.

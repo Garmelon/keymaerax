@@ -7,11 +7,9 @@ package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.core.Sequent
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
-import org.keymaerax.hippolang.{HippoExpression, HippoValue}
+import org.keymaerax.hippolang.{HippoExpression, HippoValue, HlangException}
 import org.keymaerax.hippolochos.BackwardTactic
 import org.keymaerax.hippolochos.run.{HippoContext, ProofChain}
-
-import java.nio.file.Path
 
 class InterpreterBackward(ictx: HippoInterpreterContext, ctx: HippoContext, conclusion: Sequent)
     extends InterpreterPure(ictx, ctx) {
@@ -19,19 +17,23 @@ class InterpreterBackward(ictx: HippoInterpreterContext, ctx: HippoContext, conc
   var chain: ProofChain = ctx.chain(conclusion)
 
   override def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {
-    case HippoExpression.ApplyTactic(target, args) =>
-      val targetV = eval(namespace, target) match {
+    case e: HippoExpression.ApplyTactic =>
+      val target = eval(namespace, e.target) match {
         case HippoValue.Tactic(t: BackwardTactic) => t
-        case _ => throw new Exception("target is not a backward tactic")
+        case _ => throw HlangException(
+            "only backward tactics can be tactic-applied in this context",
+            slice = e.target.slice,
+            label = "this is not a backward tactic",
+          )
       }
 
-      val argV = args match {
+      val arg = e.args match {
         case Seq() => 0
         case Seq(arg) => eval(namespace, arg).asInt
-        case _ => throw new Exception("too many args for tactic application")
+        case _ => throw HlangException("too many arguments", slice = e.argsSlice, label = "only 0 or 1 args allowed")
       }
 
-      chain = chain.backwardAt(argV)(targetV)
+      chain = chain.backwardAt(arg)(target)
 
       HippoValue.Null
 

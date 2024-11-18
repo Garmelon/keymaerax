@@ -6,7 +6,7 @@
 package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
-import org.keymaerax.hippolang.{BuiltinFunction, HippoExpression, HippoValue}
+import org.keymaerax.hippolang.{BuiltinFunction, HippoExpression, HippoValue, HlangException}
 import org.keymaerax.hippolib.primitive.Graph
 import org.keymaerax.hippolochos.run.HippoContext
 
@@ -28,20 +28,25 @@ class InterpreterGraph(ictx: HippoInterpreterContext, ctx: HippoContext) extends
   }
 
   override def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {
-    case HippoExpression.ApplyTactic(target, args) =>
-      val targetV = eval(namespace, target) match {
+    case e: HippoExpression.ApplyTactic =>
+      val target = eval(namespace, e.target) match {
         case HippoValue.Tactic(t) => t
-        case _ => throw new Exception("target is not a tactic")
+        case _ => throw HlangException(
+            "only tactics can be tactic-applied in this context",
+            slice = e.target.slice,
+            label = "this is not a tactic",
+          )
       }
 
-      val argsV = args
-        .map(eval(namespace, _))
+      val Args = e
+        .args
+        .map(arg => (arg.slice, eval(namespace, arg)))
         .map {
-          case HippoValue.Int(i) => getNode(i)
-          case _ => throw new IllegalArgumentException("only node ids are allowed in square brackets in graph blocks")
+          case (_, HippoValue.Int(i)) => getNode(i)
+          case (slice, _) => throw HlangException("argument must be an integer (i.e. a node id)", slice = slice)
         }
 
-      val node = this.graph.stepAny(targetV, argsV)
+      val node = this.graph.stepAny(target, Args)
       HippoValue.Int(registerNode(node))
 
     case _ => super.eval(namespace, expr)

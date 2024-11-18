@@ -87,6 +87,16 @@ object TacticArg {
     override def validate(any: Any): Type = any.asInstanceOf[Type]
   }
 
+  case object Formula extends TacticArg {
+    override type Type = org.keymaerax.core.Formula
+    override def validate(any: Any): Type = any.asInstanceOf[Type]
+  }
+
+  case object Variable extends TacticArg {
+    override type Type = org.keymaerax.core.Variable
+    override def validate(any: Any): Type = any.asInstanceOf[Type]
+  }
+
   /////////////////
   // Hippo types //
   /////////////////

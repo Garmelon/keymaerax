@@ -117,7 +117,7 @@ object Test {
     .backward(CoreRule(Skolemize(SuccPos(0))))
     .backward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
     .backward(RewriteAtU(ExprPath(), lib.core.testb.proof))
-    .backward(RewriteAtU(ExprPath(1), lib.core.assignbAxiom.proof))
+    .backward(RewriteAtU(ExprPath(1), lib.core.assignb.proof))
     .backward(QE())
     .proof
 
@@ -145,7 +145,7 @@ object Test {
     .backward(QE())
     // .forward(Forward(RewriteAt(ExprPath(1)), "==> x>0->[x:=x+1;]x>1".asSequent))
     // .backward(Unify(CoreAxioms.assignbAxiom))
-    .forward(BidiBackward(RewriteAtU(ExprPath(1), lib.core.assignbAxiom.proof), "==> x>0->[x:=x+1;]x>1".asSequent))
+    .forward(BidiBackward(RewriteAtU(ExprPath(1), lib.core.assignb.proof), "==> x>0->[x:=x+1;]x>1".asSequent))
     .forward(RewriteAtU(ExprPath(), lib.core.testb.proof))
     .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
     .forward(BidiBackward(CoreRule(Skolemize(SuccPos(0))), "==> \\forall x [?x>0;x:=x+1;]x>1".asSequent))

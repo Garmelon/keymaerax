@@ -205,8 +205,12 @@ object AstExpression {
    *   <target>(<args>)
    * }}}
    */
-  case class Apply(slice: SourceFile#Slice, target: AstExpression, args: IndexedSeq[AstExpression])
-      extends AstExpression
+  case class Apply(
+      slice: SourceFile#Slice,
+      target: AstExpression,
+      args: IndexedSeq[AstExpression],
+      argsSlice: SourceFile#Slice,
+  ) extends AstExpression
 
   /**
    * {{{

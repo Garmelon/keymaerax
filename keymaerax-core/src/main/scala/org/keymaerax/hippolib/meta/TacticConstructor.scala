@@ -5,31 +5,52 @@
 
 package org.keymaerax.hippolib.meta
 
-import org.keymaerax.hippolochos.Tactic
 import org.keymaerax.hippolochos.tools.{GloballyUniqueName, Hash}
+import org.keymaerax.hippolochos.{HippoException, Tactic}
 
 trait TacticConstructor[+T <: Tactic] {
   def hash: Hash
 
   val args: IndexedSeq[TacticArgInfo[TacticArg]]
-  def construct(args: Seq[Any]): T
+  lazy val argNames: Set[String] = args.map(_.name).toSet // Defer initialization until after object exists
+  def construct(values: Seq[Any]): T
 
-  final def constructPositional(args: Seq[Any]): T = {
-    require(args.length <= this.args.length)
+  final def constructPositional(values: IndexedSeq[Any]): T = {
+    HippoException.require(
+      values.length <= args.length,
+      s"Too many arguments: Expected exactly ${args.length}, but got ${values.length}",
+    )
 
-    val defaultArgs = this
-      .args
-      .takeRight(this.args.length - args.length)
-      .map(_.getDefault.getOrElse(throw new Exception("default values required")))
+    val allArgs = args
+      .zipWithIndex
+      .map {
+        case (_, i) if i < values.length => values(i)
+        case (arg, i) => arg
+            .getDefault
+            .getOrElse(HippoException.fail(
+              s"Missing argument ${i + 1} named ${arg.name}: No value was provided and no default value exists"
+            ))
+      }
 
-    construct(args ++ defaultArgs)
+    construct(allArgs)
   }
 
-  final def constructNamed(args: Map[String, Any]): T = {
-    val argsSeq = for (arg <- this.args)
-      yield args.get(arg.name).orElse(arg.getDefault).getOrElse(throw new Exception("arg or default value required"))
+  final def constructNamed(values: Map[String, Any]): T = {
+    for ((name, _) <- values) HippoException
+      .require(argNames.contains(name), s"Too many arguments: Expected no argument named $name")
 
-    construct(argsSeq)
+    val allArgs = args
+      .zipWithIndex
+      .map { case (arg, i) =>
+        values
+          .get(arg.name)
+          .orElse(arg.getDefault)
+          .getOrElse(HippoException.fail(
+            s"Missing argument ${i + 1} named ${arg.name}: No value was provided and no default value exists"
+          ))
+      }
+
+    construct(allArgs)
   }
 }
 
@@ -46,8 +67,8 @@ object TacticConstructor {
   def apply[T <: Tactic](uniqueName: String)(tactic: => T): TacticConstructor[T] = new TacticConstructor[T] {
     override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq()
-    override def construct(args: Seq[Any]): T = {
-      val Seq() = args
+    override def construct(values: Seq[Any]): T = {
+      val Seq() = values
       tactic
     }
   }
@@ -57,8 +78,8 @@ object TacticConstructor {
   ): TacticConstructor[T] = new TacticConstructor[T] {
     override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1)
-    override def construct(args: Seq[Any]): T = {
-      val Seq(val1) = args
+    override def construct(values: Seq[Any]): T = {
+      val Seq(val1) = values
       build(arg1.arg.validate(val1))
     }
   }
@@ -70,8 +91,8 @@ object TacticConstructor {
   )(build: (arg1.arg.Type, arg2.arg.Type) => T): TacticConstructor[T] = new TacticConstructor[T] {
     override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2)
-    override def construct(args: Seq[Any]): T = {
-      val Seq(val1, val2) = args
+    override def construct(values: Seq[Any]): T = {
+      val Seq(val1, val2) = values
       build(arg1.arg.validate(val1), arg2.arg.validate(val2))
     }
   }
@@ -84,8 +105,8 @@ object TacticConstructor {
   )(build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type) => T): TacticConstructor[T] = new TacticConstructor[T] {
     override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
     override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3)
-    override def construct(args: Seq[Any]): T = {
-      val Seq(val1, val2, val3) = args
+    override def construct(values: Seq[Any]): T = {
+      val Seq(val1, val2, val3) = values
       build(arg1.arg.validate(val1), arg2.arg.validate(val2), arg3.arg.validate(val3))
     }
   }
@@ -100,8 +121,8 @@ object TacticConstructor {
     new TacticConstructor[T] {
       override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
       override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3, arg4)
-      override def construct(args: Seq[Any]): T = {
-        val Seq(val1, val2, val3, val4) = args
+      override def construct(values: Seq[Any]): T = {
+        val Seq(val1, val2, val3, val4) = values
         build(arg1.arg.validate(val1), arg2.arg.validate(val2), arg3.arg.validate(val3), arg4.arg.validate(val4))
       }
     }
@@ -117,8 +138,8 @@ object TacticConstructor {
     new TacticConstructor[T] {
       override val hash: Hash = Hash.start.digest(GloballyUniqueName(uniqueName)).build
       override val args: IndexedSeq[TacticArgInfo[TacticArg]] = IndexedSeq(arg1, arg2, arg3, arg4, arg5)
-      override def construct(args: Seq[Any]): T = {
-        val Seq(val1, val2, val3, val4, val5) = args
+      override def construct(values: Seq[Any]): T = {
+        val Seq(val1, val2, val3, val4, val5) = values
         build(
           arg1.arg.validate(val1),
           arg2.arg.validate(val2),

@@ -8,7 +8,7 @@ package org.keymaerax.hippolang
 import org.keymaerax.core.Sequent
 import org.keymaerax.hippolang.namespace.ImmutableNamespace
 import org.keymaerax.hippolochos.proof.{HippoPremise, HippoProof}
-import org.keymaerax.hippolochos.tools.Hash
+import org.keymaerax.hippolochos.tools.{Hash, SequentPrinter}
 import org.keymaerax.{core, hippolochos}
 
 sealed trait HippoValue {
@@ -22,12 +22,6 @@ sealed trait HippoValue {
 }
 
 object HippoValue {
-  private def formatSequent(sequent: Sequent): java.lang.String = {
-    val antes = sequent.ante.map(_.prettyString).mkString(",  ")
-    val succs = sequent.succ.map(_.prettyString).mkString(",  ")
-    s"$antes  ==>  $succs".trim
-  }
-
   final case object Null extends HippoValue {
     override def isTruthy: Boolean = false
     override def format: java.lang.String = "null"
@@ -58,7 +52,7 @@ object HippoValue {
 
   final case class DlSequent(value: core.Sequent) extends HippoValue {
     override def asSequent: core.Sequent = value
-    override def format: java.lang.String = s"dLs { ${formatSequent(value)} }"
+    override def format: java.lang.String = s"dLs { ${SequentPrinter.smart(value)} }"
   }
 
   final case class Namespace(value: ImmutableNamespace) extends HippoValue {
@@ -67,14 +61,14 @@ object HippoValue {
 
   final case class Proof(value: HippoProof) extends HippoValue {
     override def format: java.lang.String = {
-      if (value.premises.isEmpty) return s"<proof of ${formatSequent(value.conclusion)}>"
+      if (value.premises.isEmpty) return s"<proof of ${SequentPrinter.oneline(value.conclusion)}>"
       val premises = value
         .premises
         .map {
-          case HippoPremise(sequent, false) => s"\n  given ${formatSequent(sequent)}"
-          case HippoPremise(sequent, true) => s"\n  given ${formatSequent(sequent)} (must be proved)"
+          case HippoPremise(sequent, false) => s"\n  given  ${SequentPrinter.oneline(sequent)}"
+          case HippoPremise(sequent, true) => s"\n  given  ${SequentPrinter.oneline(sequent)} (must be proved)"
         }
-      s"<proof\n  of    ${formatSequent(value.conclusion)}${premises.mkString}\n>"
+      s"<proof\n  of     ${SequentPrinter.oneline(value.conclusion)}${premises.mkString}\n>"
     }
   }
 

@@ -25,8 +25,8 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
   @publish(name = "core.diamond")
   val diamond: ProofInfo = ProofInfo { ctx.coreAxiom("<> diamond") }
 
-  @publish(name = "core.assignbAxiom")
-  val assignbAxiom: ProofInfo = ProofInfo { ctx.coreAxiom("[:=] assign") }
+  @publish(name = "core.assignb")
+  val assignb: ProofInfo = ProofInfo { ctx.coreAxiom("[:=] assign") }
 
   @publish(name = "core.assignbeq")
   val assignbeq: ProofInfo = ProofInfo { ctx.coreAxiom("[:=] assign equality") }

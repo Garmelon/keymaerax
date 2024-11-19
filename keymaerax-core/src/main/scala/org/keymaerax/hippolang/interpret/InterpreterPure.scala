@@ -207,7 +207,11 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
     case BuiltinFunction.List => HippoValue.List(args)
 
     case BuiltinFunction.Print =>
-      println(args.map(_.format).mkString)
+      val parts = args.map {
+        case HippoValue.String(str) => str
+        case value => value.format
+      }
+      println(parts.mkString)
       HippoValue.Null
 
     case BuiltinFunction.Premise => throw new UnsupportedOperationException(

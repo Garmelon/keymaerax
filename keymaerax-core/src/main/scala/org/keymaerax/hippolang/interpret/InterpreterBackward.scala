@@ -6,9 +6,10 @@
 package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.core.Sequent
+import org.keymaerax.hippolang.HippoConversions._
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
-import org.keymaerax.hippolang.{HippoExpression, HippoValue, HlangException}
-import org.keymaerax.hippolochos.{BackwardTactic, HippoException}
+import org.keymaerax.hippolang.{BuiltinFunction, HippoExpression, HippoValue, HlangException}
+import org.keymaerax.hippolochos.BackwardTactic
 import org.keymaerax.hippolochos.run.{HippoContext, ProofChain}
 
 class InterpreterBackward(ictx: HippoInterpreterContext, ctx: HippoContext, conclusion: Sequent)
@@ -39,6 +40,16 @@ class InterpreterBackward(ictx: HippoInterpreterContext, ctx: HippoContext, conc
 
     case _ => super.eval(namespace, expr)
   }
+
+  override def applyValue(e: HippoExpression.Apply, target: HippoValue, args: IndexedSeq[HippoValue]): HippoValue =
+    target match {
+      case HippoValue.BuiltinFunction(BuiltinFunction.Goals) =>
+        if (args.nonEmpty)
+          throw HlangException("no arguments allowed", slice = e.argsSlice, label = "while retrieving goals")
+        chain.proof.premises.map(_.sequent.toHValue).toHValue
+
+      case _ => super.applyValue(e, target, args)
+    }
 }
 
 object InterpreterBackward {

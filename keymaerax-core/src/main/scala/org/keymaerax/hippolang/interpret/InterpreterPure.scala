@@ -20,7 +20,7 @@ import org.keymaerax.hippolang.{
 import org.keymaerax.hippolib.meta.TacticInfo
 import org.keymaerax.hippolib.primitive.Cached
 import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.ExprPath
+import org.keymaerax.hippolochos.tools.{ExprPath, SequentPrinter}
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
 class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
@@ -63,6 +63,24 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       val proof = eval(namespace, e.proof).asTactic
       val proven = HlangException
         .at(e.proofSlice, "while running this tactic") { ctx.tactic(Cached(proof), conclusion, premises) }
+
+      if (conclusion != proven.conclusion || premises != proven.premises.map(_.sequent)) {
+        val declaredConclusion = SequentPrinter.oneline(conclusion)
+        val declaredPremises = premises.map(p => s"\n  given ${SequentPrinter.oneline(p)}").mkString
+        val provenConclusion = SequentPrinter.oneline(proven.conclusion)
+        val provenPremises = proven.premises.map(p => s"\n  given ${SequentPrinter.oneline(p.sequent)}").mkString
+        throw HlangException(
+          s"""Proof does not match theorem declaration:
+             |
+             |Declared:
+             |  $declaredConclusion$declaredPremises
+             |
+             |Proven:
+             |  $provenConclusion$provenPremises""".stripMargin,
+          slice = e.slice,
+          label = "while checking this theorem",
+        )
+      }
 
       for (slice <- e.verifySlice) HlangException.at(slice, "while verifying this theorem") {
         val provable = ctx.provableFromLocalProof(proven)

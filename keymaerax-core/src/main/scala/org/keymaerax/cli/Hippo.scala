@@ -7,15 +7,24 @@ package org.keymaerax.cli
 
 import org.keymaerax.FileConfiguration
 import org.keymaerax.btactics.ToolProvider
-import org.keymaerax.cli.KeymaeraxCore.exit
+import org.keymaerax.cli.KeymaeraxCore.{combineToolConfigs, exit, initializeBackend, toolConfigFromFile}
+import org.keymaerax.core.PrettyPrinter
 import org.keymaerax.hippolang.HlangException
 import org.keymaerax.hippolang.interpret.HippoInterpreterContext
 import org.keymaerax.hippolochos.run.HippoContext
+import org.keymaerax.parser.KeYmaeraXPrettyPrinter
+import org.keymaerax.tools.ToolName
 
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
 
 /** Initialize a context in which hippolang programs can be executed, and implement hippolang-related CLI programs. */
-class Hippo {
+class Hippo(options: Options) {
+  // Initialize necessary bits of global state without initializing bellerophon
+  // since bellerophon initialization can take quite long (a few seconds).
+  // See also KeymaeraxCore.initializeProver and KeYmaeraXTool.init
+  initializeBackend(combineToolConfigs(options.toToolConfig, toolConfigFromFile(ToolName.Z3)))
+  PrettyPrinter.setPrinter(KeYmaeraXPrettyPrinter.pp)
+
   private val home = Path.of(FileConfiguration.KEYMAERAX_HOME_PATH)
   private val cacheDir = home.resolve("hippo").resolve("cache")
   private val ctx = HippoContext.withCacheDir(ToolProvider.provider, cacheDir)

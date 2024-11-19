@@ -171,10 +171,13 @@ object Hash {
       case HippoProof.Weaken(proof, premise) => digest("Weaken").digest(proof).digest(premise)
     }
 
+    // TODO Reorganize this module so hippolang types don't "leak" into hippolochos
+
     def digest(builtin: BuiltinMemberFunction): Builder = builtin match {
       case BuiltinMemberFunction.Forward => digest("Forward")
       case BuiltinMemberFunction.Backward => digest("Backward")
       case BuiltinMemberFunction.Pure => digest("Pure")
+      case BuiltinMemberFunction.Select => digest("Select")
     }
 
     def digest(value: HippoValue): Builder = value match {

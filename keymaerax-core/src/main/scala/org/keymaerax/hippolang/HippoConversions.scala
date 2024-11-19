@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolang
 
-import org.keymaerax.core.{Formula, Sequent}
+import org.keymaerax.core.{Expression, Sequent}
 import org.keymaerax.hippolang.namespace.ImmutableNamespace
 import org.keymaerax.hippolang.parse.{AstExpression, AstIdentifier, SourceFile}
 import org.keymaerax.hippolib.meta.{ProofInfo, TacticInfo}
@@ -33,7 +33,11 @@ object HippoConversions {
     def toHValue: HippoValue.String = HippoValue.String(it)
   }
 
-  implicit class FormulaConversion(val it: Formula) {
+  implicit class ListConversion(val it: IndexedSeq[HippoValue]) {
+    def toHValue: HippoValue.List = HippoValue.List(it)
+  }
+
+  implicit class ExpressionConversion(val it: Expression) {
     def toHValue: HippoValue.DlExpression = HippoValue.DlExpression(it)
   }
 

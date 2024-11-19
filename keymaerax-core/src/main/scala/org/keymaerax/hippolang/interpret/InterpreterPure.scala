@@ -6,7 +6,9 @@
 package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.hippolang.HippoConversions._
+import org.keymaerax.hippolang.interpret.InterpreterPure.{getSingleArg, getValueAsInt, getValueAsList}
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
+import org.keymaerax.hippolang.parse.SourceFile
 import org.keymaerax.hippolang.{
   BuiltinFunction,
   BuiltinMemberFunction,
@@ -18,6 +20,7 @@ import org.keymaerax.hippolang.{
 import org.keymaerax.hippolib.meta.TacticInfo
 import org.keymaerax.hippolib.primitive.Cached
 import org.keymaerax.hippolochos.run.HippoContext
+import org.keymaerax.hippolochos.tools.ExprPath
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
 class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
@@ -109,6 +112,12 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       case (HippoValue.Tactic(_), "forward") => HippoValue.BuiltinMemberFunction(target, Forward)
       case (HippoValue.Tactic(_), "backward") => HippoValue.BuiltinMemberFunction(target, Backward)
       case (HippoValue.Tactic(_), "pure") => HippoValue.BuiltinMemberFunction(target, Pure)
+      case (HippoValue.DlExpression(_), "select") => HippoValue.BuiltinMemberFunction(target, Select)
+      case (HippoValue.Proof(value), "conclusion") => value.conclusion.toHValue
+      case (HippoValue.Proof(value), "premises") => value.premises.map(_.sequent.toHValue).toHValue
+      case (HippoValue.DlSequent(value), "ante") => value.ante.map(_.toHValue).toHValue
+      case (HippoValue.DlSequent(value), "succ") => value.succ.map(_.toHValue).toHValue
+      case (HippoValue.List(value), "length") => value.length.toHValue
       case _ => throw new UnsupportedOperationException("incorrect access")
     }
   }
@@ -120,12 +129,15 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       case HippoValue.BuiltinFunction(value) => applyBuiltinFunction(e, value, args)
       case HippoValue.BuiltinMemberFunction(target, value) => applyBuiltinMemberFunction(e, target, value, args)
       case HippoValue.Function(env, argNames, body) => applyFunction(e, env, argNames, body, args)
+      case HippoValue.List(value) => applyList(e, value, args)
       case _ => throw new IllegalArgumentException("can only apply builtin")
     }
 
   private def applyTacticInfo(e: HippoExpression.Apply, info: TacticInfo, args: IndexedSeq[HippoValue]): HippoValue = {
     val tacticArgs = args.map(InterpreterPure.hippoValToTacticArg)
-    HlangException.at(e.argsSlice, "while constructing the tactic") { info.constructor.constructPositional(tacticArgs).toHValue }
+    HlangException.at(e.argsSlice, "while constructing the tactic") {
+      info.constructor.constructPositional(tacticArgs).toHValue
+    }
   }
 
   private def applyBuiltinFunction(
@@ -223,6 +235,29 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
       case (HippoValue.Tactic(tactic: PureTactic), Pure, Seq()) => ctx.pure(tactic).toHValue
 
+      case (HippoValue.DlExpression(value), Select, args) =>
+        val arg = getSingleArg(e, args, label = "while selecting subexpression")
+
+        val path = getValueAsList(
+          arg,
+          message = "path must be a list",
+          slice = e.args(0).slice,
+          label = "while selecting subexpression",
+        )
+
+        val segments = path
+          .zipWithIndex
+          .map { case (segment, i) =>
+            getValueAsInt(
+              segment,
+              message = s"path segment at index $i must be an int",
+              slice = e.args(0).slice,
+              label = "while selecting subexpression",
+            )
+          }
+
+        ExprPath(segments.toList).select(value).toHValue
+
       case _ => throw new UnsupportedOperationException("incorrect builtin member function application")
     }
   }
@@ -238,6 +273,31 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
     val innerEnv = new MutableNamespace(Some(env))
     for ((name, arg) <- argNames.zip(args)) innerEnv.declare(name, arg, mutable = false)
     eval(innerEnv, body)
+  }
+
+  private def applyList(
+      e: HippoExpression.Apply,
+      list: IndexedSeq[HippoValue],
+      args: IndexedSeq[HippoValue],
+  ): HippoValue = {
+    val arg = getSingleArg(e, args, label = "while indexing list")
+    val index = getValueAsInt(
+      arg,
+      message = "list index must be an integer",
+      slice = e.args(0).slice,
+      label = "while indexing list",
+    )
+
+    if (list.isEmpty)
+      throw HlangException("can't index empty list", slice = e.args(0).slice, label = "while indexing list")
+
+    if (index < 0 || index >= list.length) throw HlangException(
+      s"index ($index) must be within bounds (0 <= index < ${list.length})",
+      slice = e.args(0).slice,
+      label = "while indexing list",
+    )
+
+    list(index)
   }
 }
 
@@ -255,5 +315,26 @@ object InterpreterPure {
     case HippoValue.ProofInfo(value) => value
     case HippoValue.TacticInfo(value) => value
     case _ => throw new UnsupportedOperationException("can't convert value to tactic argument")
+  }
+
+  protected def getSingleArg(e: HippoExpression.Apply, args: Seq[HippoValue], label: String): HippoValue = args match {
+    case Seq(arg) => arg
+    case _ => throw HlangException("exactly one argument required", slice = e.argsSlice, label = label)
+  }
+
+  protected def getValueAsInt(value: HippoValue, message: String, slice: SourceFile#Slice, label: String): Int =
+    value match {
+      case HippoValue.Int(value) => value
+      case _ => throw HlangException(message, slice = slice, label = label)
+    }
+
+  protected def getValueAsList(
+      value: HippoValue,
+      message: String,
+      slice: SourceFile#Slice,
+      label: String,
+  ): IndexedSeq[HippoValue] = value match {
+    case HippoValue.List(values) => values
+    case _ => throw HlangException(message, slice = slice, label = label)
   }
 }

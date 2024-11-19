@@ -7,7 +7,7 @@ package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.hippolang.HippoConversions._
 import org.keymaerax.hippolang.namespace.MutableNamespace
-import org.keymaerax.hippolang.{HippoExpression, HippoValue}
+import org.keymaerax.hippolang.{HippoExpression, HippoValue, HlangException}
 import org.keymaerax.hippolochos.run.HippoContext
 
 import java.nio.file.Path
@@ -23,7 +23,7 @@ class InterpreterFile(ictx: HippoInterpreterContext, ctx: HippoContext, file: Op
       val importFile =
         if (path.isAbsolute) path
         else file.getOrElse(throw new UnsupportedOperationException("code has no path")).getParent.resolve(path)
-      ictx.importCached(importFile).toHValue
+      HlangException.at(slice = e.slice, label = "while importing this file") { ictx.importCached(importFile).toHValue }
 
     case e: HippoExpression.Declare if e.exports =>
       val valueV = eval(namespace, e.copy(exportSlice = None))

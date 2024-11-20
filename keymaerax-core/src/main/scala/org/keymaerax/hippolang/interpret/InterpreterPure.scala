@@ -5,10 +5,11 @@
 
 package org.keymaerax.hippolang.interpret
 
-import org.keymaerax.core.Sequent
+import org.keymaerax.core.{Expression, Sequent}
 import org.keymaerax.hippolang.HippoConversions._
 import org.keymaerax.hippolang.interpret.InterpreterPure.{
   getSingleArg,
+  getValueAsExpression,
   getValueAsInt,
   getValueAsList,
   getValueAsProof,
@@ -147,8 +148,14 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       case (HippoValue.Tactic(_), "pure") => HippoValue.BuiltinMemberFunction(target, Pure)
       case (HippoValue.DlExpression(_), "select") => HippoValue.BuiltinMemberFunction(target, Select)
       case (HippoValue.Proof(value), "join") => HippoValue.BuiltinMemberFunction(target, Join)
+      case (HippoValue.Proof(value), "usubst") => HippoValue.BuiltinMemberFunction(target, Usubst)
       case (HippoValue.Proof(value), "conclusion") => value.conclusion.toHValue
       case (HippoValue.Proof(value), "premises") => value.premises.map(_.sequent.toHValue).toHValue
+      // TODO Better solution for proof/proofinfo duality
+      case (HippoValue.ProofInfo(value), "join") => HippoValue.BuiltinMemberFunction(target, Join)
+      case (HippoValue.ProofInfo(value), "usubst") => HippoValue.BuiltinMemberFunction(target, Usubst)
+      case (HippoValue.ProofInfo(value), "conclusion") => value.proof.conclusion.toHValue
+      case (HippoValue.ProofInfo(value), "premises") => value.proof.premises.map(_.sequent.toHValue).toHValue
       case (HippoValue.DlSequent(value), "ante") => value.ante.map(_.toHValue).toHValue
       case (HippoValue.DlSequent(value), "succ") => value.succ.map(_.toHValue).toHValue
       case (HippoValue.List(value), "length") => value.length.toHValue
@@ -285,6 +292,8 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
       case (HippoValue.Tactic(tactic: PureTactic), Pure, Seq()) => ctx.pure(tactic).toHValue
 
+      case (HippoValue.ProofInfo(proof), Join, _) => applyBuiltinMemberFunction(e, proof.proof.toHValue, value, args)
+
       case (HippoValue.Proof(proof), Join, Seq(at, subproof)) =>
         val atV = getValueAsInt(
           at,
@@ -302,6 +311,28 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
         HlangException.at(slice = e.slice, label = "while joining proofs") {
           ctx.joinAt(atV)(proof, subproofV).toHValue
+        }
+
+      case (HippoValue.ProofInfo(proof), Usubst, _) => applyBuiltinMemberFunction(e, proof.proof.toHValue, value, args)
+
+      // TODO Support multiple substitution pairs
+      case (HippoValue.Proof(proof), Usubst, Seq(from, to)) =>
+        val fromV = getValueAsExpression(
+          from,
+          message = "argument must be a dL expression",
+          slice = e.args(0).slice,
+          label = "while performing usubst",
+        )
+
+        val toV = getValueAsExpression(
+          to,
+          message = "argument must be a dL expression",
+          slice = e.args(0).slice,
+          label = "while performing usubst",
+        )
+
+        HlangException.at(slice = e.slice, label = "while performing usubst") {
+          ctx.uSubst(proof, fromV -> toV).toHValue
         }
 
       case (HippoValue.DlExpression(value), Select, args) =>
@@ -396,6 +427,16 @@ object InterpreterPure {
       case HippoValue.Int(value) => value
       case _ => throw HlangException(message, slice = slice, label = label)
     }
+
+  protected def getValueAsExpression(
+      value: HippoValue,
+      message: String,
+      slice: SourceFile#Slice,
+      label: String,
+  ): Expression = value match {
+    case HippoValue.DlExpression(value) => value
+    case _ => throw HlangException(message, slice = slice, label = label)
+  }
 
   protected def getValueAsSequent(value: HippoValue, message: String, slice: SourceFile#Slice, label: String): Sequent =
     value match {

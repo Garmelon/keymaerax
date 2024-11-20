@@ -179,6 +179,7 @@ object Hash {
       case BuiltinMemberFunction.Pure => digest("Pure")
       case BuiltinMemberFunction.Join => digest("Join")
       case BuiltinMemberFunction.Usubst => digest("Usubst")
+      case BuiltinMemberFunction.Urename => digest("Urename")
       case BuiltinMemberFunction.Select => digest("Select")
     }
 

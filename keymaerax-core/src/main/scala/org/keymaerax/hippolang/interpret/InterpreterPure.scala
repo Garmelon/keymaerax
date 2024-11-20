@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolang.interpret
 
-import org.keymaerax.core.{Expression, Sequent}
+import org.keymaerax.core.{Expression, Sequent, Variable}
 import org.keymaerax.hippolang.HippoConversions._
 import org.keymaerax.hippolang.interpret.InterpreterPure.{
   getSingleArg,
@@ -149,11 +149,13 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       case (HippoValue.DlExpression(_), "select") => HippoValue.BuiltinMemberFunction(target, Select)
       case (HippoValue.Proof(value), "join") => HippoValue.BuiltinMemberFunction(target, Join)
       case (HippoValue.Proof(value), "usubst") => HippoValue.BuiltinMemberFunction(target, Usubst)
+      case (HippoValue.Proof(value), "urename") => HippoValue.BuiltinMemberFunction(target, Urename)
       case (HippoValue.Proof(value), "conclusion") => value.conclusion.toHValue
       case (HippoValue.Proof(value), "premises") => value.premises.map(_.sequent.toHValue).toHValue
       // TODO Better solution for proof/proofinfo duality
       case (HippoValue.ProofInfo(value), "join") => HippoValue.BuiltinMemberFunction(target, Join)
       case (HippoValue.ProofInfo(value), "usubst") => HippoValue.BuiltinMemberFunction(target, Usubst)
+      case (HippoValue.ProofInfo(value), "urename") => HippoValue.BuiltinMemberFunction(target, Urename)
       case (HippoValue.ProofInfo(value), "conclusion") => value.proof.conclusion.toHValue
       case (HippoValue.ProofInfo(value), "premises") => value.proof.premises.map(_.sequent.toHValue).toHValue
       case (HippoValue.DlSequent(value), "ante") => value.ante.map(_.toHValue).toHValue
@@ -333,6 +335,27 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
         HlangException.at(slice = e.slice, label = "while performing usubst") {
           ctx.uSubst(proof, fromV -> toV).toHValue
+        }
+
+      case (HippoValue.ProofInfo(proof), Urename, _) => applyBuiltinMemberFunction(e, proof.proof.toHValue, value, args)
+
+      case (HippoValue.Proof(proof), Urename, Seq(from, to)) =>
+        val fromV = getValueAsExpression(
+          from,
+          message = "argument must be a dL expression",
+          slice = e.args(0).slice,
+          label = "while performing urename",
+        )
+
+        val toV = getValueAsExpression(
+          to,
+          message = "argument must be a dL expression",
+          slice = e.args(0).slice,
+          label = "while performing urename",
+        )
+
+        HlangException.at(slice = e.slice, label = "while performing urename") {
+          ctx.uRename(proof, fromV.asInstanceOf[Variable], toV.asInstanceOf[Variable]).toHValue
         }
 
       case (HippoValue.DlExpression(value), Select, args) =>

@@ -60,9 +60,16 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
     case e: HippoExpression.Theorem =>
       val conclusion = eval(namespace, e.conclusion).asSequent
       val premises = e.premises.map(eval(namespace, _).asSequent).toIndexedSeq
-      val proof = eval(namespace, e.proof).asTactic
-      val proven = HlangException
-        .at(e.proofSlice, "while running this tactic") { ctx.tactic(Cached(proof), conclusion, premises) }
+      val proof = eval(namespace, e.proof)
+
+      val proven = proof match {
+        case HippoValue.Proof(value) => value
+        case HippoValue.ProofInfo(value) => value.proof
+        case HippoValue.Tactic(value) => HlangException
+            .at(e.proofSlice, "while running this tactic") { ctx.tactic(Cached(value), conclusion, premises) }
+        case _ =>
+          throw HlangException("must be a proof or a tactic", slice = e.proofSlice, label = "while proving theorem")
+      }
 
       if (conclusion != proven.conclusion || premises != proven.premises.map(_.sequent)) {
         val declaredConclusion = SequentPrinter.oneline(conclusion)

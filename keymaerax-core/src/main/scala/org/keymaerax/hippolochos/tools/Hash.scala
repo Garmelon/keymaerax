@@ -99,7 +99,7 @@ object Hash {
 
     def digest(expr: Expression): Builder = digest(printer(expr))
 
-    def digest(sequent: Sequent): Builder = digestSeq(sequent.ante)(_.digest(_))
+    def digest(sequent: Sequent): Builder = digestSeq(sequent.ante)(_.digest(_)).digestSeq(sequent.succ)(_.digest(_))
 
     def digest(pos: SeqPos): Builder = digest(pos.getPos)
 

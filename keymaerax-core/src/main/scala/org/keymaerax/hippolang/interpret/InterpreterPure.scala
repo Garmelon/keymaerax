@@ -5,8 +5,14 @@
 
 package org.keymaerax.hippolang.interpret
 
+import org.keymaerax.core.Sequent
 import org.keymaerax.hippolang.HippoConversions._
-import org.keymaerax.hippolang.interpret.InterpreterPure.{getSingleArg, getValueAsInt, getValueAsList}
+import org.keymaerax.hippolang.interpret.InterpreterPure.{
+  getSingleArg,
+  getValueAsInt,
+  getValueAsList,
+  getValueAsSequent,
+}
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.parse.SourceFile
 import org.keymaerax.hippolang.{
@@ -231,6 +237,16 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
     case BuiltinFunction.List => HippoValue.List(args)
 
+    case BuiltinFunction.Proof =>
+      val arg = getSingleArg(e, args, label = "while constructing proof")
+      val sequent = getValueAsSequent(
+        arg,
+        "argument must be a sequent",
+        slice = e.args(0).slice,
+        label = "while constructing proof",
+      )
+      HippoValue.Proof(ctx.sequent(sequent))
+
     case BuiltinFunction.Print =>
       val parts = args.map {
         case HippoValue.String(str) => str
@@ -356,6 +372,12 @@ object InterpreterPure {
   protected def getValueAsInt(value: HippoValue, message: String, slice: SourceFile#Slice, label: String): Int =
     value match {
       case HippoValue.Int(value) => value
+      case _ => throw HlangException(message, slice = slice, label = label)
+    }
+
+  protected def getValueAsSequent(value: HippoValue, message: String, slice: SourceFile#Slice, label: String): Sequent =
+    value match {
+      case HippoValue.DlSequent(value) => value
       case _ => throw HlangException(message, slice = slice, label = label)
     }
 

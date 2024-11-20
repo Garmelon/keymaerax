@@ -36,10 +36,10 @@ class EnvBuilder(child: Option[Namespace] = None) {
   }
 
   def addBuiltins(): EnvBuilder = {
-    Seq(BuiltinFunction.List, BuiltinFunction.Print, BuiltinFunction.Goals, BuiltinFunction.Premise)
-      .foreach(bf => add(bf.name, bf.toHValue))
-
-    for (builtin <- BuiltinFunction.all) addPath(List(HippoIdentifier("builtins"), builtin.name), builtin.toHValue)
+    for (builtin <- BuiltinFunction.all) {
+      addPath(List(HippoIdentifier("builtins"), builtin.name), builtin.toHValue)
+      if (!builtin.hidden) add(builtin.name, builtin.toHValue)
+    }
 
     this
   }

@@ -92,6 +92,11 @@ object TacticArg {
     override def validate(any: Any): Type = any.asInstanceOf[Type]
   }
 
+  case object Sequent extends TacticArg {
+    override type Type = org.keymaerax.core.Sequent
+    override def validate(any: Any): Type = any.asInstanceOf[Type]
+  }
+
   case object Variable extends TacticArg {
     override type Type = org.keymaerax.core.Variable
     override def validate(any: Any): Type = any.asInstanceOf[Type]

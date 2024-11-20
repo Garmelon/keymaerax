@@ -5,33 +5,34 @@
 
 package org.keymaerax.hippolang
 
-sealed abstract class BuiltinFunction(val name: HippoIdentifier)
+sealed abstract class BuiltinFunction(val name: HippoIdentifier, val hidden: Boolean = false)
 
 object BuiltinFunction {
   // Arithmetic operations
-  case object Not extends BuiltinFunction(HippoIdentifier("not"))
-  case object Neg extends BuiltinFunction(HippoIdentifier("neg"))
-  case object Mul extends BuiltinFunction(HippoIdentifier("mul"))
-  case object Div extends BuiltinFunction(HippoIdentifier("div"))
-  case object Add extends BuiltinFunction(HippoIdentifier("add"))
-  case object Sub extends BuiltinFunction(HippoIdentifier("sub"))
-  case object Gt extends BuiltinFunction(HippoIdentifier("gt"))
-  case object Gte extends BuiltinFunction(HippoIdentifier("gte"))
-  case object Lt extends BuiltinFunction(HippoIdentifier("lt"))
-  case object Lte extends BuiltinFunction(HippoIdentifier("lte"))
-  case object Eq extends BuiltinFunction(HippoIdentifier("eq"))
-  case object Neq extends BuiltinFunction(HippoIdentifier("neq"))
-  case object And extends BuiltinFunction(HippoIdentifier("and"))
-  case object Or extends BuiltinFunction(HippoIdentifier("or"))
+  case object Not extends BuiltinFunction(HippoIdentifier("not"), hidden = true)
+  case object Neg extends BuiltinFunction(HippoIdentifier("neg"), hidden = true)
+  case object Mul extends BuiltinFunction(HippoIdentifier("mul"), hidden = true)
+  case object Div extends BuiltinFunction(HippoIdentifier("div"), hidden = true)
+  case object Add extends BuiltinFunction(HippoIdentifier("add"), hidden = true)
+  case object Sub extends BuiltinFunction(HippoIdentifier("sub"), hidden = true)
+  case object Gt extends BuiltinFunction(HippoIdentifier("gt"), hidden = true)
+  case object Gte extends BuiltinFunction(HippoIdentifier("gte"), hidden = true)
+  case object Lt extends BuiltinFunction(HippoIdentifier("lt"), hidden = true)
+  case object Lte extends BuiltinFunction(HippoIdentifier("lte"), hidden = true)
+  case object Eq extends BuiltinFunction(HippoIdentifier("eq"), hidden = true)
+  case object Neq extends BuiltinFunction(HippoIdentifier("neq"), hidden = true)
+  case object And extends BuiltinFunction(HippoIdentifier("and"), hidden = true)
+  case object Or extends BuiltinFunction(HippoIdentifier("or"), hidden = true)
 
   // Other operations
   case object List extends BuiltinFunction(HippoIdentifier("list"))
+  case object Proof extends BuiltinFunction(HippoIdentifier("proof"))
   case object Print extends BuiltinFunction(HippoIdentifier("print"))
   case object Goals extends BuiltinFunction(HippoIdentifier("goals"))
   case object Premise extends BuiltinFunction(HippoIdentifier("premise"))
 
   val all: Seq[BuiltinFunction] =
-    Seq(Not, Neg, Mul, Div, Add, Sub, Gt, Gte, Lt, Lte, Eq, Neq, And, Or, List, Print, Goals, Premise)
+    Seq(Not, Neg, Mul, Div, Add, Sub, Gt, Gte, Lt, Lte, Eq, Neq, And, Or, List, Proof, Print, Goals, Premise)
 
   val byName: Map[HippoIdentifier, BuiltinFunction] = all.map(b => b.name -> b).toMap
 }

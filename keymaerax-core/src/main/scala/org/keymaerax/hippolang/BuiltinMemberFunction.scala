@@ -13,9 +13,10 @@ object BuiltinMemberFunction {
   case object Pure extends BuiltinMemberFunction(HippoIdentifier("pure"))
   case object Join extends BuiltinMemberFunction(HippoIdentifier("join"))
   case object Usubst extends BuiltinMemberFunction(HippoIdentifier("usubst"))
+  case object Urename extends BuiltinMemberFunction(HippoIdentifier("urename"))
   case object Select extends BuiltinMemberFunction(HippoIdentifier("select"))
 
-  val all: Seq[BuiltinMemberFunction] = Seq(Forward, Backward, Pure, Join, Usubst, Select)
+  val all: Seq[BuiltinMemberFunction] = Seq(Forward, Backward, Pure, Join, Usubst, Urename, Select)
 
   val byName: Map[HippoIdentifier, BuiltinMemberFunction] = all.map(b => b.name -> b).toMap
 }

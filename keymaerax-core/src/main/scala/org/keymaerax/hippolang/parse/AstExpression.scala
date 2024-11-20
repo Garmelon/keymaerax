@@ -46,14 +46,35 @@ object AstExpression {
 
   /**
    * {{{
-   *   f{ 1+1=2 }
+   *   dLt { 1+1 }
+   * }}}
+   */
+  case class DlTerm(slice: SourceFile#Slice, value: org.keymaerax.core.Term) extends AstExpression
+
+  /**
+   * {{{
+   *   dLf { 1+1=2 }
+   * }}}
+   */
+  case class DlFormula(slice: SourceFile#Slice, value: org.keymaerax.core.Formula) extends AstExpression
+
+  /**
+   * {{{
+   *   dLp { x:=2; }
+   * }}}
+   */
+  case class DlProgram(slice: SourceFile#Slice, value: org.keymaerax.core.Program) extends AstExpression
+
+  /**
+   * {{{
+   *   dL { 1+1=2 }
    * }}}
    */
   case class DlExpression(slice: SourceFile#Slice, value: org.keymaerax.core.Expression) extends AstExpression
 
   /**
    * {{{
-   *   s{ ==> 1+1=2 }
+   *   dLs { ==> 1+1=2 }
    * }}}
    */
   case class DlSequent(slice: SourceFile#Slice, value: org.keymaerax.core.Sequent) extends AstExpression

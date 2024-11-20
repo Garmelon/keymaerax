@@ -93,10 +93,20 @@ class HippoParser(source: SourceFile) {
     }
   }.opaque("string")
 
-  private def dlExpressionExpression[$: P]: P[AstExpression.DlExpression] = P {
-    sliced(keywordDlExpression ~/ "{" ~ dlParser.expression ~ "}").map { case (value, slice) =>
+  private def dlExpressionExpression[$: P]: P[AstExpression] = P {
+    def dlTerm = sliced(keywordDlTerm ~/ "{" ~ dlParser.term(true) ~ "}").map { case (value, slice) =>
+      AstExpression.DlTerm(slice = slice, value = value)
+    }
+    def dlFormula = sliced(keywordDlFormula ~/ "{" ~ dlParser.formula ~ "}").map { case (value, slice) =>
+      AstExpression.DlFormula(slice = slice, value = value)
+    }
+    def dlProgram = sliced(keywordDlProgram ~/ "{" ~ dlParser.program ~ "}").map { case (value, slice) =>
+      AstExpression.DlProgram(slice = slice, value = value)
+    }
+    def dlExpression = sliced(keywordDlExpression ~/ "{" ~ dlParser.expression ~ "}").map { case (value, slice) =>
       AstExpression.DlExpression(slice = slice, value = value)
     }
+    dlTerm | dlFormula | dlProgram | dlExpression
   }
 
   private def dlSequentExpression[$: P]: P[AstExpression.DlSequent] = P {
@@ -342,7 +352,10 @@ object HippoParser {
   private val keywordBackward = "backward"
   private val keywordBy = "by"
   private val keywordDlExpression = "dL"
+  private val keywordDlFormula = "dLf"
+  private val keywordDlProgram = "dLp"
   private val keywordDlSequent = "dLs"
+  private val keywordDlTerm = "dLt"
   private val keywordElse = "else"
   private val keywordExport = "export"
   private val keywordFalse = "false"
@@ -362,7 +375,10 @@ object HippoParser {
     keywordBackward,
     keywordBy,
     keywordDlExpression,
+    keywordDlFormula,
+    keywordDlProgram,
     keywordDlSequent,
+    keywordDlTerm,
     keywordElse,
     keywordExport,
     keywordFalse,

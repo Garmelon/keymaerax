@@ -177,6 +177,7 @@ object Hash {
       case BuiltinMemberFunction.Forward => digest("Forward")
       case BuiltinMemberFunction.Backward => digest("Backward")
       case BuiltinMemberFunction.Pure => digest("Pure")
+      case BuiltinMemberFunction.Join => digest("Join")
       case BuiltinMemberFunction.Select => digest("Select")
     }
 

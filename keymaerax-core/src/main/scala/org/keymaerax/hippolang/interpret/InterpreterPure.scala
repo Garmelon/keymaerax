@@ -11,6 +11,7 @@ import org.keymaerax.hippolang.interpret.InterpreterPure.{
   getSingleArg,
   getValueAsInt,
   getValueAsList,
+  getValueAsProof,
   getValueAsSequent,
 }
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
@@ -25,6 +26,7 @@ import org.keymaerax.hippolang.{
 }
 import org.keymaerax.hippolib.meta.TacticInfo
 import org.keymaerax.hippolib.primitive.Cached
+import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.hippolochos.tools.{ExprPath, SequentPrinter}
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
@@ -144,6 +146,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       case (HippoValue.Tactic(_), "backward") => HippoValue.BuiltinMemberFunction(target, Backward)
       case (HippoValue.Tactic(_), "pure") => HippoValue.BuiltinMemberFunction(target, Pure)
       case (HippoValue.DlExpression(_), "select") => HippoValue.BuiltinMemberFunction(target, Select)
+      case (HippoValue.Proof(value), "join") => HippoValue.BuiltinMemberFunction(target, Join)
       case (HippoValue.Proof(value), "conclusion") => value.conclusion.toHValue
       case (HippoValue.Proof(value), "premises") => value.premises.map(_.sequent.toHValue).toHValue
       case (HippoValue.DlSequent(value), "ante") => value.ante.map(_.toHValue).toHValue
@@ -282,6 +285,25 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
       case (HippoValue.Tactic(tactic: PureTactic), Pure, Seq()) => ctx.pure(tactic).toHValue
 
+      case (HippoValue.Proof(proof), Join, Seq(at, subproof)) =>
+        val atV = getValueAsInt(
+          at,
+          message = "argument must be an integer",
+          slice = e.args(0).slice,
+          label = "while joining proofs",
+        )
+
+        val subproofV = getValueAsProof(
+          subproof,
+          message = "argument must be a proof",
+          slice = e.args(1).slice,
+          label = "while joining proofs",
+        )
+
+        HlangException.at(slice = e.slice, label = "while joining proofs") {
+          ctx.joinAt(atV)(proof, subproofV).toHValue
+        }
+
       case (HippoValue.DlExpression(value), Select, args) =>
         val arg = getSingleArg(e, args, label = "while selecting subexpression")
 
@@ -380,6 +402,17 @@ object InterpreterPure {
       case HippoValue.DlSequent(value) => value
       case _ => throw HlangException(message, slice = slice, label = label)
     }
+
+  protected def getValueAsProof(
+      value: HippoValue,
+      message: String,
+      slice: SourceFile#Slice,
+      label: String,
+  ): HippoProof = value match {
+    case HippoValue.Proof(value) => value
+    case HippoValue.ProofInfo(value) => value.proof
+    case _ => throw HlangException(message, slice = slice, label = label)
+  }
 
   protected def getValueAsList(
       value: HippoValue,

@@ -124,7 +124,7 @@ class HippoParser(source: SourceFile) {
   }
 
   private def assignExpression[$: P]: P[AstExpression.Assign] = P {
-    sliced(identifier ~ "=" ~/ expression).map { case ((name, value), slice) =>
+    sliced(identifier ~ "=" ~ expression).map { case ((name, value), slice) =>
       AstExpression.Assign(slice = slice, name = name, value = value)
     }
   }

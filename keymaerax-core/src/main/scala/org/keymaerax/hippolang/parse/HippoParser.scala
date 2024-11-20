@@ -152,7 +152,7 @@ class HippoParser(source: SourceFile) {
 
   private def theoremExpression[$: P]: P[AstExpression.Theorem] = P {
     sliced(
-      slice(keywordVerified./).? ~ keywordTheorem ~/ expression ~ (keywordPremise ~/ expression)
+      slice(keywordVerified./).? ~ keywordTheorem ~/ expression ~ (keywordGiven ~/ expression)
         .rep ~ keywordBy ~/ sliced(expression)
     ).map { case ((verifySlice, conclusion, premises, (proof, proofSlice)), slice) =>
       AstExpression.Theorem(
@@ -347,11 +347,11 @@ object HippoParser {
   private val keywordExport = "export"
   private val keywordFalse = "false"
   private val keywordFunction = "function"
+  private val keywordGiven = "given"
   private val keywordGraph = "graph"
   private val keywordIf = "if"
   private val keywordImport = "import"
   private val keywordNull = "null"
-  private val keywordPremise = "premise"
   private val keywordTheorem = "theorem"
   private val keywordTrue = "true"
   private val keywordVal = "val"
@@ -367,11 +367,11 @@ object HippoParser {
     keywordExport,
     keywordFalse,
     keywordFunction,
+    keywordGiven,
     keywordGraph,
     keywordIf,
     keywordImport,
     keywordNull,
-    keywordPremise,
     keywordTheorem,
     keywordTrue,
     keywordVal,

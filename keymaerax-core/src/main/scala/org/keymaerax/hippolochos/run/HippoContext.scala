@@ -9,7 +9,7 @@ import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
 import org.keymaerax.hippolochos.cache.{Cache, HippoProofFsCache, LruCache, ProvableFsCache}
 import org.keymaerax.hippolochos.proof.{ExternalSource, HippoPremise, HippoProof}
-import org.keymaerax.hippolochos.tools.Hash
+import org.keymaerax.hippolochos.tools.Hasher
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
 
 import java.nio.file.Path
@@ -21,7 +21,7 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
   //////////////////////
 
   private def computeQe(formula: Formula): Provable = toolCache
-    .getOrCompute(Hash.start.digest(formula).build) { toolProvider.qeTool().get.qe(formula).fact.underlyingProvable }
+    .getOrCompute(Hasher().digest(formula).hash) { toolProvider.qeTool().get.qe(formula).fact.underlyingProvable }
 
   ////////////////////////
   // Proof constructors //
@@ -112,25 +112,24 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
   // These functions also cache the tactic application.
 
   def cachedPure(tactic: PureTactic): HippoProof = {
-    val hash = Hash.start.digest("pure").digest(tactic.hash).build
+    val hash = Hasher().digest("pure").digest(tactic.hash).hash
     val proof = tacticCache.getOrCompute(hash) { pure(tactic) }
     HippoProof.External(proof.conclusion, proof.premises, ExternalSource.Cache(hash))
   }
 
   def cachedForward(tactic: ForwardTactic, premises: IndexedSeq[Sequent]): HippoProof = {
-    val hash = Hash.start.digest("forward").digest(tactic.hash).digestSeq(premises)(_.digest(_)).build
+    val hash = Hasher().digest("forward").digest(tactic.hash).digestSeqWith(premises)(_.digest(_)).hash
     val proof = tacticCache.getOrCompute(hash) { forward(tactic, premises) }
     HippoProof.External(proof.conclusion, proof.premises, ExternalSource.Cache(hash))
   }
 
   def cachedBackward(tactic: BackwardTactic, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
-    val hash = Hash
-      .start
+    val hash = Hasher()
       .digest("backward")
       .digest(tactic.hash)
       .digest(conclusion)
-      .digestSeq(premises.toSeq.sortBy(_._1)) { case (b, (i, p)) => b.digest(i).digest(p) }
-      .build
+      .digestSeqWith(premises.toSeq.sortBy(_._1)) { case (b, (i, p)) => b.digest(i).digest(p) }
+      .hash
     val proof = tacticCache.getOrCompute(hash) { backward(tactic, conclusion, premises) }
     HippoProof.External(proof.conclusion, proof.premises, ExternalSource.Cache(hash))
   }

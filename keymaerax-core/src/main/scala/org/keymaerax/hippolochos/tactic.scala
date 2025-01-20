@@ -8,10 +8,12 @@ package org.keymaerax.hippolochos
 import org.keymaerax.core.Sequent
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.Hash
+import org.keymaerax.hippolochos.tools.{Hash, Hashable, Hasher}
 
-sealed trait Tactic {
+sealed trait Tactic extends Hashable {
   def hash: Hash
+
+  final override def digestInto(hasher: Hasher): Unit = hasher.digest(hash)
 }
 
 trait ForwardTactic extends Tactic {

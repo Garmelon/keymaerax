@@ -6,5 +6,8 @@
 package org.keymaerax.hippolib.meta
 
 import org.keymaerax.hippolochos.proof.HippoProof
+import org.keymaerax.hippolochos.tools.{Hashable, Hasher}
 
-case class ProofInfo(proof: HippoProof)
+case class ProofInfo(proof: HippoProof) extends Hashable {
+  override def digestInto(hasher: Hasher): Unit = hasher.digest(proof)
+}

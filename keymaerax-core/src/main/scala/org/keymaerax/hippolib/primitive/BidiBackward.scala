@@ -8,7 +8,7 @@ package org.keymaerax.hippolib.primitive
 import org.keymaerax.core.Sequent
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.Hash
+import org.keymaerax.hippolochos.tools.{Hash, Hasher}
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
 
 /**
@@ -17,7 +17,7 @@ import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
  * Uses the original tactic without modification when run backwards.
  */
 case class BidiBackward(tactic: BackwardTactic, conclusion: Sequent) extends ForwardTactic with BackwardTactic {
-  override lazy val hash: Hash = Hash.start.digest[this.type].digest(tactic.hash).digest(conclusion).build
+  override lazy val hash: Hash = Hasher().digest[this.type].digest(tactic.hash).digest(conclusion).hash
 
   override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof = {
     val premiseMap = premises.zipWithIndex.map { case (p, i) => (i, p) }.toMap

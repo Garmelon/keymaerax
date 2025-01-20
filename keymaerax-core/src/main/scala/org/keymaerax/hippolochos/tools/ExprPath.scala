@@ -9,7 +9,7 @@ import org.keymaerax.core
 
 import scala.annotation.tailrec
 
-case class ExprPath(segments: List[Int]) {
+case class ExprPath(segments: List[Int]) extends Hashable {
   def select(expr: core.Term): core.Expression = ExprPath.selectAt(segments, expr)
 
   def select(expr: core.Formula): core.Expression = ExprPath.selectAt(segments, expr)
@@ -29,6 +29,8 @@ case class ExprPath(segments: List[Int]) {
 
   def replace(expr: core.Expression, replacement: core.Expression): core.Expression = ExprPath
     .replaceAt(segments, expr, replacement)
+
+  override def digestInto(hasher: Hasher): Unit = hasher.digestSeqWith(segments)(_.digest(_))
 }
 
 object ExprPath {

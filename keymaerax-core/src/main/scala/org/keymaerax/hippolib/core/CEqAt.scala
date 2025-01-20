@@ -11,10 +11,10 @@ import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolochos.BackwardTactic
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{ExprPath, Hash}
+import org.keymaerax.hippolochos.tools.{ExprPath, Hash, Hasher}
 
 case class CEqAt(at: ExprPath)(implicit lib: HippoLib) extends BackwardTactic {
-  override def hash: Hash = Hash.start.digest[this.type].digest(at).build
+  override lazy val hash: Hash = Hasher().digest[this.type].digest(at).hash
 
   override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
     require(conclusion.succ.length == 1)

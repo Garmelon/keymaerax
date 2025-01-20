@@ -5,7 +5,11 @@
 
 package org.keymaerax.hippolang
 
-sealed abstract class BuiltinMemberFunction(val name: HippoIdentifier) {}
+import org.keymaerax.hippolochos.tools.{Hashable, Hasher}
+
+sealed abstract class BuiltinMemberFunction(val name: HippoIdentifier) extends Hashable {
+  override def digestInto(hasher: Hasher): Unit = hasher.digest(name)
+}
 
 object BuiltinMemberFunction {
   case object Forward extends BuiltinMemberFunction(HippoIdentifier("forward"))

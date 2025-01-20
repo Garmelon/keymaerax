@@ -6,14 +6,16 @@
 package org.keymaerax.hippolang
 
 import org.keymaerax.hippolang.parse.HippoParser
+import org.keymaerax.hippolochos.tools.{Hashable, Hasher}
 
-case class HippoIdentifier(value: String) extends Comparable[HippoIdentifier] {
+case class HippoIdentifier(value: String) extends Hashable with Comparable[HippoIdentifier] {
   require(HippoIdentifier.isValid(value), "invalid identifier")
 
   def plain: String = value
   def quoted: String = s"'$value'"
   def quotedIfNecessary: String = if (HippoParser.keywords.contains(value)) quoted else plain
 
+  override def digestInto(hasher: Hasher): Unit = hasher.digest(value)
   override def compareTo(o: HippoIdentifier): Int = value.compareTo(o.value)
   override def toString: String = quotedIfNecessary
 }

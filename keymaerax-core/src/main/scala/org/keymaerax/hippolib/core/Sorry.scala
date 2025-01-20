@@ -8,7 +8,7 @@ package org.keymaerax.hippolib.core
 import org.keymaerax.core.{Sequent, True}
 import org.keymaerax.hippolochos.proof.{HippoPremise, HippoProof}
 import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.Hash
+import org.keymaerax.hippolochos.tools.{Hash, Hasher}
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
 
 import scala.collection.SortedMap
@@ -16,12 +16,11 @@ import scala.collection.SortedMap
 case class Sorry(conclusion: Option[Sequent] = None, premises: SortedMap[Int, Sequent] = SortedMap.empty)
     extends ForwardTactic with BackwardTactic {
 
-  override lazy val hash: Hash = Hash
-    .start
+  override lazy val hash: Hash = Hasher()
     .digest[this.type]
-    .digestOpt(conclusion)(_.digest(_))
-    .digestMap(premises)(_.digest(_).digest(_))
-    .build
+    .digestOptWith(conclusion)(_.digest(_))
+    .digestMapWith(premises)(_.digest(_).digest(_))
+    .hash
 
   override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof = {
     // TODO Nicer error handling

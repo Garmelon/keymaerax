@@ -6,8 +6,9 @@
 package org.keymaerax.hippolochos.proof
 
 import org.keymaerax.core
+import org.keymaerax.hippolochos.tools.{Hashable, Hasher}
 
-sealed abstract class HippoProof {
+sealed abstract class HippoProof extends Hashable {
   val conclusion: core.Sequent
   val premises: IndexedSeq[HippoPremise]
 
@@ -58,10 +59,17 @@ object HippoProof {
 
   final case class External(conclusion: core.Sequent, premises: IndexedSeq[HippoPremise], source: ExternalSource)
       extends HippoProof {
+
     override protected def computeProvable(
         fromExternal: FromExternal,
         premises: IndexedSeq[core.Provable],
     ): core.Provable = fromExternal(this, premises)
+
+    override def digestInto(hasher: Hasher): Unit = hasher
+      .digest[this.type]
+      .digest(conclusion)
+      .digestSeq(premises)
+      .digest(source)
   }
 
   final case class Sequent(conclusion: core.Sequent) extends HippoProof {
@@ -72,6 +80,8 @@ object HippoProof {
         fromExternal: FromExternal,
         premises: IndexedSeq[core.Provable],
     ): core.Provable = assertConsistency(premises) { applyPremises(provable, premises) }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(conclusion)
   }
 
   final case class CoreAxiom(name: String) extends HippoProof {
@@ -83,6 +93,8 @@ object HippoProof {
         fromExternal: FromExternal,
         premises: IndexedSeq[core.Provable],
     ): core.Provable = assertConsistency(premises) { applyPremises(provable, premises) }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(name)
   }
 
   final case class CoreAxiomaticRule(name: String) extends HippoProof {
@@ -94,6 +106,8 @@ object HippoProof {
         fromExternal: FromExternal,
         premises: IndexedSeq[core.Provable],
     ): core.Provable = assertConsistency(premises) { applyPremises(provable, premises) }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(name)
   }
 
   final case class CoreProofRule(conclusion: core.Sequent, rule: core.Rule) extends HippoProof {
@@ -104,6 +118,8 @@ object HippoProof {
         fromExternal: FromExternal,
         premises: IndexedSeq[core.Provable],
     ): core.Provable = assertConsistency(premises) { applyPremises(provable, premises) }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(conclusion).digest(rule)
   }
 
   final case class URename(proof: HippoProof, rename: core.URename) extends HippoProof {
@@ -118,6 +134,8 @@ object HippoProof {
       val provable = proof.localProvable(fromExternal)(rename)
       applyPremises(provable, premises)
     }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(proof).digest(rename)
   }
 
   final case class USubst(proof: HippoProof, subst: core.USubst) extends HippoProof {
@@ -136,6 +154,8 @@ object HippoProof {
       val provable = proof.localProvable(fromExternal)(subst)
       applyPremises(provable, premises)
     }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(proof).digest(subst)
   }
 
   final case class GloballySoundUSubst(premise: core.Sequent, subst: core.USubst) extends HippoProof {
@@ -146,6 +166,8 @@ object HippoProof {
         fromExternal: FromExternal,
         premises: IndexedSeq[core.Provable],
     ): core.Provable = assertConsistency(premises) { premises.head(subst) }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(premise).digest(subst)
   }
 
   final case class Join(proof: HippoProof, subproof: HippoProof, at: Int) extends HippoProof {
@@ -174,6 +196,8 @@ object HippoProof {
       val premise = subproof.computeProvable(fromExternal, subpremises)
       proof.computeProvable(fromExternal, (before :+ premise) ++ after)
     }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(proof).digest(subproof).digest(at)
   }
 
   final case class Swap(proof: HippoProof, premise1: Int, premise2: Int) extends HippoProof {
@@ -190,6 +214,12 @@ object HippoProof {
           yield premises(if (i == premise1) premise2 else if (i == premise2) premise1 else i)
         proof.computeProvable(fromExternal, swappedPremises).swap(premise1, premise2)
       }
+
+    override def digestInto(hasher: Hasher): Unit = hasher
+      .digest[this.type]
+      .digest(proof)
+      .digest(premise1)
+      .digest(premise2)
   }
 
   final case class Deduplicate(proof: HippoProof, premise: Int, duplicate: Int) extends HippoProof {
@@ -212,6 +242,12 @@ object HippoProof {
         val duplicatedPremises = (premises.take(duplicate) :+ duplicatedPremise) ++ premises.drop(duplicate)
         proof.computeProvable(fromExternal, duplicatedPremises).deduplicate(premise, duplicate)
       }
+
+    override def digestInto(hasher: Hasher): Unit = hasher
+      .digest[this.type]
+      .digest(proof)
+      .digest(premise)
+      .digest(duplicate)
   }
 
   final case class Weaken(proof: HippoProof, premise: core.Sequent) extends HippoProof {
@@ -220,5 +256,7 @@ object HippoProof {
 
     override def computeProvable(fromExternal: FromExternal, premises: IndexedSeq[core.Provable]): core.Provable =
       assertConsistency(premises) { proof.computeProvable(fromExternal, premises.dropRight(1)).weaken(premise) }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(proof).digest(premise)
   }
 }

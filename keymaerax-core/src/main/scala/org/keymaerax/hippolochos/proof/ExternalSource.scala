@@ -6,11 +6,19 @@
 package org.keymaerax.hippolochos.proof
 
 import org.keymaerax.core.Formula
-import org.keymaerax.hippolochos.tools.Hash
+import org.keymaerax.hippolochos.tools.{Hash, Hashable, Hasher}
 
-sealed trait ExternalSource
+sealed trait ExternalSource extends Hashable
 object ExternalSource {
-  case object Sorry extends ExternalSource
-  case class QeTool(formula: Formula) extends ExternalSource
-  case class Cache(hash: Hash) extends ExternalSource
+  case object Sorry extends ExternalSource {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type]
+  }
+
+  case class QeTool(formula: Formula) extends ExternalSource {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(formula)
+  }
+
+  case class Cache(hash: Hash) extends ExternalSource {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(hash)
+  }
 }

@@ -10,7 +10,7 @@ import org.keymaerax.core.{Equal, Equiv, Expression, Sequent}
 import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{ExprPath, Hash}
+import org.keymaerax.hippolochos.tools.{ExprPath, Hash, Hasher}
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
 import org.keymaerax.infrastruct.UnificationMatch
 
@@ -23,16 +23,15 @@ case class RewriteAtU(at: ExprPath, eq: HippoProof, dir: Option[RewriteAt.Dir] =
     extends ForwardTactic with BackwardTactic {
   import RewriteAt.Dir
 
-  override lazy val hash: Hash = Hash
-    .start
+  override lazy val hash: Hash = Hasher()
     .digest[this.type]
     .digest(at)
     .digest(eq)
-    .digestOpt(dir) {
+    .digestOptWith(dir) {
       case (b, Dir.Ltr) => b.digest("Ltr")
       case (b, Dir.Rtl) => b.digest("Rtl")
     }
-    .build
+    .hash
 
   require(eq.proved)
   require(eq.conclusion.ante.isEmpty)

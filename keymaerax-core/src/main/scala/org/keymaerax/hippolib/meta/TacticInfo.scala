@@ -6,8 +6,11 @@
 package org.keymaerax.hippolib.meta
 
 import org.keymaerax.hippolochos.Tactic
+import org.keymaerax.hippolochos.tools.{Hashable, Hasher}
 
-case class TacticInfo(constructor: TacticConstructor[Tactic])
+case class TacticInfo(constructor: TacticConstructor[Tactic]) extends Hashable {
+  override def digestInto(hasher: Hasher): Unit = hasher.digest(constructor)
+}
 
 object TacticInfo {
   def apply[T <: Tactic](uniqueName: String)(tactic: => T): TacticInfo =

@@ -11,13 +11,12 @@ import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.parse.{HippoParser, SourceFile}
 import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.Hash
+import org.keymaerax.hippolochos.tools.{Hash, Hashable, Hasher}
 
 import java.nio.file.{Files, Path}
 import scala.collection.mutable
 
-case class HippoInterpreterContext(ctx: HippoContext, env: Option[ImmutableNamespace] = None) {
-  lazy val hash: Hash = Hash.start.digestOpt(env) { (b, ns) => b.digest(ns.hash) }.build
+case class HippoInterpreterContext(ctx: HippoContext, env: Option[ImmutableNamespace] = None) extends Hashable {
 
   private val importCache: mutable.Map[Path, ImmutableNamespace] = mutable.Map.empty
 
@@ -36,6 +35,13 @@ case class HippoInterpreterContext(ctx: HippoContext, env: Option[ImmutableNames
   }
 
   def importCached(file: Path): ImmutableNamespace = importCache.getOrElseUpdate(file.toAbsolutePath, run(file)._2)
+
+  /////////////
+  // Hashing //
+  /////////////
+
+  lazy val hash: Hash = Hasher().digestOpt(env).hash
+  override def digestInto(hasher: Hasher): Unit = hasher.digest(hash)
 }
 
 object HippoInterpreterContext {

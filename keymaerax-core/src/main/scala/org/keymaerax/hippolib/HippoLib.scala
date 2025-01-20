@@ -15,5 +15,8 @@ class HippoLib(implicit ctx: HippoContext) {
   @publish
   val core: hippolib.core.Lib = new hippolib.core.Lib
 
+  @publish
+  val belle: hippolib.belle.Lib = new hippolib.belle.Lib
+
   val db: HippoLibDb = HippoLibDb.empty.addPublished(this)
 }

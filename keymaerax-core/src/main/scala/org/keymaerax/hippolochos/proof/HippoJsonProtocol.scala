@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolochos.proof
 
-import org.keymaerax.core.{Formula, Program, SubstitutionPair, Term}
+import org.keymaerax.core.{Formula, Program, Provable, SubstitutionPair, Term}
 import org.keymaerax.hippolochos.tools.{Hash, SequentPrinter}
 import org.keymaerax.parser.FullPrettyPrinter
 import org.keymaerax.{core, GlobalState}
@@ -263,6 +263,13 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
     }
   }
 
+  // Provable
+
+  implicit object ProvableFormat extends RootJsonFormat[core.Provable] {
+    override def read(json: JsValue): Provable = core.Provable.fromStorageString(json.convertTo[String])
+    override def write(obj: Provable): JsValue = core.Provable.toStorageString(obj).toJson
+  }
+
   /////////////////
   // Hippo types //
   /////////////////
@@ -275,6 +282,9 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
   implicit val externalSourceQeToolFormat: RootJsonFormat[ExternalSource.QeTool] =
     jsonFormat(ExternalSource.QeTool, "formula")
 
+  implicit val externalSourceBellerophonFormat: RootJsonFormat[ExternalSource.Bellerophon] =
+    jsonFormat(ExternalSource.Bellerophon, "proof")
+
   implicit val externalSourceCacheFormat: RootJsonFormat[ExternalSource.Cache] =
     jsonFormat(ExternalSource.Cache, "hash")
 
@@ -282,12 +292,14 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
     override def write(obj: ExternalSource): JsValue = obj match {
       case ExternalSource.Sorry => variant("sorry")
       case o: ExternalSource.QeTool => variantO("qeTool", o.toJson)
+      case o: ExternalSource.Bellerophon => variantO("bellerophon", o.toJson)
       case o: ExternalSource.Cache => variantO("cache", o.toJson)
     }
 
     override def read(json: JsValue): ExternalSource = json.asJsObject.fields(discriminant).convertTo[String] match {
       case "sorry" => ExternalSource.Sorry
       case "qeTool" => json.convertTo[ExternalSource.QeTool]
+      case "bellerophon" => json.convertTo[ExternalSource.Bellerophon]
       case "cache" => json.convertTo[ExternalSource.Cache]
       case _ => deserializationError("ExternalSource expected")
     }

@@ -45,6 +45,12 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
     )
   }
 
+  def belle(provable: Provable): HippoProof = HippoProof.External(
+    conclusion = provable.conclusion,
+    premises = provable.subgoals.map(HippoPremise(_, mustBeProved = false)),
+    source = ExternalSource.Bellerophon(provable),
+  )
+
   def sequent(conclusion: Sequent): HippoProof = HippoProof.Sequent(conclusion)
 
   def coreAxiom(name: String): HippoProof = HippoProof.CoreAxiom(name)
@@ -177,9 +183,8 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
   private def fromExternal(external: HippoProof.External, premises: IndexedSeq[Provable]): Provable =
     external.source match {
       case ExternalSource.Sorry => ???
-      case ExternalSource.QeTool(formula) =>
-        val provable = external.assertConsistency(premises) { computeQe(formula) }
-        HippoProof.applyPremises(provable, premises)
+      case ExternalSource.QeTool(formula) => HippoProof.applyPremises(computeQe(formula), premises)
+      case ExternalSource.Bellerophon(provable) => HippoProof.applyPremises(provable, premises)
       case ExternalSource.Cache(hash) =>
         val proof = tacticCache.get(hash).get // TODO Throw some more appropriate exception?
         provableFromGlobalProof(proof, premises)

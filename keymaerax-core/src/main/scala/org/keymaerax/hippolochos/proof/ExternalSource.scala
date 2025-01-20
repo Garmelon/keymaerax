@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolochos.proof
 
-import org.keymaerax.core.Formula
+import org.keymaerax.core.{Formula, Provable}
 import org.keymaerax.hippolochos.tools.{Hash, Hashable, Hasher}
 
 sealed trait ExternalSource extends Hashable
@@ -16,6 +16,13 @@ object ExternalSource {
 
   case class QeTool(formula: Formula) extends ExternalSource {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(formula)
+  }
+
+  case class Bellerophon(provable: Provable) extends ExternalSource {
+    override def digestInto(hasher: Hasher): Unit = hasher
+      .digest[this.type]
+      .digest(provable.conclusion)
+      .digestSeqWith(provable.subgoals)(_.digest(_))
   }
 
   case class Cache(hash: Hash) extends ExternalSource {

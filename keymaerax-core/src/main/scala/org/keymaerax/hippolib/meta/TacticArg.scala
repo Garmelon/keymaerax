@@ -121,4 +121,12 @@ object TacticArg {
       case v: ProofInfo => v.proof
     }
   }
+
+  case object ProofInfo extends TacticArg {
+    override type Type = org.keymaerax.hippolib.meta.ProofInfo
+    override def validate(any: Any): Type = any match {
+      case v: Type => v
+      case v: org.keymaerax.hippolochos.proof.HippoProof => org.keymaerax.hippolib.meta.ProofInfo(v)
+    }
+  }
 }

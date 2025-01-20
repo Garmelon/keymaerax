@@ -63,7 +63,7 @@ object HippoProof {
     override protected def computeProvable(
         fromExternal: FromExternal,
         premises: IndexedSeq[core.Provable],
-    ): core.Provable = fromExternal(this, premises)
+    ): core.Provable = assertConsistency(premises) { fromExternal(this, premises) }
 
     override def digestInto(hasher: Hasher): Unit = hasher
       .digest[this.type]

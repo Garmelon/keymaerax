@@ -1,16 +1,9 @@
-print("Hello world!");
-print("Hello world\nwith newline!");
-print();
+val something_using_useAt =
+  verified theorem dLs { ==> 1+2=3 -> [x:=3;]1+2=x }
+  by backward {
+    core.ImplyRight(1)[];
+    belle.useAt(core.assignb, /*seqpos*/1, /*posinexpr*/list(), /*key*/list(0))[];
+    core.Close(-1, 1)[];
+  };
 
-val foo = import "foo.hippo";
-print(foo.greeting, " from another file!");
-val bar = import "foo.hippo";
-print(bar.greeting, " from another file (cached, hopefully)!");
-print();
-
-var i = 0;
-while (i < 10) {
-  print("while ", i);
-  i = i + 1;
-};
-print("after ", i);
+print(something_using_useAt);

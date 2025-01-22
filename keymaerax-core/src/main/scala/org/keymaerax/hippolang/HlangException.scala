@@ -40,7 +40,7 @@ class HlangException(message: String, cause: Throwable = null)
   private def formatCauses(cause: Throwable, blocks: mutable.Buffer[String]): Unit = {
     if (cause == null) return
     val trace = differingCauseTrace(cause).map(_.toString).mkString("\n")
-    val block = s"${cause.getMessage.stripLineEnd}\n$trace"
+    val block = s"${HlangException.getNameAndMessage(cause)}\n$trace"
     blocks.prepend("Led to:")
     blocks.prepend(block)
     formatCauses(cause.getCause, blocks)
@@ -60,6 +60,18 @@ class HlangException(message: String, cause: Throwable = null)
 }
 
 object HlangException {
+  private def getNameAndMessage(e: Throwable): String = {
+    val name = e.getClass.getName
+    Option(e.getMessage) match {
+      case Some(msg) => s"$name: ${msg.stripLineEnd}"
+      case None => name
+    }
+  }
+
+  private def getMessageOrName(e: Throwable): String = Option(e.getMessage)
+    .map(_.stripLineEnd)
+    .getOrElse(e.getClass.getName)
+
   private def formatCause(e: Throwable): String = {
     val stackTrace = new StringWriter()
     e.printStackTrace(new PrintWriter(stackTrace))
@@ -81,6 +93,6 @@ object HlangException {
     try body
     catch {
       case e: HlangException => throw e.addLocation(slice, label)
-      case e: Throwable => throw HlangException(e.getMessage, slice, label, cause = e)
+      case e: Throwable => throw HlangException(getMessageOrName(e), slice, label, cause = e)
     }
 }

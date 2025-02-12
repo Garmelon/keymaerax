@@ -8,6 +8,8 @@ package org.keymaerax.hippolochos.proof
 import org.keymaerax.core
 import org.keymaerax.hippolochos.tools.{Hashable, Hasher}
 
+import scala.collection.mutable
+
 sealed abstract class HippoProof extends Hashable {
   val conclusion: core.Sequent
   val premises: IndexedSeq[HippoPremise]
@@ -49,10 +51,85 @@ sealed abstract class HippoProof extends Hashable {
 object HippoProof {
   private val CQrule: HippoProof.CoreAxiomaticRule = HippoProof.CoreAxiomaticRule("CQ equation congruence")
 
+  /**
+   * Extend a proof with a subproof at a specified premise while keeping the subproof's premises together and in order.
+   *
+   * Extending
+   * {{{
+   *    S1 ... Si ... Sn
+   *   ------------------
+   *           R
+   * }}}
+   * with
+   * {{{
+   *    T1 T2 ... Tn
+   *   --------------
+   *         Si
+   * }}}
+   * results in
+   * {{{
+   *    S1 ...  T1 T2 ... Tn  ... Sn
+   *   ------------------------------
+   *                 R
+   * }}}
+   *
+   * The core's method for joining Provables does this slightly differently: If the subproof has more than one premise,
+   * the first premise is replaced in-place and all remaining premises are appended at the end.
+   *
+   * In other words, the above example would result in
+   * {{{
+   *    S1 ... T1 ... Sn    T2 ... Tn
+   *   -------------------------------
+   *                  R
+   * }}}
+   *
+   * In order to fix this, we use [[core.Provable.swap]] to reorder the premises after joining. Note that this
+   * reordering is a permutation consisting of cycles. We need len(cycle)-1 swaps per cycle, so to reorder n elements,
+   * we need n-amount_of_cycles swaps, no matter what we do. The algorithm below is essentially just resolving the
+   * cycles one-by-one.
+   */
+  def applyPremise(proof: core.Provable, subproof: core.Provable, at: Int): core.Provable = {
+    require(proof.subgoals.indices.contains(at))
+    require(proof.subgoals(at) == subproof.conclusion)
+
+    var result = proof(subproof, at)
+    if (subproof.subgoals.length <= 1) return result
+
+    val l = proof.subgoals.length
+    val sl = subproof.subgoals.length
+    // We now need to swap the ranges [at+1, l) and [l, l+sl-1) using only
+    // element-wise swaps. To keep track of our current state in-between swaps,
+    // we'll use a list with one target index per premise in the result
+    // provable. Our goal is that this list looks like [0, 1, ..., l+sl-2].
+    // (The -2 comes from the fact that we're indexing the list starting at 0
+    // and that we're removing the premise we're replacing.)
+    val indices = ((0 until at + 1) ++ (l until l + sl - 1) ++ (at + 1 until l)).to(mutable.IndexedSeq)
+    require(indices.length == result.subgoals.length)
+
+    // Now we can proceed through the list of premises. When we hit an element
+    // that is not at its target index, we swap it there and re-inspect our
+    // current position. We're essentially swapping our way through the cycle
+    // the original element was on, moving every single of its elements to the
+    // correct position.
+    //
+    // Invariant: All elements to the left of our current position are already
+    // in their correct position. From this follows that all elements starting
+    // at our current position are greater or equal to our current position.
+    for (i <- result.subgoals.indices) while (indices(i) != i) {
+      val j = indices(i)
+      // Swap elements at i and indices(i)
+      indices(i) = indices(j)
+      indices(j) = j
+      result = result.swap(i, j)
+    }
+
+    result
+  }
+
   def applyPremises(provable: core.Provable, premises: IndexedSeq[core.Provable]): core.Provable = {
     assert(provable.subgoals.length == premises.length)
     // Replace premises from right to left so the index works out.
-    premises.zipWithIndex.foldRight(provable) { case ((premise, i), provable) => provable(premise, i) }
+    premises.zipWithIndex.foldRight(provable) { case ((premise, i), provable) => applyPremise(provable, premise, i) }
   }
 
   private type FromExternal = (External, IndexedSeq[core.Provable]) => core.Provable

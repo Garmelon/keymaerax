@@ -31,14 +31,14 @@ import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
  *
  * Schema (assuming [[RewriteAt.Dir.Ltr]]):
  * {{{
- * §  G ⊢ C{left}   ⊢ left<->right
- * §  ----------------------------
- * §          G ⊢ C{right}
+ *    G ⊢ C{left}    ⊢ left<->right
+ *   -------------------------------
+ *            G ⊢ C{right}
  * }}}
  * {{{
- * §  G ⊢ C(left)   ⊢ left=right
- * §  --------------------------
- * §         G ⊢ C(right)
+ *    G ⊢ C(left)    ⊢ left=right
+ *   -----------------------------
+ *           G ⊢ C(right)
  * }}}
  */
 case class RewriteAt(at: ExprPath, dir: Option[RewriteAt.Dir] = None)(implicit lib: HippoLib)

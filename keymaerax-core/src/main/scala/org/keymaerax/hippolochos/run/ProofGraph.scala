@@ -41,9 +41,9 @@ import scala.collection.mutable
  * {{{
  *   premises:    1 2 3  4
  *                |  / \ |
- *   step 1:      | |  ---
+ *   step 1:      | |  ===
  *                | |   |
- *   step 2:      -------
+ *   step 2:      =======
  *                   |
  *   conclusion:     x
  * }}}
@@ -51,9 +51,9 @@ import scala.collection.mutable
  * The resulting proof will include all premises in order, and each premise exactly once:
  *
  * {{{
- *   §  1 2 3 4
- *   §  -------
- *   §     x
+ *    1 2 3 4
+ *   ---------
+ *       x
  * }}}
  */
 class ProofGraph(ctx: HippoContext) {

@@ -73,7 +73,7 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
 
   // Sort
 
-  implicit val objectSortFormat: RootJsonFormat[core.ObjectSort] = jsonFormat(core.ObjectSort, "name")
+  implicit val objectSortFormat: RootJsonFormat[core.ObjectSort] = jsonFormat(core.ObjectSort.apply, "name")
 
   implicit object SortFormat extends JsonFormat[core.Sort] {
     override def write(obj: core.Sort): JsValue = obj match {
@@ -102,7 +102,7 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
   // Variable
 
   implicit val baseVariableFormat: RootJsonFormat[core.BaseVariable] =
-    jsonFormat(core.BaseVariable, "name", "index", "sort")
+    jsonFormat(core.BaseVariable.apply, "name", "index", "sort")
 
   implicit object VariableFormat extends RootJsonFormat[core.Variable] {
     override def write(obj: core.Variable): JsValue = obj match {
@@ -122,10 +122,10 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
 
   // URename and USubst
 
-  implicit val uRenameFormat: RootJsonFormat[core.URename] = jsonFormat(core.URename, "what", "repl", "semantic")
+  implicit val uRenameFormat: RootJsonFormat[core.URename] = jsonFormat(core.URename.apply, "what", "repl", "semantic")
 
   implicit val substitutionPairFormat: RootJsonFormat[core.SubstitutionPair] =
-    jsonFormat(core.SubstitutionPair, "what", "repl")
+    jsonFormat(core.SubstitutionPair.apply, "what", "repl")
 
   implicit object USubstFormat extends JsonFormat[core.USubst] {
     override def write(obj: core.USubst): JsValue = obj.subsDefsInput.toJson
@@ -161,40 +161,41 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
 
   // Rule
 
-  implicit val hideRightFormat: RootJsonFormat[core.HideRight] = jsonFormat(core.HideRight, "pos")
-  implicit val hideLeftFormat: RootJsonFormat[core.HideLeft] = jsonFormat(core.HideLeft, "pos")
+  implicit val hideRightFormat: RootJsonFormat[core.HideRight] = jsonFormat(core.HideRight.apply, "pos")
+  implicit val hideLeftFormat: RootJsonFormat[core.HideLeft] = jsonFormat(core.HideLeft.apply, "pos")
   implicit val exchangeRightRuleFormat: RootJsonFormat[core.ExchangeRightRule] =
-    jsonFormat(core.ExchangeRightRule, "pos1", "pos2")
+    jsonFormat(core.ExchangeRightRule.apply, "pos1", "pos2")
   implicit val exchangeLeftRuleFormat: RootJsonFormat[core.ExchangeLeftRule] =
-    jsonFormat(core.ExchangeLeftRule, "pos1", "pos2")
-  implicit val closeFormat: RootJsonFormat[core.Close] = jsonFormat(core.Close, "assume", "pos")
-  implicit val closeTrueFormat: RootJsonFormat[core.CloseTrue] = jsonFormat(core.CloseTrue, "pos")
-  implicit val closeFalseFormat: RootJsonFormat[core.CloseFalse] = jsonFormat(core.CloseFalse, "pos")
-  implicit val cutFormat: RootJsonFormat[core.Cut] = jsonFormat(core.Cut, "c")
-  implicit val notRightFormat: RootJsonFormat[core.NotRight] = jsonFormat(core.NotRight, "pos")
-  implicit val notLeftFormat: RootJsonFormat[core.NotLeft] = jsonFormat(core.NotLeft, "pos")
-  implicit val andRightFormat: RootJsonFormat[core.AndRight] = jsonFormat(core.AndRight, "pos")
-  implicit val andLeftFormat: RootJsonFormat[core.AndLeft] = jsonFormat(core.AndLeft, "pos")
-  implicit val orRightFormat: RootJsonFormat[core.OrRight] = jsonFormat(core.OrRight, "pos")
-  implicit val orLeftFormat: RootJsonFormat[core.OrLeft] = jsonFormat(core.OrLeft, "pos")
-  implicit val implyRightFormat: RootJsonFormat[core.ImplyRight] = jsonFormat(core.ImplyRight, "pos")
-  implicit val implyLeftFormat: RootJsonFormat[core.ImplyLeft] = jsonFormat(core.ImplyLeft, "pos")
-  implicit val equivRightFormat: RootJsonFormat[core.EquivRight] = jsonFormat(core.EquivRight, "pos")
-  implicit val equivLeftFormat: RootJsonFormat[core.EquivLeft] = jsonFormat(core.EquivLeft, "pos")
+    jsonFormat(core.ExchangeLeftRule.apply, "pos1", "pos2")
+  implicit val closeFormat: RootJsonFormat[core.Close] = jsonFormat(core.Close.apply, "assume", "pos")
+  implicit val closeTrueFormat: RootJsonFormat[core.CloseTrue] = jsonFormat(core.CloseTrue.apply, "pos")
+  implicit val closeFalseFormat: RootJsonFormat[core.CloseFalse] = jsonFormat(core.CloseFalse.apply, "pos")
+  implicit val cutFormat: RootJsonFormat[core.Cut] = jsonFormat(core.Cut.apply, "c")
+  implicit val notRightFormat: RootJsonFormat[core.NotRight] = jsonFormat(core.NotRight.apply, "pos")
+  implicit val notLeftFormat: RootJsonFormat[core.NotLeft] = jsonFormat(core.NotLeft.apply, "pos")
+  implicit val andRightFormat: RootJsonFormat[core.AndRight] = jsonFormat(core.AndRight.apply, "pos")
+  implicit val andLeftFormat: RootJsonFormat[core.AndLeft] = jsonFormat(core.AndLeft.apply, "pos")
+  implicit val orRightFormat: RootJsonFormat[core.OrRight] = jsonFormat(core.OrRight.apply, "pos")
+  implicit val orLeftFormat: RootJsonFormat[core.OrLeft] = jsonFormat(core.OrLeft.apply, "pos")
+  implicit val implyRightFormat: RootJsonFormat[core.ImplyRight] = jsonFormat(core.ImplyRight.apply, "pos")
+  implicit val implyLeftFormat: RootJsonFormat[core.ImplyLeft] = jsonFormat(core.ImplyLeft.apply, "pos")
+  implicit val equivRightFormat: RootJsonFormat[core.EquivRight] = jsonFormat(core.EquivRight.apply, "pos")
+  implicit val equivLeftFormat: RootJsonFormat[core.EquivLeft] = jsonFormat(core.EquivLeft.apply, "pos")
   implicit val uniformRenamingFormat: RootJsonFormat[core.UniformRenaming] =
     jsonFormat(core.UniformRenaming.apply, "what", "repl")
   implicit val boundRenamingFormat: RootJsonFormat[core.BoundRenaming] =
-    jsonFormat(core.BoundRenaming, "what", "repl", "pos")
-  implicit val skolemizeFormat: RootJsonFormat[core.Skolemize] = jsonFormat(core.Skolemize, "pos")
-  implicit val coHideRightFormat: RootJsonFormat[core.CoHideRight] = jsonFormat(core.CoHideRight, "pos")
-  implicit val coHideLeftFormat: RootJsonFormat[core.CoHideLeft] = jsonFormat(core.CoHideLeft, "pos")
-  implicit val coHide2Format: RootJsonFormat[core.CoHide2] = jsonFormat(core.CoHide2, "pos1", "pos2")
-  implicit val cutRightFormat: RootJsonFormat[core.CutRight] = jsonFormat(core.CutRight, "c", "pos")
-  implicit val cutLeftFormat: RootJsonFormat[core.CutLeft] = jsonFormat(core.CutLeft, "c", "pos")
+    jsonFormat(core.BoundRenaming.apply, "what", "repl", "pos")
+  implicit val skolemizeFormat: RootJsonFormat[core.Skolemize] = jsonFormat(core.Skolemize.apply, "pos")
+  implicit val coHideRightFormat: RootJsonFormat[core.CoHideRight] = jsonFormat(core.CoHideRight.apply, "pos")
+  implicit val coHideLeftFormat: RootJsonFormat[core.CoHideLeft] = jsonFormat(core.CoHideLeft.apply, "pos")
+  implicit val coHide2Format: RootJsonFormat[core.CoHide2] = jsonFormat(core.CoHide2.apply, "pos1", "pos2")
+  implicit val cutRightFormat: RootJsonFormat[core.CutRight] = jsonFormat(core.CutRight.apply, "c", "pos")
+  implicit val cutLeftFormat: RootJsonFormat[core.CutLeft] = jsonFormat(core.CutLeft.apply, "c", "pos")
   implicit val commuteEquivRightFormat: RootJsonFormat[core.CommuteEquivRight] =
-    jsonFormat(core.CommuteEquivRight, "pos")
-  implicit val commuteEquivLeftFormat: RootJsonFormat[core.CommuteEquivLeft] = jsonFormat(core.CommuteEquivLeft, "pos")
-  implicit val equivifyRightFormat: RootJsonFormat[core.EquivifyRight] = jsonFormat(core.EquivifyRight, "pos")
+    jsonFormat(core.CommuteEquivRight.apply, "pos")
+  implicit val commuteEquivLeftFormat: RootJsonFormat[core.CommuteEquivLeft] =
+    jsonFormat(core.CommuteEquivLeft.apply, "pos")
+  implicit val equivifyRightFormat: RootJsonFormat[core.EquivifyRight] = jsonFormat(core.EquivifyRight.apply, "pos")
 
   implicit object RuleFormat extends RootJsonFormat[core.Rule] {
     override def write(obj: core.Rule): JsValue = obj match {
@@ -280,13 +281,13 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
   }
 
   implicit val externalSourceQeToolFormat: RootJsonFormat[ExternalSource.QeTool] =
-    jsonFormat(ExternalSource.QeTool, "formula")
+    jsonFormat(ExternalSource.QeTool.apply, "formula")
 
   implicit val externalSourceBellerophonFormat: RootJsonFormat[ExternalSource.Bellerophon] =
-    jsonFormat(ExternalSource.Bellerophon, "proof")
+    jsonFormat(ExternalSource.Bellerophon.apply, "proof")
 
   implicit val externalSourceCacheFormat: RootJsonFormat[ExternalSource.Cache] =
-    jsonFormat(ExternalSource.Cache, "hash")
+    jsonFormat(ExternalSource.Cache.apply, "hash")
 
   implicit object ExternalSourceFormat extends RootJsonFormat[ExternalSource] {
     override def write(obj: ExternalSource): JsValue = obj match {

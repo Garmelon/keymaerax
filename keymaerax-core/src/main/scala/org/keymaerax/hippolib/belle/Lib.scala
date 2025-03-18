@@ -10,10 +10,10 @@ import org.keymaerax.core.hippolib.publish
 import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
 import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.ExprPath
+import org.keymaerax.hippolochos.tools.{ExprPath, UniqueNameRegistry}
 
 /** A collection of tactics ported from [[org.keymaerax.bellerophon]]. */
-class Lib(implicit ctx: HippoContext, lib: HippoLib) {
+class Lib(implicit ctx: HippoContext, lib: HippoLib, names: UniqueNameRegistry) {
   @publish(name = "belle.useAt")
   val useAt: TacticInfo = TacticInfo(
     "belle.useAt",

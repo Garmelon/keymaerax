@@ -5,19 +5,13 @@
 
 package org.keymaerax.hippolochos.tools
 
-import org.keymaerax.hippolochos.tools.GloballyUniqueName.knownNames
-
 import scala.collection.mutable
 
-case class GloballyUniqueName(name: String) extends Hashable {
-  synchronized {
+class UniqueNameRegistry {
+  private val knownNames: mutable.Set[String] = mutable.Set.empty
+
+  def register(name: String): Unit = synchronized {
     require(!knownNames.contains(name), s"name is already in use: $name")
     knownNames.add(name)
   }
-
-  override def digestInto(hasher: Hasher): Unit = hasher.digest(name)
-}
-
-object GloballyUniqueName {
-  private val knownNames: mutable.Set[String] = mutable.Set.empty
 }

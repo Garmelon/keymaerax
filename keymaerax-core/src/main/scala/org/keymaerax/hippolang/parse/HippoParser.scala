@@ -42,9 +42,9 @@ class HippoParser(source: SourceFile) {
   private def identifier[$: P]: P[AstIdentifier] = P {
     def startChar = CharPred(HippoIdentifier.isValidStartChar(_))
     def restChars = CharsWhile(HippoIdentifier.isValidChar(_)).?
-    def identifier = (startChar ~~ restChars).!.map(HippoIdentifier(_))
+    def identifier = (startChar ~~ restChars).!.map(HippoIdentifier.apply)
     def quotedIdentifier = "'" ~~ identifier ~~ "'"
-    (quotedIdentifier | identifier).map(AstIdentifier)
+    (quotedIdentifier | identifier).map(AstIdentifier.apply)
   }.opaque("identifier")
 
   ///////////////////////////
@@ -321,20 +321,20 @@ class HippoParser(source: SourceFile) {
               leftAssociativeInfixOpExpression(
                 leftAssociativeInfixOpExpression(
                   atomicExpression,
-                  infixOp("*", AstExpression.Mul) | infixOp("/", AstExpression.Div),
+                  infixOp("*", AstExpression.Mul.apply) | infixOp("/", AstExpression.Div.apply),
                 ),
-                infixOp("+", AstExpression.Add) | infixOp("-", AstExpression.Sub),
+                infixOp("+", AstExpression.Add.apply) | infixOp("-", AstExpression.Sub.apply),
               ),
-              infixOp(">=", AstExpression.Gte) | infixOp(">", AstExpression.Gt) | infixOp("<=", AstExpression.Lte) |
-                infixOp("<", AstExpression.Lt),
+              infixOp(">=", AstExpression.Gte.apply) | infixOp(">", AstExpression.Gt.apply) |
+                infixOp("<=", AstExpression.Lte.apply) | infixOp("<", AstExpression.Lt.apply),
             ),
-            infixOp("==", AstExpression.Eq) | infixOp("!=", AstExpression.Neq),
+            infixOp("==", AstExpression.Eq.apply) | infixOp("!=", AstExpression.Neq.apply),
           ),
-          infixOp("&&", AstExpression.And),
+          infixOp("&&", AstExpression.And.apply),
         ),
-        infixOp("||", AstExpression.Or),
+        infixOp("||", AstExpression.Or.apply),
       ),
-      infixOp("->", AstExpression.MapsTo),
+      infixOp("->", AstExpression.MapsTo.apply),
     )
   }
 

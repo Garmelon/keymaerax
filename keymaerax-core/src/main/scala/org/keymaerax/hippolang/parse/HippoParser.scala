@@ -103,10 +103,7 @@ class HippoParser(source: SourceFile) {
     def dlProgram = sliced(keywordDlProgram ~/ "{" ~ dlParser.program ~ "}").map { case (value, slice) =>
       AstExpression.DlProgram(slice = slice, value = value)
     }
-    def dlExpression = sliced(keywordDlExpression ~/ "{" ~ dlParser.expression ~ "}").map { case (value, slice) =>
-      AstExpression.DlExpression(slice = slice, value = value)
-    }
-    dlTerm | dlFormula | dlProgram | dlExpression
+    dlTerm | dlFormula | dlProgram
   }
 
   private def dlSequentExpression[$: P]: P[AstExpression.DlSequent] = P {
@@ -351,7 +348,6 @@ object HippoParser {
   // This helps ensure the list does not become outdated.
   private val keywordBackward = "backward"
   private val keywordBy = "by"
-  private val keywordDlExpression = "dL"
   private val keywordDlFormula = "dLf"
   private val keywordDlProgram = "dLp"
   private val keywordDlSequent = "dLs"
@@ -374,7 +370,6 @@ object HippoParser {
   val keywords: Set[String] = Set(
     keywordBackward,
     keywordBy,
-    keywordDlExpression,
     keywordDlFormula,
     keywordDlProgram,
     keywordDlSequent,

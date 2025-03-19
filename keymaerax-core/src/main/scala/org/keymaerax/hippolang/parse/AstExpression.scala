@@ -67,13 +67,6 @@ object AstExpression {
 
   /**
    * {{{
-   *   dL { 1+1=2 }
-   * }}}
-   */
-  case class DlExpression(slice: SourceFile#Slice, value: org.keymaerax.core.Expression) extends AstExpression
-
-  /**
-   * {{{
    *   dLs { ==> 1+1=2 }
    * }}}
    */

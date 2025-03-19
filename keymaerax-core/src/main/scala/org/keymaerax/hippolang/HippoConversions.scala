@@ -96,7 +96,6 @@ object HippoConversions {
       case e: AstExpression.DlTerm => HippoValue.DlExpression(e.value).toHExpr(e.slice)
       case e: AstExpression.DlFormula => HippoValue.DlExpression(e.value).toHExpr(e.slice)
       case e: AstExpression.DlProgram => HippoValue.DlExpression(e.value).toHExpr(e.slice)
-      case e: AstExpression.DlExpression => HippoValue.DlExpression(e.value).toHExpr(e.slice)
       case e: AstExpression.DlSequent => HippoValue.DlSequent(e.value).toHExpr(e.slice)
       case e: AstExpression.BuiltinFunction => HippoValue.BuiltinFunction(e.value).toHExpr(e.slice)
       case e: AstExpression.Import => Import(slice = e.slice, path = e.path.toHExpr)

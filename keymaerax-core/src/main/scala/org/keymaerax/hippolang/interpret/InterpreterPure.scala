@@ -6,7 +6,7 @@
 package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.core.{Expression, Sequent, Variable}
-import org.keymaerax.hippolang.HippoConversions._
+import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.interpret.InterpreterPure.{
   getSingleArg,
   getValueAsExpression,
@@ -139,7 +139,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
   // Protected because otherwise the value would have to be computed twice.
   protected def accessValue(target: HippoValue, name: HippoIdentifier): HippoValue = {
-    import org.keymaerax.hippolang.BuiltinMemberFunction._
+    import org.keymaerax.hippolang.BuiltinMemberFunction.*
 
     (target, name.value) match {
       case (HippoValue.Namespace(ns), _) => ns.lookup(name)
@@ -280,7 +280,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       value: BuiltinMemberFunction,
       args: IndexedSeq[HippoValue],
   ): HippoValue = {
-    import org.keymaerax.hippolang.BuiltinMemberFunction._
+    import org.keymaerax.hippolang.BuiltinMemberFunction.*
 
     (target, value, args) match {
       case (HippoValue.Tactic(tactic: ForwardTactic), Forward, args) =>

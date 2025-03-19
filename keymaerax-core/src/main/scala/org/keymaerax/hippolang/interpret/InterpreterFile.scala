@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolang.interpret
 
-import org.keymaerax.hippolang.HippoConversions._
+import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.namespace.MutableNamespace
 import org.keymaerax.hippolang.{HippoExpression, HippoValue, HlangException}
 import org.keymaerax.hippolochos.run.HippoContext

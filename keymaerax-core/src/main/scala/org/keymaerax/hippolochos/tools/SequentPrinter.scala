@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolochos.tools
 
-import org.keymaerax.core.{AntePos, Formula, SeqPos, Sequent, SuccPos}
+import org.keymaerax.core.Sequent
 import org.keymaerax.parser.KeYmaeraXPrettyPrinter
 
 object SequentPrinter {

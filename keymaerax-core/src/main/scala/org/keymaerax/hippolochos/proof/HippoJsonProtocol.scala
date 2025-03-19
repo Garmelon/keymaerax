@@ -9,7 +9,7 @@ import org.keymaerax.core.{Formula, Program, Provable, SubstitutionPair, Term}
 import org.keymaerax.hippolochos.tools.{Hash, SequentPrinter}
 import org.keymaerax.parser.FullPrettyPrinter
 import org.keymaerax.{core, GlobalState}
-import spray.json._
+import spray.json.*
 
 object HippoJsonProtocol extends DefaultJsonProtocol {
   val discriminant = "type"

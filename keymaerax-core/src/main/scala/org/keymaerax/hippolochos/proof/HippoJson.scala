@@ -6,8 +6,8 @@
 package org.keymaerax.hippolochos.proof
 
 import org.keymaerax.core.{Rule, Sequent, URename, USubst}
-import org.keymaerax.hippolochos.proof.HippoJsonProtocol._
-import spray.json._
+import org.keymaerax.hippolochos.proof.HippoJsonProtocol.*
+import spray.json.*
 
 import java.util
 import scala.collection.mutable

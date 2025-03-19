@@ -5,9 +5,9 @@
 
 package org.keymaerax.hippolang.parse
 
-import fastparse.ScalaWhitespace._
-import fastparse._
-import org.keymaerax.hippolang.parse.HippoParser._
+import fastparse.*
+import fastparse.ScalaWhitespace.*
+import org.keymaerax.hippolang.parse.HippoParser.*
 import org.keymaerax.hippolang.{BuiltinFunction, BuiltinMemberFunction, HippoIdentifier, HlangException}
 import org.keymaerax.parser.DLParser
 

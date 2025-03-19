@@ -5,7 +5,6 @@
 
 package org.keymaerax.hippolochos.tools
 
-import org.keymaerax.btactics.macros.ProvableInfo
 import org.keymaerax.core.{
   AndLeft,
   AndRight,

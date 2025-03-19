@@ -340,11 +340,13 @@ class DLParser extends Parser {
    * @note
    *   Keywords are not allowed as identifiers.
    */
-  def ident[$: P]: P[(String, Option[Int])] = P(
-    DLParserUtils.filterWithMsg((CharIn("a-zA-Z") ~~ CharIn("a-zA-Z0-9").repX ~~ ("_" ~~ !CharIn("0-9")).?).!)(
-      !keywords.contains(_)
-    )("Keywords cannot be used as identifiers") ~~ ("_" ~~ normNatural).? ~~ (!CharIn("a-zA-Z_"))
-  )
+  def ident[$: P]: P[(String, Option[Int])] =
+    P(
+      DLParserUtils.filterWithMsg(
+        (CharIn("a-zA-Z") ~~ CharIn("a-zA-Z0-9").repX ~~ ("_".repX(1) ~~ !CharIn("0-9")).?).!
+      )(!keywords.contains(_))("Keywords cannot be used as identifiers") ~~ ("_" ~~ normNatural).? ~~
+        (!CharIn("a-zA-Z_"))
+    )
 
   /** `.` or `._2`: dot parsing */
   def dot[$: P]: P[DotTerm] = P(("." | "•") ~~ ("_" ~~ ("0" | CharIn("1-9") ~~ CharIn("0-9").repX).!).?)

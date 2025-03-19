@@ -278,15 +278,18 @@ sealed trait ApplicationOf extends Composite {
 sealed trait NamedSymbol extends Expression with Ordered[NamedSymbol] {
   // @note initialization order uses explicit dataStructureInvariant that is called in all nontrivial subclasses after val have been initialized.
   private[core] final def insistNamingConvention(): Unit = {
-    insist(
-      !name.isEmpty && !name.substring(0, name.length - 1).contains("_"),
-      "non-empty names without underscores (except at end for internal names): " + name,
-    )
+    insist(name.nonEmpty, "name must not be empty")
+
+    val firstUnderscore = name.indexOf('_')
+    if (firstUnderscore >= 0)
+      insist(name.substring(firstUnderscore).forall(_ == '_'), "underscores may only appear at the end of a name")
+
     // @note in particular: names cannot have primes
     insist(
       name.charAt(0).isLetter && name.forall(c => c.isLetterOrDigit || c == '_'),
       "alphabetical name expected: " + name,
     )
+
     insist(index.getOrElse(0) >= 0, "nonnegative index if any " + this)
   }
 

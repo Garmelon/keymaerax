@@ -86,7 +86,7 @@ object HippoConversions {
   }
 
   implicit class AstExpressionConversion(val it: AstExpression) {
-    import org.keymaerax.hippolang.HippoExpression._
+    import org.keymaerax.hippolang.HippoExpression.*
 
     def toHExpr: HippoExpression = it match {
       case e: AstExpression.Null => HippoValue.Null.toHExpr(e.slice)

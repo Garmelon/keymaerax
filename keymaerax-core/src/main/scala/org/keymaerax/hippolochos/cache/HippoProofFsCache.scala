@@ -6,7 +6,7 @@
 package org.keymaerax.hippolochos.cache
 
 import org.keymaerax.hippolochos.proof.{HippoJson, HippoProof}
-import spray.json._
+import spray.json.*
 
 import java.nio.file.Path
 

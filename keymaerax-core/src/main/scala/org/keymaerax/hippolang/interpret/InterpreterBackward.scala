@@ -6,7 +6,7 @@
 package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.core.Sequent
-import org.keymaerax.hippolang.HippoConversions._
+import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.{BuiltinFunction, HippoExpression, HippoValue, HlangException}
 import org.keymaerax.hippolochos.BackwardTactic

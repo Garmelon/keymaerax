@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolang.interpret
 
-import org.keymaerax.hippolang.HippoConversions._
+import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace, Namespace}
 import org.keymaerax.hippolang.{BuiltinFunction, HippoIdentifier, HippoValue}
 import org.keymaerax.hippolib.HippoLib

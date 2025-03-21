@@ -1,3 +1,9 @@
+val foo = dLt{ 1 + 1 };
+print("break", foo);
+print("foo is ", foo);
+val bar = dLt{ foo__ + 1 };
+print("bar is ", bar);
+
 val something_using_useAt =
   verified theorem dLs { ==> 1+2=3 -> [x:=3;]1+2=x }
   by backward {

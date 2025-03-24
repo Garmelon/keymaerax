@@ -1,15 +1,12 @@
-val foo = dLt{ 1 + 1 };
-print("break", foo);
-print("foo is ", foo);
-val bar = dLt{ foo__ + 1 };
-print("bar is ", bar);
+val dOne = dLt{ 1 };
+val dAdd = dLt{ ._0 + ._1 };
+val dEq = dLf{ ._0 = ._1 };
+//val dNot = dLf{ !._0 };
+val dInc = dLp{ x := x + 1; };
 
-val something_using_useAt =
-  verified theorem dLs { ==> 1+2=3 -> [x:=3;]1+2=x }
-  by backward {
-    core.ImplyRight(1)[];
-    belle.useAt(core.assignb, /*seqpos*/1, /*posinexpr*/list(), /*key*/list(0))[];
-    core.Close(-1, 1)[];
-  };
-
-print(something_using_useAt);
+print(dLt{ dOne__ + 2 });
+print(dLt{ dAdd__(1, 2) + 3 });
+print(dLt{ dAdd__(dOne__, 2) + 3 });
+print(dLf{ !dEq__(1, 2) });
+//print(dLf{ dNot__{true} });
+print(dLp{ x := *; dInc__; });

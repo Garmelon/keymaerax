@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolang.interpret
 
-import org.keymaerax.core.{Expression, Sequent, Variable}
+import org.keymaerax.core.{Expression, Formula, Program, Sequent, Term, Variable}
 import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.interpret.InterpreterPure.{
   getSingleArg,
@@ -14,6 +14,7 @@ import org.keymaerax.hippolang.interpret.InterpreterPure.{
   getValueAsList,
   getValueAsProof,
   getValueAsSequent,
+  interpolateExpression,
 }
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.parse.SourceFile
@@ -35,6 +36,8 @@ import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
   def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {
     case e: HippoExpression.Const => e.value
+
+    case e: HippoExpression.DlExpression => interpolateExpression(namespace, e).toHValue
 
     case e: HippoExpression.Import => throw HlangException("import not allowed during pure evaluation", slice = e.slice)
 
@@ -461,6 +464,24 @@ object InterpreterPure {
     case _ => throw HlangException(message, slice = slice, label = label)
   }
 
+  protected def getValueAsTerm(value: HippoValue, message: String, slice: SourceFile#Slice, label: String): Term =
+    getValueAsExpression(value, message, slice, label) match {
+      case value: Term => value
+      case _ => throw HlangException(message, slice = slice, label = label)
+    }
+
+  protected def getValueAsFormula(value: HippoValue, message: String, slice: SourceFile#Slice, label: String): Formula =
+    getValueAsExpression(value, message, slice, label) match {
+      case value: Formula => value
+      case _ => throw HlangException(message, slice = slice, label = label)
+    }
+
+  protected def getValueAsProgram(value: HippoValue, message: String, slice: SourceFile#Slice, label: String): Program =
+    getValueAsExpression(value, message, slice, label) match {
+      case value: Program => value
+      case _ => throw HlangException(message, slice = slice, label = label)
+    }
+
   protected def getValueAsSequent(value: HippoValue, message: String, slice: SourceFile#Slice, label: String): Sequent =
     value match {
       case HippoValue.DlSequent(value) => value
@@ -486,5 +507,19 @@ object InterpreterPure {
   ): IndexedSeq[HippoValue] = value match {
     case HippoValue.List(values) => values
     case _ => throw HlangException(message, slice = slice, label = label)
+  }
+
+  protected def interpolateExpression(namespace: MutableNamespace, e: HippoExpression.DlExpression): Expression = {
+    val slice = e.slice
+    val label = "while evaluating dL expression"
+    def errorMsg(name: String, msg: String): String = s"failed to interpolate $name: $msg"
+
+    new Interpolator(
+      lookup = { name =>
+        val value = HlangException.at(slice, label) { namespace.lookup(HippoIdentifier(name)) }
+        getValueAsExpression(value, errorMsg(name, "replacement value must be a dL expression"), slice, label)
+      },
+      onError = (name, msg) => throw HlangException(errorMsg(name, msg), slice, label),
+    ).interpolate(expression = e.value)
   }
 }

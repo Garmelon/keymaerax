@@ -5,6 +5,7 @@
 
 package org.keymaerax.hippolang
 
+import org.keymaerax.core
 import org.keymaerax.hippolang.parse.SourceFile
 import org.keymaerax.hippolochos.tools.{Hashable, Hasher}
 
@@ -18,6 +19,10 @@ object HippoExpression {
   ///////////////
 
   case class Const(slice: SourceFile#Slice, value: HippoValue) extends HippoExpression {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
+  }
+
+  case class DlExpression(slice: SourceFile#Slice, value: core.Expression) extends HippoExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 

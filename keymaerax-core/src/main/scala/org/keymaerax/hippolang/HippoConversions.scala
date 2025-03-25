@@ -106,6 +106,12 @@ object HippoConversions {
           case Some(args) => Interpolator.replacePredArgs(args.map(_.name.value), e.value)
         }
         HippoExpression.DlExpression(e.slice, value)
+      case e: AstExpression.DlFormulaPredicational =>
+        val value = e.arg match {
+          case None => e.value
+          case Some(arg) => Interpolator.replacePredicationalArg(arg.name.value, e.value)
+        }
+        HippoExpression.DlExpression(e.slice, value)
       case e: AstExpression.DlProgram => HippoExpression.DlExpression(e.slice, e.value)
       case e: AstExpression.DlSequent => HippoValue.DlSequent(e.value).toHExpr(e.slice)
       case e: AstExpression.BuiltinFunction => HippoValue.BuiltinFunction(e.value).toHExpr(e.slice)

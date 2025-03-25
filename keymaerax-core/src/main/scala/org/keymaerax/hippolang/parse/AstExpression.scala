@@ -64,6 +64,18 @@ object AstExpression {
 
   /**
    * {{{
+   *   dLfp { [a;]x }
+   *   dLfp(x) { [a;]x }
+   * }}}
+   */
+  case class DlFormulaPredicational(
+      slice: SourceFile#Slice,
+      arg: Option[AstIdentifier],
+      value: org.keymaerax.core.Formula,
+  ) extends AstExpression
+
+  /**
+   * {{{
    *   dLp { x:=2; }
    * }}}
    */

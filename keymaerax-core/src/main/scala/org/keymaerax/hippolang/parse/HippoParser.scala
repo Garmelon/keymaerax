@@ -47,6 +47,10 @@ class HippoParser(source: SourceFile) {
     (quotedIdentifier | identifier).map(AstIdentifier.apply)
   }.opaque("identifier")
 
+  private def argumentList[$: P]: P[Seq[AstIdentifier]] = "(" ~/ identifier.rep(sep = ","./) ~ ",".? ~ ")"
+
+  private def tacticArgumentList[$: P]: P[Seq[AstIdentifier]] = "[" ~/ identifier.rep(sep = ","./) ~ ",".? ~ "]"
+
   ///////////////////////////
   // Primitive expressions //
   ///////////////////////////
@@ -153,8 +157,9 @@ class HippoParser(source: SourceFile) {
   }
 
   private def functionExpression[$: P]: P[AstExpression.Function] = P {
-    sliced(keywordFunction ~/ "(" ~ identifier.rep(sep = ","./) ~ ",".? ~ ")" ~/ expression)
-      .map { case ((args, body), slice) => AstExpression.Function(slice = slice, args = args, body = body) }
+    sliced(keywordFunction ~/ argumentList ~/ expression).map { case ((args, body), slice) =>
+      AstExpression.Function(slice = slice, args = args, body = body)
+    }
   }
 
   private def theoremExpression[$: P]: P[AstExpression.Theorem] = P {

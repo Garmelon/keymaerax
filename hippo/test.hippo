@@ -1,4 +1,5 @@
 val dOne = dLt{ 1 };
+val dTwo = 2;
 
 val dAdd = dLt(x, y) { x + y };
 print("dAdd: ", dAdd);
@@ -12,10 +13,10 @@ print("dNot: ", dNot);
 val dInc = dLp{ x := x + 1; };
 print("dInc: ", dInc);
 
-print(dLt{ dOne__ + 2 });
+print(dLt{ dOne__ + dTwo__ });
 print(dLt{ dAdd__(1, 2) + 3 });
 print(dLt{ dAdd__(dOne__, 2) + 3 });
 print(dLf{ !dEq__(1, 2) });
 print(dLf{ dNot__{1=2} });
-print(dLf{ dNot__{dEq__(dAdd__(dOne__, dOne__), 2)} });
+print(dLf{ dNot__{dEq__(dAdd__(dOne__, dOne__), dTwo__)} });
 print(dLp{ x := *; dInc__; });

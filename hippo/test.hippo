@@ -1,7 +1,13 @@
 val dOne = dLt{ 1 };
-val dAdd = dLt{ ._0 + ._1 };
-val dEq = dLf{ ._0 = ._1 };
+
+val dAdd = dLt(x, y) { x + y };
+print("dAdd: ", dAdd);
+
+val dEq = dLf(x, y) { x = y & \exists x x = 3 };
+print("dEq:  ", dEq);
+
 //val dNot = dLf{ !._0 };
+
 val dInc = dLp{ x := x + 1; };
 
 print(dLt{ dOne__ + 2 });

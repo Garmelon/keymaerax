@@ -6,6 +6,7 @@
 package org.keymaerax.hippolang
 
 import org.keymaerax.core.{Expression, Sequent}
+import org.keymaerax.hippolang.interpret.Interpolator
 import org.keymaerax.hippolang.namespace.ImmutableNamespace
 import org.keymaerax.hippolang.parse.{AstExpression, AstIdentifier, SourceFile}
 import org.keymaerax.hippolib.meta.{ProofInfo, TacticInfo}
@@ -93,8 +94,18 @@ object HippoConversions {
       case e: AstExpression.Bool => HippoValue.Bool(e.value).toHExpr(e.slice)
       case e: AstExpression.Int => HippoValue.Int(e.value).toHExpr(e.slice)
       case e: AstExpression.String => HippoValue.String(e.value).toHExpr(e.slice)
-      case e: AstExpression.DlTerm => HippoExpression.DlExpression(e.slice, e.value)
-      case e: AstExpression.DlFormula => HippoExpression.DlExpression(e.slice, e.value)
+      case e: AstExpression.DlTerm =>
+        val value = e.args match {
+          case None => e.value
+          case Some(args) => Interpolator.replaceFuncArgs(args.map(_.name.value), e.value)
+        }
+        HippoExpression.DlExpression(e.slice, value)
+      case e: AstExpression.DlFormula =>
+        val value = e.args match {
+          case None => e.value
+          case Some(args) => Interpolator.replacePredArgs(args.map(_.name.value), e.value)
+        }
+        HippoExpression.DlExpression(e.slice, value)
       case e: AstExpression.DlProgram => HippoExpression.DlExpression(e.slice, e.value)
       case e: AstExpression.DlSequent => HippoValue.DlSequent(e.value).toHExpr(e.slice)
       case e: AstExpression.BuiltinFunction => HippoValue.BuiltinFunction(e.value).toHExpr(e.slice)

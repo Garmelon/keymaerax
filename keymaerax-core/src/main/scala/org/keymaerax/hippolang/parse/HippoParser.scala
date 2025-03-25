@@ -237,7 +237,7 @@ class HippoParser(source: SourceFile) {
   }
 
   private def applyTacticExpression[$: P]: P[SuffixOpConstructor] = P {
-    ("[" ~/ sliced(expression.rep(sep = ","./) ~ ",".?) ~ "]").map { case (args, argsSlice) =>
+    sliced("[" ~/ expression.rep(sep = ","./) ~ ",".? ~ "]").map { case (args, argsSlice) =>
       (slice, inner) =>
         AstExpression.ApplyTactic(slice = slice, target = inner, args = args.toIndexedSeq, argsSlice = argsSlice)
     }

@@ -7,12 +7,14 @@ package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.core.{
   BaseVariable,
+  Bool,
   DifferentialSymbol,
   DotTerm,
   Expression,
   Formula,
   FuncOf,
   NamedSymbol,
+  Nothing,
   Pair,
   PredOf,
   PredicationalOf,
@@ -24,6 +26,7 @@ import org.keymaerax.core.{
   USubst,
 }
 import org.keymaerax.hippolochos.tools.ExprTransform
+import org.keymaerax.infrastruct.Augmentors.ExpressionAugmentor
 
 /**
  * Insert dL expressions into other dL expressions, similar to string interpolation.
@@ -71,6 +74,7 @@ class Interpolator(val lookup: String => Expression, val onError: (String, Strin
   }
 
   private def argsFromPairs(term: Term): List[Term] = term match {
+    case Nothing => Nil
     case term: Pair => term.left :: argsFromPairs(term.right)
     case term => term :: Nil
   }
@@ -167,4 +171,18 @@ class Interpolator(val lookup: String => Expression, val onError: (String, Strin
       case Some(name) => lookupProgram(name)
     }
   }.transformExpression(expression)
+}
+
+object Interpolator {
+  def replaceFuncArgs(args: Seq[String], term: Term): Term = {
+    args
+      .zipWithIndex
+      .foldLeft(term) { case (term, (arg, i)) => term.replaceFree(BaseVariable(arg), DotTerm(idx = Some(i))) }
+  }
+
+  def replacePredArgs(args: Seq[String], formula: Formula): Formula = {
+    args
+      .zipWithIndex
+      .foldLeft(formula) { case (formula, (arg, i)) => formula.replaceFree(BaseVariable(arg), DotTerm(idx = Some(i))) }
+  }
 }

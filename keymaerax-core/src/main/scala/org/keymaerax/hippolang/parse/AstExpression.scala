@@ -47,16 +47,20 @@ object AstExpression {
   /**
    * {{{
    *   dLt { 1+1 }
+   *   dLt(x, y) { x+y }
    * }}}
    */
-  case class DlTerm(slice: SourceFile#Slice, value: org.keymaerax.core.Term) extends AstExpression
+  case class DlTerm(slice: SourceFile#Slice, args: Option[Seq[AstIdentifier]], value: org.keymaerax.core.Term)
+      extends AstExpression
 
   /**
    * {{{
    *   dLf { 1+1=2 }
+   *   dLf(x, y) { x+y=2 }
    * }}}
    */
-  case class DlFormula(slice: SourceFile#Slice, value: org.keymaerax.core.Formula) extends AstExpression
+  case class DlFormula(slice: SourceFile#Slice, args: Option[Seq[AstIdentifier]], value: org.keymaerax.core.Formula)
+      extends AstExpression
 
   /**
    * {{{

@@ -98,12 +98,10 @@ class HippoParser(source: SourceFile) {
   }.opaque("string")
 
   private def dlExpressionExpression[$: P]: P[AstExpression] = P {
-    def dlTerm = sliced(keywordDlTerm ~/ "{" ~ dlParser.term(true) ~ "}").map { case (value, slice) =>
-      AstExpression.DlTerm(slice = slice, value = value)
-    }
-    def dlFormula = sliced(keywordDlFormula ~/ "{" ~ dlParser.formula ~ "}").map { case (value, slice) =>
-      AstExpression.DlFormula(slice = slice, value = value)
-    }
+    def dlTerm = sliced(keywordDlTerm ~/ argumentList.? ~ "{" ~ dlParser.term(true) ~ "}")
+      .map { case ((args, value), slice) => AstExpression.DlTerm(slice = slice, args = args, value = value) }
+    def dlFormula = sliced(keywordDlFormula ~/ argumentList.? ~ "{" ~ dlParser.formula ~ "}")
+      .map { case ((args, value), slice) => AstExpression.DlFormula(slice = slice, args = args, value = value) }
     def dlProgram = sliced(keywordDlProgram ~/ "{" ~ dlParser.program ~ "}").map { case (value, slice) =>
       AstExpression.DlProgram(slice = slice, value = value)
     }

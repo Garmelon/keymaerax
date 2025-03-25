@@ -6,13 +6,16 @@ print("dAdd: ", dAdd);
 val dEq = dLf(x, y) { x = y & \exists x x = 3 };
 print("dEq:  ", dEq);
 
-//val dNot = dLf{ !._0 };
+val dNot = dLfp(x){ !x };
+print("dNot: ", dNot);
 
 val dInc = dLp{ x := x + 1; };
+print("dInc: ", dInc);
 
 print(dLt{ dOne__ + 2 });
 print(dLt{ dAdd__(1, 2) + 3 });
 print(dLt{ dAdd__(dOne__, 2) + 3 });
 print(dLf{ !dEq__(1, 2) });
-//print(dLf{ dNot__{true} });
+print(dLf{ dNot__{1=2} });
+print(dLf{ dNot__{dEq__(dAdd__(dOne__, dOne__), 2)} });
 print(dLp{ x := *; dInc__; });

@@ -5,10 +5,11 @@
 
 package org.keymaerax.hippolang.interpret
 
+import org.keymaerax.core
 import org.keymaerax.core.{
   BaseVariable,
-  Bool,
   DifferentialSymbol,
+  DotFormula,
   DotTerm,
   Expression,
   Formula,
@@ -122,7 +123,7 @@ class Interpolator(val lookup: String => Expression, val onError: (String, Strin
 
   private def applyPredicational(name: String, definition: Formula, child: Formula): Formula = {
     verifyDotMatchesArg(name, allDotIndexes(definition))
-    val substPairs = Seq(SubstitutionPair(DotTerm(), child))
+    val substPairs = Seq(SubstitutionPair(DotFormula, child))
     USubst(substPairs).apply(definition)
   }
 
@@ -184,5 +185,10 @@ object Interpolator {
     args
       .zipWithIndex
       .foldLeft(formula) { case (formula, (arg, i)) => formula.replaceFree(BaseVariable(arg), DotTerm(idx = Some(i))) }
+  }
+
+  def replacePredicationalArg(arg: String, formula: Formula): Formula = {
+    val function = core.Function(name = arg, domain = core.Unit, sort = core.Bool)
+    formula.replaceAll(PredOf(func = function, child = Nothing), DotFormula)
   }
 }

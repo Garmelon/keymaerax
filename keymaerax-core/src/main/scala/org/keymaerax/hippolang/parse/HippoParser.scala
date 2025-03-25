@@ -47,6 +47,8 @@ class HippoParser(source: SourceFile) {
     (quotedIdentifier | identifier).map(AstIdentifier.apply)
   }.opaque("identifier")
 
+  private def singleArgumentList[$: P]: P[AstIdentifier] = "(" ~/ identifier ~ ",".? ~ ")"
+
   private def argumentList[$: P]: P[Seq[AstIdentifier]] = "(" ~/ identifier.rep(sep = ","./) ~ ",".? ~ ")"
 
   private def tacticArgumentList[$: P]: P[Seq[AstIdentifier]] = "[" ~/ identifier.rep(sep = ","./) ~ ",".? ~ "]"
@@ -102,10 +104,14 @@ class HippoParser(source: SourceFile) {
       .map { case ((args, value), slice) => AstExpression.DlTerm(slice = slice, args = args, value = value) }
     def dlFormula = sliced(keywordDlFormula ~/ argumentList.? ~ "{" ~ dlParser.formula ~ "}")
       .map { case ((args, value), slice) => AstExpression.DlFormula(slice = slice, args = args, value = value) }
+    def dlFormulaPredicational =
+      sliced(keywordDlFormulaPredicational ~/ singleArgumentList.? ~ "{" ~ dlParser.formula ~ "}").map {
+        case ((arg, value), slice) => AstExpression.DlFormulaPredicational(slice = slice, arg = arg, value = value)
+      }
     def dlProgram = sliced(keywordDlProgram ~/ "{" ~ dlParser.program ~ "}").map { case (value, slice) =>
       AstExpression.DlProgram(slice = slice, value = value)
     }
-    dlTerm | dlFormula | dlProgram
+    dlTerm | dlFormulaPredicational | dlFormula | dlProgram
   }
 
   private def dlSequentExpression[$: P]: P[AstExpression.DlSequent] = P {
@@ -352,6 +358,7 @@ object HippoParser {
   private val keywordBackward = "backward"
   private val keywordBy = "by"
   private val keywordDlFormula = "dLf"
+  private val keywordDlFormulaPredicational = "dLfp"
   private val keywordDlProgram = "dLp"
   private val keywordDlSequent = "dLs"
   private val keywordDlTerm = "dLt"
@@ -374,6 +381,7 @@ object HippoParser {
     keywordBackward,
     keywordBy,
     keywordDlFormula,
+    keywordDlFormulaPredicational,
     keywordDlProgram,
     keywordDlSequent,
     keywordDlTerm,

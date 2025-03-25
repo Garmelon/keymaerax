@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolang.interpret
 
-import org.keymaerax.core.{Expression, Formula, Program, Sequent, Term, Variable}
+import org.keymaerax.core.{Expression, Formula, Number, Program, Sequent, Term, Variable}
 import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.interpret.InterpreterPure.{
   getSingleArg,
@@ -461,6 +461,7 @@ object InterpreterPure {
       label: String,
   ): Expression = value match {
     case HippoValue.DlExpression(value) => value
+    case HippoValue.Int(value) => Number(value)
     case _ => throw HlangException(message, slice = slice, label = label)
   }
 
@@ -517,7 +518,12 @@ object InterpreterPure {
     new Interpolator(
       lookup = { name =>
         val value = HlangException.at(slice, label) { namespace.lookup(HippoIdentifier(name)) }
-        getValueAsExpression(value, errorMsg(name, "replacement value must be a dL expression"), slice, label)
+        getValueAsExpression(
+          value,
+          errorMsg(name, "replacement value can't be converted to a dL expression"),
+          slice,
+          label,
+        )
       },
       onError = (name, msg) => throw HlangException(errorMsg(name, msg), slice, label),
     ).interpolate(expression = e.value)

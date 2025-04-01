@@ -34,15 +34,17 @@ import org.keymaerax.hippolochos.tools.{ExprPath, SequentPrinter}
 import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
 class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
+  def during: String = "during pure evaluation"
+
   def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {
     case e: HippoExpression.Const => e.value
 
     case e: HippoExpression.DlExpression => interpolateExpression(namespace, e).toHValue
 
-    case e: HippoExpression.Import => throw HlangException("import not allowed during pure evaluation", slice = e.slice)
+    case e: HippoExpression.Import => throw HlangException(s"import not allowed $during", slice = e.slice)
 
     case e: HippoExpression.Declare =>
-      for (slice <- e.exportSlice) throw HlangException("export not allowed during pure evaluation", slice = slice)
+      for (slice <- e.exportSlice) throw HlangException(s"export not allowed $during", slice = slice)
       val value = eval(namespace, e.value)
       namespace.declare(e.name, value, e.mutable)
       value
@@ -137,7 +139,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       applyValue(e, target, args)
 
     case e: HippoExpression.ApplyTactic =>
-      throw HlangException("tactic application not allowed in normal mode", slice = e.slice)
+      throw HlangException(s"tactic application not allowed $during", slice = e.slice)
   }
 
   // Protected because otherwise the value would have to be computed twice.

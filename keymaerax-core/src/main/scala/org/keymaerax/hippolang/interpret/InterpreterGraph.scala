@@ -13,6 +13,8 @@ import org.keymaerax.hippolochos.run.HippoContext
 import scala.collection.mutable
 
 class InterpreterGraph(ictx: HippoInterpreterContext, ctx: HippoContext) extends InterpreterPure(ictx, ctx) {
+  override def during: String = "during graph evaluation"
+
   val graph: Graph.Builder = Graph.newBuilder
   val nodes: mutable.IndexedBuffer[graph.Var] = mutable.IndexedBuffer.empty
   val premises: mutable.Map[Int, Int] = mutable.Map.empty // Maps from premise index to node id

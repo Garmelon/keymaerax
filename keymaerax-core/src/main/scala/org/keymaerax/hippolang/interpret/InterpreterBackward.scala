@@ -15,6 +15,8 @@ import org.keymaerax.hippolochos.run.{HippoContext, ProofChain}
 class InterpreterBackward(ictx: HippoInterpreterContext, ctx: HippoContext, conclusion: Sequent)
     extends InterpreterPure(ictx, ctx) {
 
+  override def during: String = "during backwards evaluation"
+
   var chain: ProofChain = ctx.chain(conclusion)
 
   override def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {

@@ -15,6 +15,8 @@ import java.nio.file.Path
 class InterpreterFile(ictx: HippoInterpreterContext, ctx: HippoContext, file: Option[Path])
     extends InterpreterPure(ictx = ictx, ctx = ctx) {
 
+  override def during: String = "during file evaluation"
+
   val exported = new MutableNamespace()
 
   override def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {

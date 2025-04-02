@@ -124,7 +124,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       eval(nestedNamespace, e.inner)
 
     case e: HippoExpression.BackwardBlock =>
-      HippoValue.Tactic(InterpreterBackward.tactic(ictx = ictx, namespace = namespace.freeze, expr = e.inner))
+      HippoValue.Tactic(InterpreterBackward.tactic(ictx = ictx, namespace = namespace.freeze, expr = e))
 
     case e: HippoExpression.GraphBlock =>
       HippoValue.Tactic(InterpreterGraph.tactic(ictx = ictx, ctx = ctx, namespace = namespace.freeze, expr = e.inner))

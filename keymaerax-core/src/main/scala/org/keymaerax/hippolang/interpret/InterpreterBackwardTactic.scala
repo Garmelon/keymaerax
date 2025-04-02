@@ -16,14 +16,14 @@ import org.keymaerax.hippolochos.tools.{Hash, Hasher}
 case class InterpreterBackwardTactic(
     ictx: HippoInterpreterContext,
     namespace: ImmutableNamespace,
-    expr: HippoExpression,
+    expr: HippoExpression.BackwardBlock,
 ) extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(ictx.hash).digest(namespace.hash).digest(expr).hash
 
   override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
-    val innerInterp = new InterpreterBackward(ictx, ctx, conclusion)
+    val innerInterp = new InterpreterBackward(ictx, ctx, expr, conclusion)
     val innerNs = new MutableNamespace(child = Some(namespace))
-    val _ = innerInterp.eval(innerNs, expr)
+    val _ = innerInterp.eval(innerNs, expr.inner)
     innerInterp.chain.proof
   }
 }

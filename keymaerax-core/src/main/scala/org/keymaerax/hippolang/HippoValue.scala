@@ -16,6 +16,7 @@ sealed trait HippoValue extends Hashable {
   def asInt: Int = throw new IllegalArgumentException("value is not an integer")
   def asString: String = throw new IllegalArgumentException("value is not a string")
   def asSequent: Sequent = throw new IllegalArgumentException("value is not a dL sequent")
+  def asProof: HippoProof = throw new IllegalArgumentException("value is not a proof")
   def asTactic: hippolochos.Tactic = throw new IllegalArgumentException("value is not a tactic")
 
   def format: String
@@ -68,6 +69,7 @@ object HippoValue {
   }
 
   final case class Proof(value: HippoProof) extends HippoValue {
+    override def asProof: HippoProof = value
     override def format: java.lang.String = {
       if (value.premises.isEmpty) return s"<proof of ${SequentPrinter.oneline(value.conclusion)}>"
       val premises = value
@@ -89,6 +91,7 @@ object HippoValue {
   }
 
   final case class ProofInfo(value: org.keymaerax.hippolib.meta.ProofInfo) extends HippoValue {
+    override def asProof: HippoProof = value.proof
     override def format: java.lang.String = s"<proof info for ${Proof(value.proof).format}>"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }

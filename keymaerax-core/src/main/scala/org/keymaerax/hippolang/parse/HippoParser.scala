@@ -149,8 +149,8 @@ class HippoParser(source: SourceFile) {
   }
 
   private def assignGoalExpression[$: P]: P[AstExpression.AssignGoal] = P {
-    sliced(goalIdentifier ~ "=" ~ expression).map { case ((name, value), slice) =>
-      AstExpression.AssignGoal(slice = slice, name = name, value = value)
+    sliced(sliced(goalIdentifier) ~ "=" ~ expression).map { case ((name, nameSlice, value), slice) =>
+      AstExpression.AssignGoal(slice = slice, nameSlice = nameSlice, name = name, value = value)
     }
   }
 

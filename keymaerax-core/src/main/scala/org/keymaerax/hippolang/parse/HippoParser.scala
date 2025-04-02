@@ -47,6 +47,8 @@ class HippoParser(source: SourceFile) {
     (quotedIdentifier | identifier).map(AstIdentifier.apply)
   }.opaque("identifier")
 
+  private def goalIdentifier[$: P]: P[AstIdentifier] = P { "$" ~ identifier }
+
   private def singleArgumentList[$: P]: P[AstIdentifier] = "(" ~/ identifier ~ ",".? ~ ")"
 
   private def argumentList[$: P]: P[Seq[AstIdentifier]] = "(" ~/ identifier.rep(sep = ","./) ~ ",".? ~ ")"
@@ -144,8 +146,17 @@ class HippoParser(source: SourceFile) {
     }
   }
 
+  private def assignGoalExpression[$: P]: P[AstExpression.AssignGoal] = P {
+    sliced(goalIdentifier ~ "=" ~ expression).map { case ((name, value), slice) =>
+      AstExpression.AssignGoal(slice = slice, name = name, value = value)
+    }
+  }
+
   private def lookupExpression[$: P]: P[AstExpression.Lookup] =
     P { sliced(identifier).map { case (name, slice) => AstExpression.Lookup(slice = slice, name = name) } }
+
+  private def lookupGoalExpression[$: P]: P[AstExpression.LookupGoal] =
+    P { sliced(goalIdentifier).map { case (name, slice) => AstExpression.LookupGoal(slice = slice, name = name) } }
 
   private def ifExpression[$: P]: P[AstExpression.If] = P {
     sliced(keywordIf ~/ parensExpression ~ expression ~ (keywordElse ~/ expression).?)
@@ -211,6 +222,8 @@ class HippoParser(source: SourceFile) {
       builtinFunctionExpression | importExpression | declareExpression | ifExpression | whileExpression |
       functionExpression | theoremExpression | parensExpression | blockExpression | backwardBlockExpression |
       graphBlockExpression |
+      // Assignment must come before lookup because lookup is a prefix of assignment.
+      assignGoalExpression | lookupGoalExpression |
       // Because these two start with a literal, they have to come last so they don't shadow literals like "while".
       // Otherwise, "while (foo) ..." is interpreted as an apply on the literal "while",
       // and due to cuts, results in a parse error because it expects a ";" to follow.

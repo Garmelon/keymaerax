@@ -54,7 +54,11 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       HlangException.at(e.slice) { namespace.assign(e.name, value) }
       value
 
+    case e: HippoExpression.AssignGoal => throw HlangException(s"goal assignment not allowed $during", slice = e.slice)
+
     case e: HippoExpression.Lookup => HlangException.at(e.slice) { namespace.lookup(e.name) }
+
+    case e: HippoExpression.LookupGoal => throw HlangException(s"goal lookup not allowed $during", slice = e.slice)
 
     case e: HippoExpression.If =>
       val condition = eval(namespace, e.condition)

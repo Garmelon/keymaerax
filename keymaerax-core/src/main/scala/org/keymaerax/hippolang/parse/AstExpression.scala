@@ -210,10 +210,16 @@ object AstExpression {
 
   /**
    * {{{
-   *   backward { ... }
+   *   backward -> $c { ... }
+   *   backward[$p1, $p2] -> $c { ... }
    * }}}
    */
-  case class BackwardBlock(slice: SourceFile#Slice, args: Seq[AstIdentifier], inner: Block) extends AstExpression
+  case class BackwardBlock(
+      slice: SourceFile#Slice,
+      premises: Seq[AstIdentifier],
+      conclusion: AstIdentifier,
+      inner: Block,
+  ) extends AstExpression
 
   /**
    * {{{

@@ -107,9 +107,17 @@ object HippoExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(inner)
   }
 
-  case class BackwardBlock(slice: SourceFile#Slice, args: Seq[HippoIdentifier], inner: HippoExpression)
-      extends HippoExpression {
-    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digestSeq(args).digest(inner)
+  case class BackwardBlock(
+      slice: SourceFile#Slice,
+      premises: Seq[HippoIdentifier],
+      conclusion: HippoIdentifier,
+      inner: HippoExpression,
+  ) extends HippoExpression {
+    override def digestInto(hasher: Hasher): Unit = hasher
+      .digest[this.type]
+      .digestSeq(premises)
+      .digest(conclusion)
+      .digest(inner)
   }
 
   case class GraphBlock(slice: SourceFile#Slice, inner: HippoExpression) extends HippoExpression {

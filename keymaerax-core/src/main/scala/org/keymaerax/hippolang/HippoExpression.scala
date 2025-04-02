@@ -46,7 +46,15 @@ object HippoExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(name).digest(value)
   }
 
+  case class AssignGoal(slice: SourceFile#Slice, name: HippoIdentifier, value: HippoExpression) extends HippoExpression {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(name).digest(value)
+  }
+
   case class Lookup(slice: SourceFile#Slice, name: HippoIdentifier) extends HippoExpression {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(name)
+  }
+
+  case class LookupGoal(slice: SourceFile#Slice, name: HippoIdentifier) extends HippoExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(name)
   }
 

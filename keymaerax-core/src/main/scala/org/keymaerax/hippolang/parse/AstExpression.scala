@@ -128,10 +128,24 @@ object AstExpression {
 
   /**
    * {{{
+   * $<name> = <value>
+   * }}}
+   */
+  case class AssignGoal(slice: SourceFile#Slice, name: AstIdentifier, value: AstExpression) extends AstExpression
+
+  /**
+   * {{{
    * <name>
    * }}}
    */
   case class Lookup(slice: SourceFile#Slice, name: AstIdentifier) extends AstExpression
+
+  /**
+   * {{{
+   * $<name>
+   * }}}
+   */
+  case class LookupGoal(slice: SourceFile#Slice, name: AstIdentifier) extends AstExpression
 
   /**
    * {{{

@@ -124,7 +124,9 @@ object HippoConversions {
           value = e.value.toHExpr,
         )
       case e: AstExpression.Assign => Assign(slice = e.slice, name = e.name.name, value = e.value.toHExpr)
+      case e: AstExpression.AssignGoal => AssignGoal(slice = e.slice, name = e.name.name, value = e.value.toHExpr)
       case e: AstExpression.Lookup => Lookup(slice = e.slice, name = e.name.name)
+      case e: AstExpression.LookupGoal => LookupGoal(slice = e.slice, name = e.name.name)
       case e: AstExpression.If => If(
           slice = e.slice,
           condition = e.condition.toHExpr,

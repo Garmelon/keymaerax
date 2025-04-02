@@ -208,9 +208,15 @@ class HippoParser(source: SourceFile) {
   }
 
   private def backwardBlockExpression[$: P]: P[AstExpression.BackwardBlock] = P {
-    sliced(keywordBackward ~/ tacticGoalArgumentList.? ~ blockExpression).map { case ((args, inner), slice) =>
-      AstExpression.BackwardBlock(slice = slice, args = args.getOrElse(Seq.empty), inner = inner)
-    }
+    sliced(keywordBackward ~/ tacticGoalArgumentList.? ~ "->" ~ goalIdentifier ~ blockExpression)
+      .map { case ((premises, conclusion, inner), slice) =>
+        AstExpression.BackwardBlock(
+          slice = slice,
+          premises = premises.getOrElse(Seq.empty),
+          conclusion = conclusion,
+          inner = inner,
+        )
+      }
   }
 
   private def graphBlockExpression[$: P]: P[AstExpression.GraphBlock] = P {

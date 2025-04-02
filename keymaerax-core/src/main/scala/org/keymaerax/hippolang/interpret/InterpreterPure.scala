@@ -276,9 +276,6 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
       println(parts.mkString)
       HippoValue.Null
 
-    case f @ BuiltinFunction.Goals =>
-      throw new UnsupportedOperationException(s"#${f.name} can only be called in the context of a backward block")
-
     case f @ BuiltinFunction.Premise =>
       throw new UnsupportedOperationException(s"#${f.name} can only be called in the context of a graph block")
   }

@@ -42,16 +42,6 @@ class InterpreterBackward(ictx: HippoInterpreterContext, ctx: HippoContext, conc
 
     case _ => super.eval(namespace, expr)
   }
-
-  override def applyValue(e: HippoExpression.Apply, target: HippoValue, args: IndexedSeq[HippoValue]): HippoValue =
-    target match {
-      case HippoValue.BuiltinFunction(BuiltinFunction.Goals) =>
-        if (args.nonEmpty)
-          throw HlangException("no arguments allowed", slice = e.argsSlice, label = "while retrieving goals")
-        chain.proof.premises.map(_.sequent.toHValue).toHValue
-
-      case _ => super.applyValue(e, target, args)
-    }
 }
 
 object InterpreterBackward {

@@ -32,11 +32,10 @@ object BuiltinFunction {
   case object List extends BuiltinFunction(HippoIdentifier("list"))
   case object Proof extends BuiltinFunction(HippoIdentifier("proof"))
   case object Print extends BuiltinFunction(HippoIdentifier("print"))
-  case object Goals extends BuiltinFunction(HippoIdentifier("goals"))
   case object Premise extends BuiltinFunction(HippoIdentifier("premise"))
 
   val all: Seq[BuiltinFunction] =
-    Seq(Not, Neg, Mul, Div, Add, Sub, Gt, Gte, Lt, Lte, Eq, Neq, And, Or, List, Proof, Print, Goals, Premise)
+    Seq(Not, Neg, Mul, Div, Add, Sub, Gt, Gte, Lt, Lte, Eq, Neq, And, Or, List, Proof, Print, Premise)
 
   val byName: Map[HippoIdentifier, BuiltinFunction] = all.map(b => b.name -> b).toMap
 }

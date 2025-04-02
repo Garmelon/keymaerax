@@ -55,6 +55,8 @@ class HippoParser(source: SourceFile) {
 
   private def tacticArgumentList[$: P]: P[Seq[AstIdentifier]] = "[" ~/ identifier.rep(sep = ","./) ~ ",".? ~ "]"
 
+  private def tacticGoalArgumentList[$: P]: P[Seq[AstIdentifier]] = "[" ~/ goalIdentifier.rep(sep = ","./) ~ ",".? ~ "]"
+
   ///////////////////////////
   // Primitive expressions //
   ///////////////////////////
@@ -206,8 +208,8 @@ class HippoParser(source: SourceFile) {
   }
 
   private def backwardBlockExpression[$: P]: P[AstExpression.BackwardBlock] = P {
-    sliced(keywordBackward ~/ blockExpression).map { case (inner, slice) =>
-      AstExpression.BackwardBlock(slice = slice, inner = inner)
+    sliced(keywordBackward ~/ tacticGoalArgumentList.? ~ blockExpression).map { case ((args, inner), slice) =>
+      AstExpression.BackwardBlock(slice = slice, args = args.getOrElse(Seq.empty), inner = inner)
     }
   }
 

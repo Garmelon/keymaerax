@@ -213,7 +213,7 @@ object AstExpression {
    *   backward { ... }
    * }}}
    */
-  case class BackwardBlock(slice: SourceFile#Slice, inner: Block) extends AstExpression
+  case class BackwardBlock(slice: SourceFile#Slice, args: Seq[AstIdentifier], inner: Block) extends AstExpression
 
   /**
    * {{{

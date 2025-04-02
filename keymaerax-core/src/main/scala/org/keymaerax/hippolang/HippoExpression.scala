@@ -46,7 +46,8 @@ object HippoExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(name).digest(value)
   }
 
-  case class AssignGoal(slice: SourceFile#Slice, name: HippoIdentifier, value: HippoExpression) extends HippoExpression {
+  case class AssignGoal(slice: SourceFile#Slice, name: HippoIdentifier, value: HippoExpression)
+      extends HippoExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(name).digest(value)
   }
 
@@ -106,8 +107,9 @@ object HippoExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(inner)
   }
 
-  case class BackwardBlock(slice: SourceFile#Slice, inner: HippoExpression) extends HippoExpression {
-    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(inner)
+  case class BackwardBlock(slice: SourceFile#Slice, args: Seq[HippoIdentifier], inner: HippoExpression)
+      extends HippoExpression {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digestSeq(args).digest(inner)
   }
 
   case class GraphBlock(slice: SourceFile#Slice, inner: HippoExpression) extends HippoExpression {

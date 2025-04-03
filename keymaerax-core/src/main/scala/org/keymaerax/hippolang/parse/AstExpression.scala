@@ -249,7 +249,8 @@ object AstExpression {
    *   <target>.<name>
    * }}}
    */
-  case class Access(slice: SourceFile#Slice, target: AstExpression, name: AstIdentifier) extends AstExpression
+  case class Access(slice: SourceFile#Slice, nameSlice: SourceFile#Slice, target: AstExpression, name: AstIdentifier)
+      extends AstExpression
 
   /**
    * {{{

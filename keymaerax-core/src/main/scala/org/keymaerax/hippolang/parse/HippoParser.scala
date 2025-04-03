@@ -256,7 +256,9 @@ class HippoParser(source: SourceFile) {
   }.opaque("builtin member function")
 
   private def accessExpression[$: P]: P[SuffixOpConstructor] = P {
-    ("." ~/ identifier).map(name => (slice, inner) => AstExpression.Access(slice = slice, target = inner, name = name))
+    ("." ~/ sliced(identifier)).map { case (name, nameSlice) =>
+      (slice, inner) => AstExpression.Access(slice = slice, nameSlice = nameSlice, target = inner, name = name)
+    }
   }
 
   private def applyExpression[$: P]: P[SuffixOpConstructor] = P {

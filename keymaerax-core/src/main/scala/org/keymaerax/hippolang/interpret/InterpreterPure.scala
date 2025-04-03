@@ -135,7 +135,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
 
     case e: HippoExpression.Access =>
       val target = eval(namespace, e.target)
-      accessValue(target, e.name)
+      accessValue(e, target)
 
     case e: HippoExpression.Apply =>
       val target = eval(namespace, e.target)
@@ -147,11 +147,11 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
   }
 
   // Protected because otherwise the value would have to be computed twice.
-  protected def accessValue(target: HippoValue, name: HippoIdentifier): HippoValue = {
+  protected def accessValue(e: HippoExpression.Access, target: HippoValue): HippoValue = {
     import org.keymaerax.hippolang.BuiltinMemberFunction.*
 
-    (target, name.value) match {
-      case (HippoValue.Namespace(ns), _) => ns.lookup(name)
+    (target, e.name.value) match {
+      case (HippoValue.Namespace(ns), _) => HlangException.at(e.nameSlice) { ns.lookup(e.name) }
       case (HippoValue.Tactic(_), "forward") => HippoValue.BuiltinMemberFunction(target, Forward)
       case (HippoValue.Tactic(_), "backward") => HippoValue.BuiltinMemberFunction(target, Backward)
       case (HippoValue.Tactic(_), "pure") => HippoValue.BuiltinMemberFunction(target, Pure)

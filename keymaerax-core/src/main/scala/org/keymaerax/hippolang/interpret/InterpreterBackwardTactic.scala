@@ -24,6 +24,6 @@ case class InterpreterBackwardTactic(
     val innerInterp = new InterpreterBackward(ictx, ctx, expr, conclusion)
     val innerNs = new MutableNamespace(child = Some(namespace))
     val _ = innerInterp.eval(innerNs, expr.inner)
-    innerInterp.chain.proof
+    innerInterp.outputProof()
   }
 }

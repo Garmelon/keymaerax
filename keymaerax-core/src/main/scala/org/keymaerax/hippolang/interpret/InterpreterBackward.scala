@@ -6,11 +6,15 @@
 package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.core.Sequent
+import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.{HippoExpression, HippoIdentifier, HippoValue, HlangException}
 import org.keymaerax.hippolochos.BackwardTactic
 import org.keymaerax.hippolochos.proof.HippoProof
 import org.keymaerax.hippolochos.run.{HippoContext, ProofChain}
+import org.keymaerax.hippolochos.tools.PremisePermuter
+
+import scala.collection.mutable
 
 class InterpreterBackward(
     ictx: HippoInterpreterContext,
@@ -21,11 +25,14 @@ class InterpreterBackward(
 
   override def during: String = "during backwards evaluation"
 
-  var chain: ProofChain = ctx.chain(conclusion)
-  var goals: IndexedSeq[HippoIdentifier] = IndexedSeq(expr.conclusion)
+  // TODO Better error handling
+  require(expr.premises.length == expr.premises.toSet.size)
+
+  private var chain: ProofChain = ctx.chain(conclusion)
+  private var goals: IndexedSeq[HippoIdentifier] = IndexedSeq(expr.conclusion)
   assert(goalsAreConsistent)
 
-  def goalsAreConsistent: Boolean = {
+  private def goalsAreConsistent: Boolean = {
     if (chain.proof.premises.length != goals.length) return false
     if (goals.length != goals.toSet.size) return false
     true
@@ -46,7 +53,9 @@ class InterpreterBackward(
       HippoValue.Null
 
     case e: HippoExpression.LookupGoal =>
-      throw HlangException(s"goal lookup not allowed outside goal assignment $during", slice = e.slice)
+      val goalIdx = goals.indexOf(e.name)
+      if (goalIdx < 0) throw HlangException(s"invalid goal", e.slice, "this goal is not currently open")
+      chain.proof.premises(goalIdx).sequent.toHValue
 
     case e: HippoExpression.ApplyTactic =>
       throw HlangException(s"tactic application not allowed outside goal assignment $during", slice = e.slice)
@@ -90,6 +99,39 @@ class InterpreterBackward(
       val proof = eval(namespace, e).asProof
       require(proof.premises.isEmpty)
       (proof, IndexedSeq.empty)
+  }
+
+  def outputProof(): HippoProof = {
+    val premiseSet = expr.premises.toSet
+    val goalSet = goals.toSet
+
+    val unopenedGoals = premiseSet -- goalSet
+    val unclosedGoals = goalSet -- premiseSet
+    val discrepancies = mutable.Buffer.empty[String]
+
+    if (unopenedGoals.nonEmpty) {
+      val goals = unopenedGoals.map(goal => s"- $$$goal").mkString("\n")
+      discrepancies.append(s"The following goals should be open:\n$goals")
+    }
+
+    if (unclosedGoals.nonEmpty) {
+      val goals = unclosedGoals.map { goal =>
+        val goalIdx = this.goals.indexOf(goal)
+        val sequent = this.chain.proof.premises(goalIdx).sequent
+        s"- $$$goal: $sequent"
+      }
+      discrepancies.append(s"The following goals should be closed:\n$goals")
+    }
+
+    if (discrepancies.nonEmpty)
+      throw HlangException(discrepancies.mkString("\n\n"), slice = expr.slice, label = "while executing this tactic")
+
+    // Should always be true thanks to the discrepancy check above
+    require(premiseSet == goalSet)
+
+    val indexByGoal = expr.premises.zipWithIndex.toMap
+    val targetIndices = goals.map(indexByGoal)
+    PremisePermuter.permute(ctx, chain.proof, targetIndices)
   }
 }
 

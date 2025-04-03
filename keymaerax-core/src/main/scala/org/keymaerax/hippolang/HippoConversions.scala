@@ -159,7 +159,8 @@ object HippoConversions {
       case e: AstExpression.GraphBlock => GraphBlock(slice = e.slice, inner = e.inner.toHExpr)
       case e: AstExpression.BuiltinAccess =>
         BuiltinAccess(slice = e.slice, target = e.target.toHExpr, member = e.member)
-      case e: AstExpression.Access => Access(slice = e.slice, target = e.target.toHExpr, name = e.name.name)
+      case e: AstExpression.Access =>
+        Access(slice = e.slice, nameSlice = e.nameSlice, target = e.target.toHExpr, name = e.name.name)
       case e: AstExpression.Apply =>
         Apply(slice = e.slice, target = e.target.toHExpr, args = e.args.map(_.toHExpr), argsSlice = e.argsSlice)
       case e: AstExpression.ApplyTactic =>

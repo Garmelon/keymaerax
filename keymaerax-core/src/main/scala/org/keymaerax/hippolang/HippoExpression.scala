@@ -140,7 +140,12 @@ object HippoExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(target).digest(member)
   }
 
-  case class Access(slice: SourceFile#Slice, target: HippoExpression, name: HippoIdentifier) extends HippoExpression {
+  case class Access(
+      slice: SourceFile#Slice,
+      nameSlice: SourceFile#Slice,
+      target: HippoExpression,
+      name: HippoIdentifier,
+  ) extends HippoExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(target).digest(name)
   }
 

@@ -6,22 +6,13 @@ val assignbAt = function(at) core.RewriteAtU(at, core.assignb);
 val simpleCompositionBackward =
   verified theorem dLs{ ==> [x:=*;?x>0;x:=x+1;]x>1 }
   by backward -> $c {
-    print("Running backward tactic");
-    print("1 ", $c);
-    $c = composeb()[$c];
-    print("2 ", $c);
-    $c = randomb()[$c];
-    print("3 ", $c);
-    $c = core.Skolemize(1)[$c];
-    print("4 ", $c);
-    $c = composeb()[$c];
-    print("5 ", $c);
-    $c = testb()[$c];
-    print("6 ", $c);
-    $c = assignbAt(list(1))[$c];
-    print("7 ", $c);
-//    $c = core.QE()[];
-    print("8");
+    $c = composeb()
+       : randomb()
+       : core.Skolemize(1)
+       : composeb()
+       : testb()
+       : assignbAt(list(1))
+       : core.QE()[];
   };
 
 print("backward: ", simpleCompositionBackward);

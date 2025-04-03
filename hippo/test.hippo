@@ -1,22 +1,18 @@
-val dOne = dLt{ 1 };
-val dTwo = 2;
+val branch =
+    theorem dLs{ ==> x>0 }
+    given dLs{ ==> x=1 }
+    given dLs{ ==> x=2 }
+    given dLs{ ==> x=3 }
+    by core.Sorry();
 
-val dAdd = dLt(x, y) { x + y };
-print("dAdd: ", dAdd);
+print("branch: ", branch);
 
-val dEq = dLf(x, y) { x = y & \exists x x = 3 };
-print("dEq:  ", dEq);
+val foo = backward[$p2, $p3, $p1] -> $c {
+    $c = core.Unify(branch)[$p1, $p2, $p3];
+};
 
-val dNot = dLfp(x){ !x };
-print("dNot: ", dNot);
+print("foo: ", foo);
 
-val dInc = dLp{ x := x + 1; };
-print("dInc: ", dInc);
+val bar = foo.backward(dLs{ ==> x>0 });
 
-print(dLt{ dOne__ + dTwo__ });
-print(dLt{ dAdd__(1, 2) + 3 });
-print(dLt{ dAdd__(dOne__, 2) + 3 });
-print(dLf{ !dEq__(1, 2) });
-print(dLf{ dNot__{1=2} });
-print(dLf{ dNot__{dEq__(dAdd__(dOne__, dOne__), dTwo__)} });
-print(dLp{ x := *; dInc__; });
+print("bar: ", bar);

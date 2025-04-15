@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolang
 
-import org.keymaerax.core.Sequent
+import org.keymaerax.core.Expression
 import org.keymaerax.hippocore.proof.{HippoPremise, HippoProof}
 import org.keymaerax.hippocore.tools.{Hashable, Hasher, SequentPrinter}
 import org.keymaerax.hippolang.namespace.ImmutableNamespace
@@ -15,7 +15,8 @@ sealed trait HippoValue extends Hashable {
   def isTruthy: Boolean = true
   def asInt: Int = throw new IllegalArgumentException("value is not an integer")
   def asString: String = throw new IllegalArgumentException("value is not a string")
-  def asSequent: Sequent = throw new IllegalArgumentException("value is not a dL sequent")
+  def asExpression: core.Expression = throw new IllegalArgumentException("value is not a dL expression")
+  def asSequent: core.Sequent = throw new IllegalArgumentException("value is not a dL sequent")
   def asProof: HippoProof = throw new IllegalArgumentException("value is not a proof")
   def asTactic: hippocore.Tactic = throw new IllegalArgumentException("value is not a tactic")
 
@@ -53,6 +54,7 @@ object HippoValue {
   }
 
   final case class DlExpression(value: core.Expression) extends HippoValue {
+    override def asExpression: Expression = value
     override def format: java.lang.String = s"dL{ ${value.prettyString} }"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }

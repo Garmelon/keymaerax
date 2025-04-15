@@ -10,7 +10,7 @@ import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, Substit
 import org.keymaerax.hippocore.cache.{Cache, HippoProofFsCache, LruCache, ProvableFsCache}
 import org.keymaerax.hippocore.proof.{ExternalSource, HippoPremise, HippoProof}
 import org.keymaerax.hippocore.tools.Hasher
-import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
+import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, HippoException, PureTactic, Tactic}
 
 import java.nio.file.Path
 
@@ -182,7 +182,7 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
 
   private def fromExternal(external: HippoProof.External, premises: IndexedSeq[Provable]): Provable =
     external.source match {
-      case ExternalSource.Sorry => ???
+      case ExternalSource.Sorry => HippoException.fail("Proof uses sorry")
       case ExternalSource.QeTool(formula) => HippoProof.applyPremises(computeQe(formula), premises)
       case ExternalSource.Bellerophon(provable) => HippoProof.applyPremises(provable, premises)
       case ExternalSource.Cache(hash) =>

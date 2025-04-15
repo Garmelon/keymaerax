@@ -21,6 +21,7 @@ import org.keymaerax.core.{
   PredicationalOf,
   Program,
   ProgramConst,
+  Sequent,
   StaticSemantics,
   SubstitutionPair,
   Term,
@@ -127,15 +128,7 @@ class Interpolator(val lookup: String => Expression, val onError: (String, Strin
     USubst(substPairs).apply(definition)
   }
 
-  /**
-   * Interpolate an expression, similar to string interpolation. See [[Interpolator]] for more details.
-   *
-   * @param expression
-   *   Expression to interpolate.
-   * @return
-   *   Interpolated expression.
-   */
-  def interpolate(expression: Expression): Expression = new ExprTransform {
+  private val exprTransform = new ExprTransform {
     override def ttBaseVariable(it: BaseVariable): Term = interpolatedName(it) match {
       case None => super.ttBaseVariable(it)
       case Some(name) => lookupTerm(name)
@@ -171,7 +164,32 @@ class Interpolator(val lookup: String => Expression, val onError: (String, Strin
       case None => super.tpProgramConst(it)
       case Some(name) => lookupProgram(name)
     }
-  }.transformExpression(expression)
+  }
+
+  /**
+   * Interpolate an expression, similar to string interpolation. See [[Interpolator]] for more details.
+   *
+   * @param expression
+   *   Expression to interpolate.
+   * @return
+   *   Interpolated expression.
+   */
+  def interpolate(expression: Expression): Expression = exprTransform.transformExpression(expression)
+
+  /**
+   * Interpolate a sequent, similar to string interpolation. See [[Interpolator]] for more details.
+   *
+   * @param sequent
+   *   Sequent to interpolate.
+   * @return
+   *   Interpolated sequent.
+   */
+  def interpolate(sequent: Sequent): Sequent = {
+    Sequent(
+      ante = sequent.ante.map(exprTransform.transformFormula),
+      succ = sequent.succ.map(exprTransform.transformFormula),
+    )
+  }
 }
 
 object Interpolator {

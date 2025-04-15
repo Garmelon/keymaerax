@@ -113,7 +113,7 @@ object HippoConversions {
         }
         HippoExpression.DlExpression(e.slice, value)
       case e: AstExpression.DlProgram => HippoExpression.DlExpression(e.slice, e.value)
-      case e: AstExpression.DlSequent => HippoValue.DlSequent(e.value).toHExpr(e.slice)
+      case e: AstExpression.DlSequent => HippoExpression.DlSequent(e.slice, e.value)
       case e: AstExpression.BuiltinFunction => HippoValue.BuiltinFunction(e.value).toHExpr(e.slice)
       case e: AstExpression.Import => Import(slice = e.slice, path = e.path.toHExpr)
       case e: AstExpression.Declare => Declare(

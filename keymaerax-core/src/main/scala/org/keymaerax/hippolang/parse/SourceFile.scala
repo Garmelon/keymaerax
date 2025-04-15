@@ -74,5 +74,15 @@ case class SourceFile(text: String, path: Option[Path] = None) {
 
   object Slice {
     def apply(at: Int): Slice = Slice(at, at)
+
+    /**
+     * Join two slices.
+     *
+     * The source file of the two original slices is ignored.
+     *
+     * @return
+     *   Smallest slice that encompasses both original slices.
+     */
+    def apply(a: SourceFile#Slice, b: SourceFile#Slice): Slice = Slice(a.start min b.start, a.end max b.end)
   }
 }

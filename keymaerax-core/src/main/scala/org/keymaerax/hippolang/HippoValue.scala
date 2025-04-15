@@ -53,13 +53,13 @@ object HippoValue {
   }
 
   final case class DlExpression(value: core.Expression) extends HippoValue {
-    override def format: java.lang.String = s"dL { ${value.prettyString} }"
+    override def format: java.lang.String = s"dL{ ${value.prettyString} }"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
   final case class DlSequent(value: core.Sequent) extends HippoValue {
     override def asSequent: core.Sequent = value
-    override def format: java.lang.String = s"dLs { ${SequentPrinter.smart(value)} }"
+    override def format: java.lang.String = s"dLs{ ${SequentPrinter.smart(value)} }"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 

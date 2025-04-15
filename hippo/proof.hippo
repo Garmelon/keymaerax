@@ -21,13 +21,13 @@ val simpleCompositionGraph =
   verified theorem dLs{ ==> [x:=*;?x>0;x:=x+1;]x>1 }
   by graph {
     print("Creating graph tactic");
-    val g1 = core.QE()[];
-    val g2 = assignbAt(list(1))[g1];
-    val g3 = testb()[g2];
-    val g4 = composeb()[g3];
-    val g5 = core.Skolemize(1)[g4];
-    val g6 = randomb()[g5];
-    composeb()[g6]
+    core.QE()[]
+      :> assignbAt(list(1))
+      :> testb()
+      :> composeb()
+      :> core.Skolemize(1)
+      :> randomb()
+      :> composeb()
   };
 
 print("   graph: ", simpleCompositionGraph);

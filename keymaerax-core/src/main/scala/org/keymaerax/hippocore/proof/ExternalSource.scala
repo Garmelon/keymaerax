@@ -3,10 +3,10 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos.proof
+package org.keymaerax.hippocore.proof
 
 import org.keymaerax.core.{Formula, Provable}
-import org.keymaerax.hippolochos.tools.{Hash, Hashable, Hasher}
+import org.keymaerax.hippocore.tools.{Hash, Hashable, Hasher}
 
 sealed trait ExternalSource extends Hashable
 object ExternalSource {

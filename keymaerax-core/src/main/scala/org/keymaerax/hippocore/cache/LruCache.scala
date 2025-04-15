@@ -3,9 +3,9 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos.cache
+package org.keymaerax.hippocore.cache
 
-import org.keymaerax.hippolochos.tools.Hash
+import org.keymaerax.hippocore.tools.Hash
 
 import scala.collection.mutable
 

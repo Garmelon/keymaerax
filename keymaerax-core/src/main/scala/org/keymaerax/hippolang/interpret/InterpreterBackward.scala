@@ -6,13 +6,13 @@
 package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.core.Sequent
+import org.keymaerax.hippocore.BackwardTactic
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.{HippoContext, ProofChain}
+import org.keymaerax.hippocore.tools.PremisePermuter
 import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.{HippoExpression, HippoIdentifier, HippoValue, HlangException}
-import org.keymaerax.hippolochos.BackwardTactic
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.{HippoContext, ProofChain}
-import org.keymaerax.hippolochos.tools.PremisePermuter
 
 import scala.collection.mutable
 

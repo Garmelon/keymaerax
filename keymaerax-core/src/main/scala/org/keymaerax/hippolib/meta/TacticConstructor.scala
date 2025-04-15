@@ -5,8 +5,8 @@
 
 package org.keymaerax.hippolib.meta
 
-import org.keymaerax.hippolochos.tools.{Hash, Hashable, Hasher, UniqueNameRegistry}
-import org.keymaerax.hippolochos.{HippoException, Tactic}
+import org.keymaerax.hippocore.tools.{Hash, Hashable, Hasher, UniqueNameRegistry}
+import org.keymaerax.hippocore.{HippoException, Tactic}
 
 trait TacticConstructor[+T <: Tactic] extends Hashable {
   def hash: Hash

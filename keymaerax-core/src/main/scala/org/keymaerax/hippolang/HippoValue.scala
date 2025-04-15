@@ -6,10 +6,10 @@
 package org.keymaerax.hippolang
 
 import org.keymaerax.core.Sequent
+import org.keymaerax.hippocore.proof.{HippoPremise, HippoProof}
+import org.keymaerax.hippocore.tools.{Hashable, Hasher, SequentPrinter}
 import org.keymaerax.hippolang.namespace.ImmutableNamespace
-import org.keymaerax.hippolochos.proof.{HippoPremise, HippoProof}
-import org.keymaerax.hippolochos.tools.{Hashable, Hasher, SequentPrinter}
-import org.keymaerax.{core, hippolochos}
+import org.keymaerax.{core, hippocore}
 
 sealed trait HippoValue extends Hashable {
   def isTruthy: Boolean = true
@@ -17,7 +17,7 @@ sealed trait HippoValue extends Hashable {
   def asString: String = throw new IllegalArgumentException("value is not a string")
   def asSequent: Sequent = throw new IllegalArgumentException("value is not a dL sequent")
   def asProof: HippoProof = throw new IllegalArgumentException("value is not a proof")
-  def asTactic: hippolochos.Tactic = throw new IllegalArgumentException("value is not a tactic")
+  def asTactic: hippocore.Tactic = throw new IllegalArgumentException("value is not a tactic")
 
   def format: String
 }
@@ -84,8 +84,8 @@ object HippoValue {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class Tactic(value: hippolochos.Tactic) extends HippoValue {
-    override def asTactic: hippolochos.Tactic = value
+  final case class Tactic(value: hippocore.Tactic) extends HippoValue {
+    override def asTactic: hippocore.Tactic = value
     override def format: java.lang.String = s"<tactic ${value.getClass.getName} ${value.hash.hexString}>"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }

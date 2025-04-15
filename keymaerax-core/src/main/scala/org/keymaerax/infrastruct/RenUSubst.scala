@@ -8,7 +8,7 @@ package org.keymaerax.infrastruct
 import org.keymaerax.bellerophon.BelleExpr
 import org.keymaerax.btactics.{Idioms, TactixLibrary, UnifyUSCalculus}
 import org.keymaerax.core._
-import org.keymaerax.hippolochos.proof.HippoProof
+import org.keymaerax.hippocore.proof.HippoProof
 import org.keymaerax.pt.ProvableSig
 
 import scala.collection.immutable

@@ -3,17 +3,17 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos
+package org.keymaerax.hippocore
 
 import org.keymaerax.btactics.Z3ToolProvider
 import org.keymaerax.core.{Formula, PrettyPrinter, Sequent, Skolemize, SuccPos}
+import org.keymaerax.hippocore.cache.{HippoProofFsCache, LruCache, ProvableFsCache}
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.ExprPath
 import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolib.core.{CoreRule, QE, RewriteAt, RewriteAtU, US}
 import org.keymaerax.hippolib.primitive.BidiBackward
-import org.keymaerax.hippolochos.cache.{HippoProofFsCache, LruCache, ProvableFsCache}
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.ExprPath
 import org.keymaerax.parser.StringConverter.StringToStringConverter
 import org.keymaerax.tools.install.ToolConfiguration
 import org.keymaerax.{Configuration, FileConfiguration}

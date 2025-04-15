@@ -7,11 +7,11 @@ package org.keymaerax.hippolib.core
 
 import org.keymaerax.bellerophon.UnificationException
 import org.keymaerax.core.{Equal, Equiv, Expression, Sequent}
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{ExprPath, Hash, Hasher}
+import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
 import org.keymaerax.hippolib.HippoLib
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{ExprPath, Hash, Hasher}
-import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
 import org.keymaerax.infrastruct.UnificationMatch
 
 /**

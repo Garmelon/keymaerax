@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolib.primitive
 
-import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
+import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
 
 object Cached {
   def apply(tactic: PureTactic): PureTactic = CachedPure(tactic)

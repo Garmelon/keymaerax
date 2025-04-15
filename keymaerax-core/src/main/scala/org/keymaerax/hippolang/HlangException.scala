@@ -5,8 +5,8 @@
 
 package org.keymaerax.hippolang
 
+import org.keymaerax.hippocore.HippoException
 import org.keymaerax.hippolang.parse.SourceFile
-import org.keymaerax.hippolochos.HippoException
 
 import java.io.{PrintWriter, StringWriter}
 import scala.annotation.tailrec

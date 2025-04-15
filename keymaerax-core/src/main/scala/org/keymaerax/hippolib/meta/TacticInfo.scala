@@ -5,8 +5,8 @@
 
 package org.keymaerax.hippolib.meta
 
-import org.keymaerax.hippolochos.Tactic
-import org.keymaerax.hippolochos.tools.{Hashable, Hasher, UniqueNameRegistry}
+import org.keymaerax.hippocore.Tactic
+import org.keymaerax.hippocore.tools.{Hashable, Hasher, UniqueNameRegistry}
 
 case class TacticInfo(constructor: TacticConstructor[Tactic]) extends Hashable {
   override def digestInto(hasher: Hasher): Unit = hasher.digest(constructor)

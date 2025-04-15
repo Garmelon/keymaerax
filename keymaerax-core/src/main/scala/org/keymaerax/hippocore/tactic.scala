@@ -3,12 +3,12 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos
+package org.keymaerax.hippocore
 
 import org.keymaerax.core.Sequent
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{Hash, Hashable, Hasher}
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{Hash, Hashable, Hasher}
 
 sealed trait Tactic extends Hashable {
   def hash: Hash

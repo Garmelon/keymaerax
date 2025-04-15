@@ -3,10 +3,10 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos.proof
+package org.keymaerax.hippocore.proof
 
 import org.keymaerax.core.{Formula, Program, Provable, SubstitutionPair, Term}
-import org.keymaerax.hippolochos.tools.{Hash, SequentPrinter}
+import org.keymaerax.hippocore.tools.{Hash, SequentPrinter}
 import org.keymaerax.parser.FullPrettyPrinter
 import org.keymaerax.{core, GlobalState}
 import spray.json.*

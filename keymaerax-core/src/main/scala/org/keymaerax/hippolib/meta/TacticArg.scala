@@ -107,15 +107,15 @@ object TacticArg {
   /////////////////
 
   case object ExprPath extends TacticArg {
-    override type Type = org.keymaerax.hippolochos.tools.ExprPath
+    override type Type = org.keymaerax.hippocore.tools.ExprPath
     override def validate(any: Any): Type = any match {
       case v: Type => v
-      case v: scala.Seq[_] => org.keymaerax.hippolochos.tools.ExprPath(TacticArg.Seq(TacticArg.Int).validate(v).toList)
+      case v: scala.Seq[_] => org.keymaerax.hippocore.tools.ExprPath(TacticArg.Seq(TacticArg.Int).validate(v).toList)
     }
   }
 
   case object HippoProof extends TacticArg {
-    override type Type = org.keymaerax.hippolochos.proof.HippoProof
+    override type Type = org.keymaerax.hippocore.proof.HippoProof
     override def validate(any: Any): Type = any match {
       case v: Type => v
       case v: ProofInfo => v.proof
@@ -126,7 +126,7 @@ object TacticArg {
     override type Type = org.keymaerax.hippolib.meta.ProofInfo
     override def validate(any: Any): Type = any match {
       case v: Type => v
-      case v: org.keymaerax.hippolochos.proof.HippoProof => org.keymaerax.hippolib.meta.ProofInfo(v)
+      case v: org.keymaerax.hippocore.proof.HippoProof => org.keymaerax.hippolib.meta.ProofInfo(v)
     }
   }
 }

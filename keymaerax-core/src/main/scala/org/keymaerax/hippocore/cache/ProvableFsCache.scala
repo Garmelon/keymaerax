@@ -3,7 +3,7 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos.cache
+package org.keymaerax.hippocore.cache
 
 import org.keymaerax.core.Provable
 

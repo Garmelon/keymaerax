@@ -3,9 +3,9 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos.cache
+package org.keymaerax.hippocore.cache
 
-import org.keymaerax.hippolochos.proof.{HippoJson, HippoProof}
+import org.keymaerax.hippocore.proof.{HippoJson, HippoProof}
 import spray.json.*
 
 import java.nio.file.Path

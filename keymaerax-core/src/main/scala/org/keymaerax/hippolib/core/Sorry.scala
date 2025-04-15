@@ -6,10 +6,10 @@
 package org.keymaerax.hippolib.core
 
 import org.keymaerax.core.{Sequent, True}
-import org.keymaerax.hippolochos.proof.{HippoPremise, HippoProof}
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{Hash, Hasher}
-import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
+import org.keymaerax.hippocore.proof.{HippoPremise, HippoProof}
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{Hash, Hasher}
+import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
 
 import scala.collection.SortedMap
 

@@ -6,9 +6,9 @@
 package org.keymaerax.hippolib
 
 import org.keymaerax.core.hippolib.publish
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.UniqueNameRegistry
 import org.keymaerax.hippolib
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.UniqueNameRegistry
 
 class HippoLib(implicit ctx: HippoContext) {
   implicit private val lib: HippoLib = this

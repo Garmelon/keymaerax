@@ -5,8 +5,8 @@
 
 package org.keymaerax.hippolang.namespace
 
+import org.keymaerax.hippocore.tools.{Hash, Hashable, Hasher}
 import org.keymaerax.hippolang.{HippoIdentifier, HippoValue}
-import org.keymaerax.hippolochos.tools.{Hash, Hashable, Hasher}
 
 final case class ImmutableNamespace(variables: Map[HippoIdentifier, HippoValue], child: Option[ImmutableNamespace])
     extends Namespace with Hashable {

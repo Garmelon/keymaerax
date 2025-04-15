@@ -6,12 +6,12 @@
 package org.keymaerax.hippolang
 
 import org.keymaerax.core.{Expression, Sequent}
+import org.keymaerax.hippocore
+import org.keymaerax.hippocore.proof.HippoProof
 import org.keymaerax.hippolang.interpret.Interpolator
 import org.keymaerax.hippolang.namespace.ImmutableNamespace
 import org.keymaerax.hippolang.parse.{AstExpression, AstIdentifier, SourceFile}
 import org.keymaerax.hippolib.meta.{ProofInfo, TacticInfo}
-import org.keymaerax.hippolochos
-import org.keymaerax.hippolochos.proof.HippoProof
 
 object HippoConversions {
   //////////////////////////////
@@ -58,7 +58,7 @@ object HippoConversions {
     def toHValue: HippoValue.Proof = HippoValue.Proof(it)
   }
 
-  implicit class TacticConversion(val it: hippolochos.Tactic) {
+  implicit class TacticConversion(val it: hippocore.Tactic) {
     def toHValue: HippoValue.Tactic = HippoValue.Tactic(it)
   }
 

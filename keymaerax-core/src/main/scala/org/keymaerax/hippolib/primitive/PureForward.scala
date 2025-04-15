@@ -6,10 +6,10 @@
 package org.keymaerax.hippolib.primitive
 
 import org.keymaerax.core.Sequent
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{Hash, Hasher}
-import org.keymaerax.hippolochos.{ForwardTactic, PureTactic}
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{Hash, Hasher}
+import org.keymaerax.hippocore.{ForwardTactic, PureTactic}
 
 /** Run a [[ForwardTactic]] like a [[PureTactic]] by manually supplying it with the required premises. */
 case class PureForward(tactic: ForwardTactic, premises: IndexedSeq[Sequent]) extends PureTactic {

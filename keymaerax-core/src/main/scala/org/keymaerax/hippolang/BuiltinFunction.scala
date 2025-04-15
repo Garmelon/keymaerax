@@ -5,7 +5,7 @@
 
 package org.keymaerax.hippolang
 
-import org.keymaerax.hippolochos.tools.{Hashable, Hasher}
+import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 
 sealed abstract class BuiltinFunction(val name: HippoIdentifier, val hidden: Boolean = false) extends Hashable {
   final override def digestInto(hasher: Hasher): Unit = hasher.digest(name)

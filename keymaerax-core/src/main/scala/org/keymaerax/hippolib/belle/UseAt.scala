@@ -8,11 +8,11 @@ package org.keymaerax.hippolib.belle
 import org.keymaerax.bellerophon.{BelleInterpreter, BelleProvable}
 import org.keymaerax.btactics.UnifyUSCalculus
 import org.keymaerax.core.{Provable, SeqPos, Sequent}
+import org.keymaerax.hippocore.BackwardTactic
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{ExprPath, Hash, Hasher}
 import org.keymaerax.hippolib.meta.ProofInfo
-import org.keymaerax.hippolochos.BackwardTactic
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{ExprPath, Hash, Hasher}
 import org.keymaerax.infrastruct.{PosInExpr, Position}
 import org.keymaerax.lemma.Lemma
 import org.keymaerax.parser.Declaration

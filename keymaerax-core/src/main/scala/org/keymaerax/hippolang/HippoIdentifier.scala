@@ -5,8 +5,8 @@
 
 package org.keymaerax.hippolang
 
+import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 import org.keymaerax.hippolang.parse.HippoParser
-import org.keymaerax.hippolochos.tools.{Hashable, Hasher}
 
 case class HippoIdentifier(value: String) extends Hashable with Comparable[HippoIdentifier] {
   require(HippoIdentifier.isValid(value), "invalid identifier")

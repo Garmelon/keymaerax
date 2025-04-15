@@ -5,10 +5,10 @@
 
 package org.keymaerax.hippolang.interpret
 
+import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.{BuiltinFunction, HippoExpression, HippoValue, HlangException}
 import org.keymaerax.hippolib.primitive.Graph
-import org.keymaerax.hippolochos.run.HippoContext
 
 import scala.collection.mutable
 

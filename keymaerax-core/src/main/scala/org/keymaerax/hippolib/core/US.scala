@@ -6,10 +6,10 @@
 package org.keymaerax.hippolib.core
 
 import org.keymaerax.core.{Expression, Sequent, SubstitutionPair, USubst}
-import org.keymaerax.hippolochos.ForwardTactic
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{Hash, Hasher}
+import org.keymaerax.hippocore.ForwardTactic
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{Hash, Hasher}
 
 case class US(subst: USubst) extends ForwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(subst).hash

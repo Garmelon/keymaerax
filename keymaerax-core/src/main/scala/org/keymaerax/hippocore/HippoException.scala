@@ -3,7 +3,7 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos
+package org.keymaerax.hippocore
 
 class HippoException(message: String, cause: Throwable = null) extends Exception(message, cause)
 

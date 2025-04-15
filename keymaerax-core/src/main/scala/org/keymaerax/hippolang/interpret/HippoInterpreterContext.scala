@@ -5,13 +5,13 @@
 
 package org.keymaerax.hippolang.interpret
 
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{Hash, Hashable, Hasher}
 import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.HippoValue
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.parse.{HippoParser, SourceFile}
 import org.keymaerax.hippolib.HippoLib
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{Hash, Hashable, Hasher}
 
 import java.nio.file.{Files, Path}
 import scala.collection.mutable

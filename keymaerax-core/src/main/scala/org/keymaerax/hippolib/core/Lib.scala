@@ -7,10 +7,10 @@ package org.keymaerax.hippolib.core
 
 import org.keymaerax.core
 import org.keymaerax.core.hippolib.publish
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.UniqueNameRegistry
 import org.keymaerax.hippolib.meta.{ProofInfo, TacticArg, TacticArgInfo, TacticInfo}
 import org.keymaerax.hippolib.{core as self, HippoLib}
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.UniqueNameRegistry
 
 /**
  * A collection of core axioms, axiomatic rules, and tactics.

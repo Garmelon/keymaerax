@@ -3,10 +3,10 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos.proof
+package org.keymaerax.hippocore.proof
 
 import org.keymaerax.core.{Rule, Sequent, URename, USubst}
-import org.keymaerax.hippolochos.proof.HippoJsonProtocol.*
+import org.keymaerax.hippocore.proof.HippoJsonProtocol.*
 import spray.json.*
 
 import java.util

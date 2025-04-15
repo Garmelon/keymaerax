@@ -343,29 +343,35 @@ class HippoParser(source: SourceFile) {
     }
   }
 
+  private def leftAssociativeInfixOpExpressions[$: P](
+      atom: () => P[AstExpression],
+      ops: (() => P[(SourceFile#Slice, AstExpression, AstExpression) => AstExpression])*
+  ): P[AstExpression] =
+    P { ops.foldLeft(atom) { case (atom, op) => () => leftAssociativeInfixOpExpression(atom(), op()) }() }
+
   private def expression[$: P]: P[AstExpression] = P {
-    leftAssociativeInfixOpExpression(
-      leftAssociativeInfixOpExpression(
-        leftAssociativeInfixOpExpression(
-          leftAssociativeInfixOpExpression(
-            leftAssociativeInfixOpExpression(
-              leftAssociativeInfixOpExpression(
-                leftAssociativeInfixOpExpression(
-                  atomicExpression,
-                  infixOp("*", AstExpression.Mul.apply) | infixOp("/", AstExpression.Div.apply),
-                ),
-                infixOp("+", AstExpression.Add.apply) | infixOp("-", AstExpression.Sub.apply),
-              ),
-              infixOp(">=", AstExpression.Gte.apply) | infixOp(">", AstExpression.Gt.apply) |
-                infixOp("<=", AstExpression.Lte.apply) | infixOp("<", AstExpression.Lt.apply),
+    leftAssociativeInfixOpExpressions(
+      () => atomicExpression,
+      () => infixOp("*", AstExpression.Mul.apply) | infixOp("/", AstExpression.Div.apply),
+      () => infixOp("+", AstExpression.Add.apply) | infixOp("-", AstExpression.Sub.apply),
+      () =>
+        infixOp(">=", AstExpression.Gte.apply) | infixOp(">", AstExpression.Gt.apply) |
+          infixOp("<=", AstExpression.Lte.apply) | infixOp("<", AstExpression.Lt.apply),
+      () => infixOp("==", AstExpression.Eq.apply) | infixOp("!=", AstExpression.Neq.apply),
+      () => infixOp("&&", AstExpression.And.apply),
+      () => infixOp("||", AstExpression.Or.apply),
+      () => infixOp("->", AstExpression.MapsTo.apply),
+      () =>
+        infixOp(
+          ":>",
+          (slice, opSlice, lhs, rhs) =>
+            AstExpression.ApplyTactic(
+              slice = slice,
+              target = rhs,
+              args = IndexedSeq(lhs),
+              argsSlice = source.Slice(opSlice, lhs.slice),
             ),
-            infixOp("==", AstExpression.Eq.apply) | infixOp("!=", AstExpression.Neq.apply),
-          ),
-          infixOp("&&", AstExpression.And.apply),
         ),
-        infixOp("||", AstExpression.Or.apply),
-      ),
-      infixOp("->", AstExpression.MapsTo.apply),
     )
   }
 

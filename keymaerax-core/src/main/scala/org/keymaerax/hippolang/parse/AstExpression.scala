@@ -128,7 +128,7 @@ object AstExpression {
 
   /**
    * {{{
-   * $<name> = <value>
+   * $<name> := <value>
    * }}}
    */
   case class AssignGoal(slice: SourceFile#Slice, nameSlice: SourceFile#Slice, name: AstIdentifier, value: AstExpression)

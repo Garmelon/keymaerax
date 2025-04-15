@@ -149,7 +149,7 @@ class HippoParser(source: SourceFile) {
   }
 
   private def assignGoalExpression[$: P]: P[AstExpression.AssignGoal] = P {
-    sliced(sliced(goalIdentifier) ~ "=" ~ expression).map { case ((name, nameSlice, value), slice) =>
+    sliced(sliced(goalIdentifier) ~ ":=" ~ expression).map { case ((name, nameSlice, value), slice) =>
       AstExpression.AssignGoal(slice = slice, nameSlice = nameSlice, name = name, value = value)
     }
   }
@@ -270,7 +270,7 @@ class HippoParser(source: SourceFile) {
 
   private def applyTacticExpression[$: P]: P[SuffixOpConstructor] = P {
     def bracketed = "[" ~/ expression.rep(sep = ","./) ~ ",".? ~ "]"
-    def continued = ":" ~/ expression.map(Seq(_))
+    def continued = ":<" ~/ expression.map(Seq(_))
     sliced(bracketed | continued).map { case (args, argsSlice) =>
       (slice, inner) =>
         AstExpression.ApplyTactic(slice = slice, target = inner, args = args.toIndexedSeq, argsSlice = argsSlice)

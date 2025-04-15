@@ -5,9 +5,8 @@
 
 package org.keymaerax.hippolib.belle
 
-import org.keymaerax.bellerophon.{BelleInterpreter, BelleProvable}
 import org.keymaerax.btactics.UnifyUSCalculus
-import org.keymaerax.core.{Provable, SeqPos, Sequent}
+import org.keymaerax.core.{SeqPos, Sequent}
 import org.keymaerax.hippocore.BackwardTactic
 import org.keymaerax.hippocore.proof.HippoProof
 import org.keymaerax.hippocore.run.HippoContext
@@ -43,16 +42,7 @@ case class UseAt(proof: ProofInfo, sequent: SeqPos = SeqPos(1), path: ExprPath =
     val belleKey = PosInExpr(key.segments)
     val belleAt = Position(sequent.getPos, path.segments)
 
-    val startProvable = Provable.startProof(conclusion)
-    val startProvableSig = ElidingProvable(startProvable, Declaration(Map.empty))
-
-    val tactic = UnifyUSCalculus.useAt(belleLemma, belleKey)(belleAt)
-    val resultValue = BelleInterpreter(tactic, BelleProvable(startProvableSig, None))
-    val resultProvable = resultValue match {
-      case BelleProvable(p, _) => p.underlyingProvable
-      case _ => ???
-    }
-
-    ctx.belle(resultProvable)
+    val belleExpr = UnifyUSCalculus.useAt(belleLemma, belleKey)(belleAt)
+    Belle.runBelleExpr(ctx, conclusion, belleExpr)
   }
 }

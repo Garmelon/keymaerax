@@ -1,0 +1,84 @@
+print("ACAS X");
+print("======");
+print();
+
+///////////////
+// Variables //
+///////////////
+
+// Real hp: Puck height
+// Real rp: Puck radius
+// Real alo: Minimal vertical acceleration, typically g/4
+
+val wLo = 1; // Lower velocity bound
+val wUp = -1; // Upper velocity bound
+
+val minI = dLt(v, w) { min(0, v * w) };
+val maxI = dLt(v, w, vlo) { max(0, w * (vlo - v)) };
+
+val Limpl = dLf(r, h, v, w, vlo, rv) {
+  \forall t \forall ro \forall ho (
+      (0 <= t & t < maxI(v,w,vlo)/alo & ro = rv * t & ho = (w * alo)/2 * t^2 + v * t)
+    | (t >= maxI(v,w,vlo)/alo & ro = rv * t & ho = vlo * t - w * maxI(v,w,vlo)^2/(2*alo))
+    -> (abs(r - ro) > rp | w * h < w * ho - hp)
+  )
+};
+
+val init = dLf(rv) { rp>=0 & hp>0 & rv>=0 & alo>0 };
+
+val loopInv = dLf(r, h, v, w, vlo, rv) { (w=wUp | w=wLo) & Limpl(r,h,v,w,vlo,rv) };
+
+val motion = dLp{ { r' = -rv, h' = -v, v' = a & w*v>=w*vlo|w*a>=alo } };
+
+print();
+print("Variables");
+print("---------");
+print();
+print("      wLo: ", wLo);
+print("      wUp: ", wUp);
+print("     minI: ", minI);
+print("     maxI: ", maxI);
+print("    Limpl: ", Limpl);
+print("     init: ", init);
+print("  loopInv: ", loopInv);
+print("   motion: ", motion);
+print();
+
+//////////////////////////////////////
+// Lemma: Safe use case lower bound //
+//////////////////////////////////////
+
+print();
+print("Safe use case lower bound");
+print("-------------------------");
+print();
+
+// Horizontal
+//
+// r: Relative distance in ft
+//   xi - xo
+//   x = r
+//
+// rv: Relative speed
+//   -(vi - vo)
+
+// Vertical
+//
+// h: Relative altitude in ft
+//   If negative, the intruder is lower than the ownship.
+//   h := hi - ho
+//   z = h
+//
+// v: Vertical verlocity of ownship
+//
+// vlo: Target minimum velocity
+//
+// w: Velocity direction
+
+val safeUseCaseLowerBound = theorem
+  dLs{ ==> loopInv__(r, h, v, w, vlo, rv) & init__(rv) -> abs(r)>rp | abs(h)>hp }
+  by backward -> $c {
+    $c := core.Sorry()[];
+  };
+
+print(safeUseCaseLowerBound.conclusion);

@@ -9,6 +9,7 @@ import org.keymaerax.core.Sequent
 import org.keymaerax.hippocore.BackwardTactic
 import org.keymaerax.hippocore.proof.HippoProof
 import org.keymaerax.hippocore.run.{HippoContext, ProofChain}
+import org.keymaerax.hippocore.tools.HumanFormat.pluralizeN
 import org.keymaerax.hippocore.tools.PremisePermuter
 import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
@@ -75,8 +76,13 @@ class InterpreterBackward(
       // TODO Use arguments that return a plain HippoProof as hints for the tactic
 
       val tactic = eval(namespace, e.target).asTactic.asInstanceOf[BackwardTactic]
-      var proof = ctx.backward(tactic, conclusion)
-      require(proof.premises.length == e.args.length)
+      var proof = HlangException.at(e.slice, "while executing this tactic") { ctx.backward(tactic, conclusion) }
+
+      val nPremises = proof.premises.length
+      val nArguments = e.args.length
+      if (nPremises != nArguments) throw HlangException(s"number of arguments does not match number of premises")
+        .addLocation(e.argsSlice, s"the tactic has $nArguments ${pluralizeN("argument")(nArguments)}")
+        .addLocation(e.slice, s"the tactic returned $nPremises ${pluralizeN("premise")(nPremises)}")
 
       val args = proof
         .premises
@@ -90,8 +96,10 @@ class InterpreterBackward(
         .foldRight(proof) { case ((subproof, i), proof) => ctx.joinAt(i)(proof, subproof) }
 
       val goals = args.flatMap { case (_, subgoals) => subgoals }
+      // This should not happen during normal operation, only if our code is buggy.
+      // Hence, it's only a "require" and not a fancy HlangException.
+      require(proof.premises.length == goals.length, "number of premises does not match number of goals")
 
-      require(proof.premises.length == goals.length)
       (proof, goals)
 
     case e =>
@@ -115,11 +123,13 @@ class InterpreterBackward(
     }
 
     if (unclosedGoals.nonEmpty) {
-      val goals = unclosedGoals.map { goal =>
-        val goalIdx = this.goals.indexOf(goal)
-        val sequent = this.chain.proof.premises(goalIdx).sequent
-        s"- $$$goal: $sequent"
-      }
+      val goals = unclosedGoals
+        .map { goal =>
+          val goalIdx = this.goals.indexOf(goal)
+          val sequent = this.chain.proof.premises(goalIdx).sequent.prettyString
+          s"\n$$$goal:\n$sequent"
+        }
+        .mkString("\n")
       discrepancies.append(s"The following goals should be closed:\n$goals")
     }
 

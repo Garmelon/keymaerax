@@ -26,7 +26,7 @@ import org.keymaerax.core.{
   Term,
   USubst,
 }
-import org.keymaerax.hippolochos.tools.ExprTransform
+import org.keymaerax.hippocore.tools.ExprTransform
 import org.keymaerax.infrastruct.Augmentors.ExpressionAugmentor
 
 /**

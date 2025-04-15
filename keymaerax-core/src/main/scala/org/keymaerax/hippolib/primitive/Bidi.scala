@@ -6,10 +6,10 @@
 package org.keymaerax.hippolib.primitive
 
 import org.keymaerax.core.Sequent
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{Hash, Hasher}
-import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{Hash, Hasher}
+import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
 
 /** Delegate to a forward or a backward tactic, depending on the execution direction. */
 case class Bidi(forward: ForwardTactic, backward: BackwardTactic) extends ForwardTactic with BackwardTactic {

@@ -3,11 +3,11 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos.run
+package org.keymaerax.hippocore.run
 
 import org.keymaerax.core.{Expression, Sequent, SubstitutionPair, URename, USubst, Variable}
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
 
 case class ProofChain(ctx: HippoContext, proof: HippoProof) {
 

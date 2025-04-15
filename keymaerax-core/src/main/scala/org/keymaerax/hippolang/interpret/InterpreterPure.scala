@@ -6,6 +6,10 @@
 package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.core.{Expression, Formula, Number, Program, Sequent, Term, Variable}
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{ExprPath, SequentPrinter}
+import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, PureTactic}
 import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.interpret.InterpreterPure.{
   getSingleArg,
@@ -28,10 +32,6 @@ import org.keymaerax.hippolang.{
 }
 import org.keymaerax.hippolib.meta.TacticInfo
 import org.keymaerax.hippolib.primitive.Cached
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{ExprPath, SequentPrinter}
-import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic}
 
 class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
   def during: String = "during pure evaluation"

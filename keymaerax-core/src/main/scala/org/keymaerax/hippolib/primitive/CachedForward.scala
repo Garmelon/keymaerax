@@ -6,10 +6,10 @@
 package org.keymaerax.hippolib.primitive
 
 import org.keymaerax.core.Sequent
-import org.keymaerax.hippolochos.ForwardTactic
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.Hash
+import org.keymaerax.hippocore.ForwardTactic
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.Hash
 
 case class CachedForward(tactic: ForwardTactic) extends ForwardTactic {
   override def hash: Hash = tactic.hash

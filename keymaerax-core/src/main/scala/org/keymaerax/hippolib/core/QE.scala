@@ -6,11 +6,11 @@
 package org.keymaerax.hippolib.core
 
 import org.keymaerax.core.{CloseTrue, Sequent, SuccPos}
+import org.keymaerax.hippocore.BackwardTactic
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{ExprPath, Hash, Hasher}
 import org.keymaerax.hippolib.HippoLib
-import org.keymaerax.hippolochos.BackwardTactic
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{ExprPath, Hash, Hasher}
 
 case class QE()(implicit lib: HippoLib) extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].hash

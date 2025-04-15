@@ -3,10 +3,10 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos.run
+package org.keymaerax.hippocore.run
 
 import org.keymaerax.core.Sequent
-import org.keymaerax.hippolochos.proof.HippoProof
+import org.keymaerax.hippocore.proof.HippoProof
 
 import scala.collection.mutable
 

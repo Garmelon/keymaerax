@@ -6,12 +6,12 @@
 package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.core.Sequent
+import org.keymaerax.hippocore.BackwardTactic
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippolang.HippoExpression
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
-import org.keymaerax.hippolochos.BackwardTactic
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{Hash, Hasher}
 
 case class InterpreterBackwardTactic(
     ictx: HippoInterpreterContext,

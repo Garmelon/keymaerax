@@ -8,9 +8,9 @@ package org.keymaerax.cli
 import org.keymaerax.FileConfiguration
 import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.cli.KeymaeraxCore.{combineToolConfigs, exit, initializeProver, toolConfigFromFile}
+import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippolang.HlangException
 import org.keymaerax.hippolang.interpret.HippoInterpreterContext
-import org.keymaerax.hippolochos.run.HippoContext
 import org.keymaerax.tools.ToolName
 
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
@@ -54,7 +54,7 @@ class Hippo(options: Options) {
   }
 
   def watch(file: Path): Unit = {
-    import scala.jdk.CollectionConverters._
+    import scala.jdk.CollectionConverters.*
 
     val watchService = FileSystems.getDefault.newWatchService()
     file

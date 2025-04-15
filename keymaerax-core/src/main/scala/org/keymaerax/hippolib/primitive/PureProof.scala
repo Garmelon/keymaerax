@@ -5,10 +5,10 @@
 
 package org.keymaerax.hippolib.primitive
 
-import org.keymaerax.hippolochos.PureTactic
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{Hash, Hasher}
+import org.keymaerax.hippocore.PureTactic
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{Hash, Hasher}
 
 case class PureProof(proof: HippoProof) extends PureTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(proof).hash

@@ -3,10 +3,10 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos.proof
+package org.keymaerax.hippocore.proof
 
 import org.keymaerax.core.Sequent
-import org.keymaerax.hippolochos.tools.{Hashable, Hasher}
+import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 
 /**
  * The premise of a [[HippoProof]].

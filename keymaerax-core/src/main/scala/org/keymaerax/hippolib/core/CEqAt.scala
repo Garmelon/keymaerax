@@ -7,11 +7,11 @@ package org.keymaerax.hippolib.core
 
 import org.keymaerax.core
 import org.keymaerax.core.{AnyArg, Real, Sequent, UnitFunctional, UnitPredicational}
+import org.keymaerax.hippocore.BackwardTactic
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{ExprPath, Hash, Hasher}
 import org.keymaerax.hippolib.HippoLib
-import org.keymaerax.hippolochos.BackwardTactic
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{ExprPath, Hash, Hasher}
 
 case class CEqAt(at: ExprPath)(implicit lib: HippoLib) extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(at).hash

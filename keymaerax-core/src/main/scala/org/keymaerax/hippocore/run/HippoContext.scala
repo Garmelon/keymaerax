@@ -3,14 +3,14 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippolochos.run
+package org.keymaerax.hippocore.run
 
 import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
-import org.keymaerax.hippolochos.cache.{Cache, HippoProofFsCache, LruCache, ProvableFsCache}
-import org.keymaerax.hippolochos.proof.{ExternalSource, HippoPremise, HippoProof}
-import org.keymaerax.hippolochos.tools.Hasher
-import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
+import org.keymaerax.hippocore.cache.{Cache, HippoProofFsCache, LruCache, ProvableFsCache}
+import org.keymaerax.hippocore.proof.{ExternalSource, HippoPremise, HippoProof}
+import org.keymaerax.hippocore.tools.Hasher
+import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
 
 import java.nio.file.Path
 

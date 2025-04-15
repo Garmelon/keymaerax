@@ -17,12 +17,12 @@ import org.keymaerax.core.{
   Sequent,
   SuccPos,
 }
+import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.run.HippoContext
+import org.keymaerax.hippocore.tools.{ExprPath, Hash, Hasher}
+import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
 import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolib.primitive.Noop
-import org.keymaerax.hippolochos.proof.HippoProof
-import org.keymaerax.hippolochos.run.HippoContext
-import org.keymaerax.hippolochos.tools.{ExprPath, Hash, Hasher}
-import org.keymaerax.hippolochos.{BackwardTactic, ForwardTactic}
 
 /**
  * Rewrite a formula at a single location using an equivalence (`<->`) or equals (`=`) relation.

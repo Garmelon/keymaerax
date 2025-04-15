@@ -6,8 +6,8 @@
 package org.keymaerax.hippolang
 
 import org.keymaerax.core
+import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 import org.keymaerax.hippolang.parse.SourceFile
-import org.keymaerax.hippolochos.tools.{Hashable, Hasher}
 
 sealed trait HippoExpression extends Hashable {
   def slice: SourceFile#Slice

@@ -26,6 +26,10 @@ object HippoExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
+  case class DlSequent(slice: SourceFile#Slice, value: core.Sequent) extends HippoExpression {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
+  }
+
   case class Import(slice: SourceFile#Slice, path: HippoExpression) extends HippoExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(path)
   }

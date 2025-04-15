@@ -19,6 +19,7 @@ import org.keymaerax.hippolang.interpret.InterpreterPure.{
   getValueAsProof,
   getValueAsSequent,
   interpolateExpression,
+  interpolateSequent,
 }
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.parse.SourceFile
@@ -40,6 +41,7 @@ class InterpreterPure(ictx: HippoInterpreterContext, ctx: HippoContext) {
     case e: HippoExpression.Const => e.value
 
     case e: HippoExpression.DlExpression => interpolateExpression(namespace, e).toHValue
+    case e: HippoExpression.DlSequent => interpolateSequent(namespace, e).toHValue
 
     case e: HippoExpression.Import => throw HlangException(s"import not allowed $during", slice = e.slice)
 
@@ -529,6 +531,26 @@ object InterpreterPure {
         )
       },
       onError = (name, msg) => throw HlangException(errorMsg(name, msg), slice, label),
-    ).interpolate(expression = e.value)
+    ).interpolate(e.value)
+  }
+
+  protected def interpolateSequent(namespace: MutableNamespace, e: HippoExpression.DlSequent): Sequent = {
+    val slice = e.slice
+    val label = "while evaluating dL sequent"
+
+    def errorMsg(name: String, msg: String): String = s"failed to interpolate $name: $msg"
+
+    new Interpolator(
+      lookup = { name =>
+        val value = HlangException.at(slice, label) { namespace.lookup(HippoIdentifier(name)) }
+        getValueAsExpression(
+          value,
+          errorMsg(name, "replacement value can't be converted to a dL sequent"),
+          slice,
+          label,
+        )
+      },
+      onError = (name, msg) => throw HlangException(errorMsg(name, msg), slice, label),
+    ).interpolate(e.value)
   }
 }

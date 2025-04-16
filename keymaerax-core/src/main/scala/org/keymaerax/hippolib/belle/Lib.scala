@@ -15,7 +15,7 @@ import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
 /** A collection of tactics ported from [[org.keymaerax.bellerophon]]. */
 class Lib(implicit ctx: HippoContext, lib: HippoLib, names: UniqueNameRegistry) {
   @publish(name = "belle.useAt")
-  val useAt: TacticInfo = TacticInfo(
+  val useAt: TacticInfo = TacticInfo.arg4(
     "belle.useAt",
     TacticArgInfo(name = "proof", arg = TacticArg.ProofInfo),
     TacticArgInfo(name = "sequent", arg = TacticArg.SeqPos, default = Some(SeqPos(1))),

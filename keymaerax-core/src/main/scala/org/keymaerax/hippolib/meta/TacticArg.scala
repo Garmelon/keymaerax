@@ -106,6 +106,11 @@ object TacticArg {
   // Hippo types //
   /////////////////
 
+  case object HippoValue extends TacticArg {
+    override type Type = org.keymaerax.hippolang.HippoValue
+    override def validate(any: Any): Type = any.asInstanceOf[Type]
+  }
+
   case object ExprPath extends TacticArg {
     override type Type = org.keymaerax.hippocore.tools.ExprPath
     override def validate(any: Any): Type = any match {

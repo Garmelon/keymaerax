@@ -26,7 +26,7 @@ val Limpl = dLf(r, h, v, w, vlo, rv) {
 
 val init = dLf(rv) { rp>=0 & hp>0 & rv>=0 & alo>0 };
 
-val loopInv = dLf(r, h, v, w, vlo, rv) { (w=wUp | w=wLo) & Limpl(r,h,v,w,vlo,rv) };
+val loopInv = dLf(r, h, v, w, vlo, rv) { (w=wUp | w=wLo) & Limpl__(r,h,v,w,vlo,rv) };
 
 val motion = dLp{ { r' = -rv, h' = -v, v' = a & w*v>=w*vlo|w*a>=alo } };
 
@@ -78,7 +78,23 @@ print();
 val safeUseCaseLowerBound = theorem
   dLs{ ==> loopInv__(r, h, v, w, vlo, rv) & init__(rv) -> abs(r)>rp | abs(h)>hp }
   by backward -> $c {
-    $c := core.Sorry()[];
+    $c
+      := Belle("implyR", 1)
+      :< Belle("andL", -1)
+      :< Belle("andL", -2)
+      :< Belle("andL", -3)
+      :< Belle("andL", -4)
+      :< Belle("andL", -1)
+      :< Belle("allL", -6, dLt{ 0 })
+      :< Belle("allL", -6, dLt{ 0 })
+      :< Belle("allL", -6, dLt{ 0 })
+      :< Belle("fullSimplify")
+      :< Belle("implyL", -6)[
+        // These QEs should resolve the goals according to the original proof,
+        // but instead return false.
+        Belle("QE")[],
+        Belle("QE")[],
+      ];
   };
 
 print(safeUseCaseLowerBound.conclusion);

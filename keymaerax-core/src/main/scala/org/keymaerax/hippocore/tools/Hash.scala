@@ -38,6 +38,7 @@ import org.keymaerax.core.{
   SeqPos,
   Sequent,
   Skolemize,
+  SubstitutionPair,
   URename,
   USubst,
   UniformRenaming,
@@ -181,4 +182,6 @@ class Hasher {
   def digest(rename: URename): Hasher = digest(rename.what).digest(rename.repl).digest(rename.semantic)
 
   def digest(subst: USubst): Hasher = digestSeqWith(subst.subsDefsInput) { (b, p) => b.digest(p.what).digest(p.repl) }
+
+  def digest(substPair: SubstitutionPair): Hasher = digest(substPair.what).digest(substPair.repl)
 }

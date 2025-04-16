@@ -28,17 +28,16 @@ import org.keymaerax.btactics.macros.{
   TermArg,
   VariableArg,
 }
-import org.keymaerax.core.{DifferentialSymbol, Provable, Sequent, SubstitutionPair, Variable}
+import org.keymaerax.core.*
 import org.keymaerax.hippocore.proof.HippoProof
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, HippoException}
-import org.keymaerax.hippolang.HippoValue
 import org.keymaerax.infrastruct.{PosInExpr, Position}
 import org.keymaerax.parser.Declaration
 import org.keymaerax.pt.ElidingProvable
 
-case class Belle(name: String, args: Seq[HippoValue]) extends BackwardTactic {
+case class Belle(name: String, args: Seq[BelleValue]) extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(name).digestSeq(args).hash
 
   override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
@@ -59,73 +58,112 @@ case class Belle(name: String, args: Seq[HippoValue]) extends BackwardTactic {
 object Belle {
 
   /** @see [[org.keymaerax.bellerophon.parser.DLBelleParser.positionLocator]] */
-  private def asPositionArg(value: HippoValue): PositionLocator = value match {
-    case HippoValue.Int(value) => Fixed(Position(value))
-
-    case HippoValue.List(values) =>
-      if (values.isEmpty) ???
-      val pos :: posInExpr = values.map(_.asInt).toList
-      Fixed(Position(pos) ++ PosInExpr(posInExpr))
-
-    case _ => HippoException.fail("Position argument must be an integer or a list of integerss")
+  private def asPositionArg(value: BelleValue): PositionLocator = value match {
+    case BelleValue.Int(v) => Fixed(Position(v))
+    case BelleValue.Seq(v) =>
+      HippoException.require(v.nonEmpty, "Position argument must not be an empty list")
+      val ints = v.collect { case BelleValue.Int(v) => v }
+      HippoException.require(v.length == ints.length, "Position arguments must all be integers")
+      val pos :: posInExpr = v.map(_.asInstanceOf[Int]).toList
+      Fixed(Position(pos, posInExpr))
+    case _ => HippoException.fail("Position argument must be an integer or a list of integers")
   }
 
-  /** @see [[org.keymaerax.bellerophon.parser.DLBelleParser.argumentInterior]] */
-  private def asArg(value: HippoValue, info: ArgInfo): Seq[Any] = info match {
-    case _: FormulaArg => List(value.asExpression)
-    case _: TermArg => List(value.asExpression)
-    case _: ExpressionArg => List(value.asExpression)
+  /**
+   * Convert an [[Any]] into a value that [[ReflectiveExpressionBuilder]] will understand for the given [[ArgInfo]].
+   *
+   * Since Hippolang does not support every core type, multiple conversions from other types are included so every type
+   * of argument can still be written in Hippolang.
+   *
+   * In the future, Bellerophon arguments can hopefully be refactored to get rid of the weird List wrapped around
+   * everything, but for now, this function tries its best to integrate with Bellerophon's weird system.
+   *
+   * @see
+   *   [[ReflectiveExpressionBuilder.build]]
+   * @see
+   *   [[org.keymaerax.bellerophon.parser.DLBelleParser.argumentInterior]]
+   */
+  private def asArg(value: BelleValue, info: ArgInfo): Seq[Any] = info match {
+    case _: FormulaArg => List(value match {
+        case BelleValue.Expression(v: Formula) => v
+        case _ => HippoException.fail("Argument must be a Formula")
+      })
 
-    case _: VariableArg =>
-      // See DLParser.variable
-      val regex = "^(?<name>[a-zA-Z][a-zA-Z0-9]*_*)(?:_(?<index>0|[1-9][0-9]*))?(?<diff>')?$".r
-      val matched = regex.findFirstMatchIn(value.asString) match {
-        case None => HippoException.fail("Variable identifier has invalid format")
-        case Some(matched) => matched
-      }
-      val name = matched.group("name")
-      val index = Option(matched.group("index")).map(_.toInt)
-      val differential = matched.group("diff") != null
-      val variable = Variable(name = name, index = index)
-      List(if (differential) DifferentialSymbol(variable) else variable)
+    case _: NumberArg => List(value match {
+        case BelleValue.Expression(v: Number) => v
+        case BelleValue.Int(v) => Number(v)
+        case _ => HippoException.fail("Argument must be a Number or an integer")
+      })
+
+    case _: VariableArg => List(value match {
+        case BelleValue.Expression(v: Variable) => v
+        case BelleValue.String(v) =>
+          // See DLParser.variable
+          val regex = "^(?<name>[a-zA-Z][a-zA-Z0-9]*_*)(?:_(?<index>0|[1-9][0-9]*))?(?<diff>')?$".r
+          val matched = regex.findFirstMatchIn(v) match {
+            case None => HippoException.fail("Variable identifier has invalid format")
+            case Some(matched) => matched
+          }
+          val name = matched.group("name")
+          val index = Option(matched.group("index")).map(_.toInt)
+          val differential = matched.group("diff") != null
+          val variable = Variable(name = name, index = index)
+          if (differential) DifferentialSymbol(variable) else variable
+        case _ => HippoException.fail("Argument must be a Variable or a string")
+      })
+
+    case _: TermArg => List(value match {
+        case BelleValue.Expression(v: Term) => v
+        case _ => HippoException.fail("Argument must be a Term")
+      })
+
+    case _: ExpressionArg => List(value match {
+        case BelleValue.Expression(v) => v
+        case _ => HippoException.fail("Argument must be an Expression")
+      })
+
+    case _: SubstitutionArg => List(value match {
+        case BelleValue.Substitution(v) => v
+        case BelleValue.Seq(Seq(BelleValue.Expression(what), BelleValue.Expression(repl))) =>
+          SubstitutionPair(what, repl)
+        case _ => HippoException.fail("Argument must be a SubstitutionPair or an Expression list of length 2")
+      })
+
+    case _: PosInExprArg => List(value match {
+        case BelleValue.PosInExpr(v) => v
+        case BelleValue.Seq(v) =>
+          val ints = v.collect { case BelleValue.Int(v) => v }
+          HippoException.require(v.length == ints.length, "List must contain only integers")
+          PosInExpr(ints.toList)
+        case _ => HippoException.fail("Argument must be a PosInExpr or a list of integers")
+      })
 
     case _: GeneratorArg => HippoException.fail("Generator arguments are not supported")
 
-    case _: StringArg => List(value.asString)
-
-    case _: SubstitutionArg =>
-      val (whatValue, replValue) = value match {
-        case HippoValue.List(Seq(whatValue, replValue)) => (whatValue, replValue)
-        case _ => HippoException.fail("Argument must be a list of length 2")
-      }
-      List(SubstitutionPair(what = whatValue.asExpression, repl = replValue.asExpression))
-
-    case _: PosInExprArg => List(value match {
-        case HippoValue.Null => PosInExpr()
-        case HippoValue.Int(value) => PosInExpr(List(value))
-        case HippoValue.List(values) => PosInExpr(values.map(_.asInt).toList)
-        case _ => HippoException.fail("Argument must be null, an integer, or a list of integers")
+    case _: StringArg => List(value match {
+        case BelleValue.String(v) => v
+        case _ => HippoException.fail("Argument must be a string")
       })
 
     case OptionArg(inner) => value match {
-        case HippoValue.Null => List()
-        case value => asArg(value, inner)
+        case BelleValue.Option(None) => List()
+        case BelleValue.Option(Some(v)) => asArg(v, inner)
+        case v => asArg(v, inner)
       }
 
     case ListArg(inner) => value match {
         // This flatMap seems incorrect in the case of nested lists, but it's what DLBelleParser does.
-        // It seems that nested ListArg-s don't usually happen "in the wild".
-        // If at some point Bellerophon's whole "an argument is actually always a list" business is refactored,
-        // this logic could become quite a bit nicer and less hacky as well.
-        case HippoValue.List(values) => values.flatMap(asArg(_, inner))
+        // ReflectiveExpressionBuilder only allows very specific lists, which never contain nested lists,
+        // so our behavior in those cases doesn't really matter... for now.
+        // Hopefully Bellerophon's "an argument is always a list" shtick will be refactored at some point,
+        // then this logic would become quite a bit nicer too.
+        case BelleValue.Seq(v) => v.flatMap(asArg(_, inner))
         case _ => HippoException.fail("Argument must be a list")
       }
-
-    case _: NumberArg => List(value.asInt)
   }
 
   private def asArgs(
-      values: Seq[HippoValue],
+      values: Seq[BelleValue],
       numPositionArgs: Int,
       argInfos: Seq[ArgInfo],
   ): List[Either[Seq[Any], PositionLocator]] = {

@@ -51,11 +51,11 @@ class HippoParser(source: SourceFile) {
 
   private def singleArgumentList[$: P]: P[AstIdentifier] = "(" ~/ identifier ~ ",".? ~ ")"
 
-  private def argumentList[$: P]: P[Seq[AstIdentifier]] = "(" ~/ identifier.rep(sep = ","./) ~ ",".? ~ ")"
+  private def argumentList[$: P]: P[Seq[AstIdentifier]] = "(" ~/ identifier.rep(sep = ",") ~ ",".? ~ ")"
 
-  private def tacticArgumentList[$: P]: P[Seq[AstIdentifier]] = "[" ~/ identifier.rep(sep = ","./) ~ ",".? ~ "]"
+  private def tacticArgumentList[$: P]: P[Seq[AstIdentifier]] = "[" ~/ identifier.rep(sep = ",") ~ ",".? ~ "]"
 
-  private def tacticGoalArgumentList[$: P]: P[Seq[AstIdentifier]] = "[" ~/ goalIdentifier.rep(sep = ","./) ~ ",".? ~ "]"
+  private def tacticGoalArgumentList[$: P]: P[Seq[AstIdentifier]] = "[" ~/ goalIdentifier.rep(sep = ",") ~ ",".? ~ "]"
 
   ///////////////////////////
   // Primitive expressions //
@@ -262,14 +262,14 @@ class HippoParser(source: SourceFile) {
   }
 
   private def applyExpression[$: P]: P[SuffixOpConstructor] = P {
-    sliced("(" ~/ expression.rep(sep = ","./) ~ ",".? ~ ")").map { case (args, argsSlice) =>
+    sliced("(" ~/ expression.rep(sep = ",") ~ ",".? ~ ")").map { case (args, argsSlice) =>
       (slice, inner) =>
         AstExpression.Apply(slice = slice, target = inner, args = args.toIndexedSeq, argsSlice = argsSlice)
     }
   }
 
   private def applyTacticExpression[$: P]: P[SuffixOpConstructor] = P {
-    def bracketed = "[" ~/ expression.rep(sep = ","./) ~ ",".? ~ "]"
+    def bracketed = "[" ~/ expression.rep(sep = ",") ~ ",".? ~ "]"
     def continued = ":<" ~/ expression.map(Seq(_))
     sliced(bracketed | continued).map { case (args, argsSlice) =>
       (slice, inner) =>

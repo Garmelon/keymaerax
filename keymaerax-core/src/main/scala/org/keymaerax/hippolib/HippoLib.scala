@@ -9,6 +9,7 @@ import org.keymaerax.core.hippolib.publish
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.UniqueNameRegistry
 import org.keymaerax.hippolib
+import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
 
 class HippoLib(implicit ctx: HippoContext) {
   implicit private val lib: HippoLib = this
@@ -19,6 +20,14 @@ class HippoLib(implicit ctx: HippoContext) {
 
   @publish
   val belle: hippolib.belle.Lib = new hippolib.belle.Lib
+
+  @publish(name = "Belle")
+  val Belle: TacticInfo = TacticInfo.arg2(
+    "Belle",
+    TacticArgInfo(name = "name", arg = TacticArg.String),
+    TacticArgInfo(name = "args", arg = TacticArg.Seq(TacticArg.HippoValue)),
+    vararg = true,
+  ) { (name, args) => org.keymaerax.hippolib.belle.Belle(name, args) }
 
   val db: HippoLibDb = HippoLibDb.empty.addPublished(this)
 }

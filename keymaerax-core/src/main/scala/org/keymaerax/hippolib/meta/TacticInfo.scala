@@ -13,46 +13,53 @@ case class TacticInfo(constructor: TacticConstructor[Tactic]) extends Hashable {
 }
 
 object TacticInfo {
-  def apply[T <: Tactic](uniqueName: String)(tactic: => T)(implicit names: UniqueNameRegistry): TacticInfo =
-    TacticInfo(constructor = TacticConstructor(uniqueName)(tactic))
+  def arg0[T <: Tactic](uniqueName: String)(tactic: => T)(implicit names: UniqueNameRegistry): TacticInfo =
+    TacticInfo(constructor = TacticConstructor.arg0(uniqueName)(tactic))
 
-  def apply[A1 <: TacticArg, T <: Tactic](uniqueName: String, arg1: TacticArgInfo[A1])(build: (arg1.arg.Type) => T)(
-      implicit names: UniqueNameRegistry
-  ): TacticInfo = TacticInfo(constructor = TacticConstructor(uniqueName, arg1)(build))
+  def arg1[A1 <: TacticArg, T <: Tactic](uniqueName: String, arg1: TacticArgInfo[A1], vararg: Boolean = false)(
+      build: (arg1.arg.Type) => T
+  )(implicit names: UniqueNameRegistry): TacticInfo =
+    TacticInfo(constructor = TacticConstructor.arg1(uniqueName, arg1, vararg = vararg)(build))
 
-  def apply[A1 <: TacticArg, A2 <: TacticArg, T <: Tactic](
+  def arg2[A1 <: TacticArg, A2 <: TacticArg, T <: Tactic](
       uniqueName: String,
       arg1: TacticArgInfo[A1],
       arg2: TacticArgInfo[A2],
+      vararg: Boolean = false,
   )(build: (arg1.arg.Type, arg2.arg.Type) => T)(implicit names: UniqueNameRegistry): TacticInfo =
-    TacticInfo(constructor = TacticConstructor(uniqueName, arg1, arg2)(build))
+    TacticInfo(constructor = TacticConstructor.arg2(uniqueName, arg1, arg2, vararg = vararg)(build))
 
-  def apply[A1 <: TacticArg, A2 <: TacticArg, A3 <: TacticArg, T <: Tactic](
+  def arg3[A1 <: TacticArg, A2 <: TacticArg, A3 <: TacticArg, T <: Tactic](
       uniqueName: String,
       arg1: TacticArgInfo[A1],
       arg2: TacticArgInfo[A2],
       arg3: TacticArgInfo[A3],
+      vararg: Boolean = false,
   )(build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type) => T)(implicit names: UniqueNameRegistry): TacticInfo =
-    TacticInfo(constructor = TacticConstructor(uniqueName, arg1, arg2, arg3)(build))
+    TacticInfo(constructor = TacticConstructor.arg3(uniqueName, arg1, arg2, arg3, vararg = vararg)(build))
 
-  def apply[A1 <: TacticArg, A2 <: TacticArg, A3 <: TacticArg, A4 <: TacticArg, T <: Tactic](
+  def arg4[A1 <: TacticArg, A2 <: TacticArg, A3 <: TacticArg, A4 <: TacticArg, T <: Tactic](
       uniqueName: String,
       arg1: TacticArgInfo[A1],
       arg2: TacticArgInfo[A2],
       arg3: TacticArgInfo[A3],
       arg4: TacticArgInfo[A4],
-  )(build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type, arg4.arg.Type) => T)(implicit
-      names: UniqueNameRegistry
-  ): TacticInfo = TacticInfo(constructor = TacticConstructor(uniqueName, arg1, arg2, arg3, arg4)(build))
+      vararg: Boolean = false,
+  )(
+      build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type, arg4.arg.Type) => T
+  )(implicit names: UniqueNameRegistry): TacticInfo =
+    TacticInfo(constructor = TacticConstructor.arg4(uniqueName, arg1, arg2, arg3, arg4, vararg = vararg)(build))
 
-  def apply[A1 <: TacticArg, A2 <: TacticArg, A3 <: TacticArg, A4 <: TacticArg, A5 <: TacticArg, T <: Tactic](
+  def arg5[A1 <: TacticArg, A2 <: TacticArg, A3 <: TacticArg, A4 <: TacticArg, A5 <: TacticArg, T <: Tactic](
       uniqueName: String,
       arg1: TacticArgInfo[A1],
       arg2: TacticArgInfo[A2],
       arg3: TacticArgInfo[A3],
       arg4: TacticArgInfo[A4],
       arg5: TacticArgInfo[A5],
-  )(build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type, arg4.arg.Type, arg5.arg.Type) => T)(implicit
-      names: UniqueNameRegistry
-  ): TacticInfo = TacticInfo(constructor = TacticConstructor(uniqueName, arg1, arg2, arg3, arg4, arg5)(build))
+      vararg: Boolean = false,
+  )(
+      build: (arg1.arg.Type, arg2.arg.Type, arg3.arg.Type, arg4.arg.Type, arg5.arg.Type) => T
+  )(implicit names: UniqueNameRegistry): TacticInfo =
+    TacticInfo(constructor = TacticConstructor.arg5(uniqueName, arg1, arg2, arg3, arg4, arg5, vararg = vararg)(build))
 }

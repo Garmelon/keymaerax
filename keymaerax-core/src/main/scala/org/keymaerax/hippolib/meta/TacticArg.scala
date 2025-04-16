@@ -106,11 +106,6 @@ object TacticArg {
   // Hippo types //
   /////////////////
 
-  case object HippoValue extends TacticArg {
-    override type Type = org.keymaerax.hippolang.HippoValue
-    override def validate(any: Any): Type = any.asInstanceOf[Type]
-  }
-
   case object ExprPath extends TacticArg {
     override type Type = org.keymaerax.hippocore.tools.ExprPath
     override def validate(any: Any): Type = any match {
@@ -132,6 +127,24 @@ object TacticArg {
     override def validate(any: Any): Type = any match {
       case v: Type => v
       case v: org.keymaerax.hippocore.proof.HippoProof => org.keymaerax.hippolib.meta.ProofInfo(v)
+    }
+  }
+
+  ////////////////////
+  // Hippolib types //
+  ////////////////////
+
+  case object BelleValue extends TacticArg {
+    import org.keymaerax.hippolib.belle.BelleValue as HlBelleValue
+    override type Type = HlBelleValue
+    override def validate(any: Any): Type = any match {
+      case v: org.keymaerax.core.Expression => HlBelleValue.Expression(v)
+      case v: org.keymaerax.core.SubstitutionPair => HlBelleValue.Substitution(v)
+      case v: org.keymaerax.infrastruct.PosInExpr => HlBelleValue.PosInExpr(v)
+      case v: scala.Int => HlBelleValue.Int(v)
+      case v: java.lang.String => HlBelleValue.String(v)
+      case v: scala.Option[_] => HlBelleValue.Option(v.map(validate))
+      case v: scala.Seq[_] => HlBelleValue.Seq(v.map(validate))
     }
   }
 }

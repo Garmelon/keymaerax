@@ -25,7 +25,7 @@ class HippoLib(implicit ctx: HippoContext) {
   val Belle: TacticInfo = TacticInfo.arg2(
     "Belle",
     TacticArgInfo(name = "name", arg = TacticArg.String),
-    TacticArgInfo(name = "args", arg = TacticArg.Seq(TacticArg.HippoValue)),
+    TacticArgInfo(name = "args", arg = TacticArg.Seq(TacticArg.BelleValue)),
     vararg = true,
   ) { (name, args) => org.keymaerax.hippolib.belle.Belle(name, args) }
 

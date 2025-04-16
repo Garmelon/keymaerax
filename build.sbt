@@ -138,11 +138,11 @@ lazy val webui = project
     libraryDependencies += "org.xerial" % "sqlite-jdbc" % "3.48.0.0",
 
     // Akka
-    libraryDependencies += "com.typesafe.akka" %% "akka-http" % "10.5.3",
-    libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % "10.5.3",
-    libraryDependencies += "com.typesafe.akka" %% "akka-http-xml" % "10.5.3",
-    libraryDependencies += "com.typesafe.akka" %% "akka-slf4j" % "2.8.8",
-    libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.8.8",
+    libraryDependencies += "org.apache.pekko" %% "pekko-http" % "1.1.0",
+    libraryDependencies += "org.apache.pekko" %% "pekko-http-spray-json" % "1.1.0",
+    libraryDependencies += "org.apache.pekko" %% "pekko-http-xml" % "1.1.0",
+    libraryDependencies += "org.apache.pekko" %% "pekko-slf4j" % "1.1.3",
+    libraryDependencies += "org.apache.pekko" %% "pekko-stream" % "1.1.3",
     libraryDependencies += "io.spray" %% "spray-json" % "1.3.6",
 
     Compile / run / mainClass := mainClass.value,

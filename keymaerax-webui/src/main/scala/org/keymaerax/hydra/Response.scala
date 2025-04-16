@@ -14,8 +14,8 @@
  */
 package org.keymaerax.hydra
 
-import akka.http.scaladsl.marshallers.xml.ScalaXmlSupport._
-import akka.http.scaladsl.marshalling.ToResponseMarshallable
+import org.apache.pekko.http.scaladsl.marshallers.xml.ScalaXmlSupport._
+import org.apache.pekko.http.scaladsl.marshalling.ToResponseMarshallable
 import org.keymaerax.Logging
 import org.keymaerax.bellerophon._
 import org.keymaerax.bellerophon.parser.BelleParser

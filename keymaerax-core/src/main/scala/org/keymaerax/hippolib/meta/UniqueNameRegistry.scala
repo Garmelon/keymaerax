@@ -3,7 +3,7 @@
  * See LICENSE.txt for the conditions of this license.
  */
 
-package org.keymaerax.hippocore.tools
+package org.keymaerax.hippolib.meta
 
 import scala.collection.mutable
 

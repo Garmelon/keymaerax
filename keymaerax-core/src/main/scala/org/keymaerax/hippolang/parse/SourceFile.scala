@@ -70,6 +70,8 @@ case class SourceFile(text: String, path: Option[Path] = None) {
       lines.addOne(s" $preEmpty-'")
       lines.result().mkString("\n")
     }
+
+    def +(other: SourceFile#Slice): Slice = SourceFile.this.Slice(this, other)
   }
 
   object Slice {

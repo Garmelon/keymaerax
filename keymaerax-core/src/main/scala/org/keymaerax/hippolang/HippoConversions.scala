@@ -156,6 +156,24 @@ object HippoConversions {
           conclusion = e.conclusion.name,
           inner = e.inner.toHExpr,
         )
+      case e: AstExpression.BackwardAssign =>
+        val goal = HippoIdentifier("conclusion")
+        val assignValueSlice = e.assignSlice + e.value.slice
+        BackwardBlock(
+          slice = e.slice,
+          premises = e.premises.map(_.name),
+          conclusion = goal,
+          inner = Block(
+            slice = assignValueSlice,
+            inner = Sequence(
+              slice = assignValueSlice,
+              exprs = Seq(
+                AssignGoal(slice = assignValueSlice, nameSlice = e.assignSlice, name = goal, value = e.value.toHExpr)
+              ),
+              returnExpr = None,
+            ),
+          ),
+        )
       case e: AstExpression.GraphBlock => GraphBlock(slice = e.slice, inner = e.inner.toHExpr)
       case e: AstExpression.BuiltinAccess =>
         BuiltinAccess(slice = e.slice, target = e.target.toHExpr, member = e.member)

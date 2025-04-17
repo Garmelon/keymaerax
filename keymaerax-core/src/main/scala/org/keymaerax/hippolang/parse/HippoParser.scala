@@ -207,16 +207,26 @@ class HippoParser(source: SourceFile) {
     }
   }
 
-  private def backwardBlockExpression[$: P]: P[AstExpression.BackwardBlock] = P {
-    sliced(keywordBackward ~/ tacticGoalArgumentList.? ~ "->" ~ goalIdentifier ~ blockExpression)
-      .map { case ((premises, conclusion, inner), slice) =>
-        AstExpression.BackwardBlock(
+  private def backwardExpression[$: P]: P[AstExpression] = P {
+    // Combines backward blocks and backward assignment so we can cut on the "backward" keyword.
+    type Block = (AstIdentifier, AstExpression.Block)
+    type Assign = (source.Slice, AstExpression)
+    def block: P[Either[Block, Assign]] = ("->" ~ goalIdentifier ~ blockExpression).map(Left.apply)
+    def assign: P[Either[Block, Assign]] = (slice(":=") ~ expression).map(Right.apply)
+    sliced(keywordBackward ~/ tacticGoalArgumentList.? ~ (block | assign)).map {
+      case ((premises, Left((conclusion, inner))), slice) => AstExpression.BackwardBlock(
           slice = slice,
           premises = premises.getOrElse(Seq.empty),
           conclusion = conclusion,
           inner = inner,
         )
-      }
+      case ((premises, Right((assignSlice, value))), slice) => AstExpression.BackwardAssign(
+          slice = slice,
+          assignSlice = assignSlice,
+          premises = premises.getOrElse(Seq.empty),
+          value = value,
+        )
+    }
   }
 
   private def graphBlockExpression[$: P]: P[AstExpression.GraphBlock] = P {
@@ -228,7 +238,7 @@ class HippoParser(source: SourceFile) {
   private def primitiveExpression[$: P]: P[AstExpression] = P {
     nullExpression | boolExpression | intExpression | stringExpression | dlSequentExpression | dlExpressionExpression |
       builtinFunctionExpression | importExpression | declareExpression | ifExpression | whileExpression |
-      functionExpression | theoremExpression | parensExpression | blockExpression | backwardBlockExpression |
+      functionExpression | theoremExpression | parensExpression | blockExpression | backwardExpression |
       graphBlockExpression |
       // Assignment must come before lookup because lookup is a prefix of assignment.
       assignGoalExpression | lookupGoalExpression |
@@ -365,12 +375,8 @@ class HippoParser(source: SourceFile) {
         infixOp(
           ":>",
           (slice, opSlice, lhs, rhs) =>
-            AstExpression.ApplyTactic(
-              slice = slice,
-              target = rhs,
-              args = IndexedSeq(lhs),
-              argsSlice = source.Slice(opSlice, lhs.slice),
-            ),
+            AstExpression
+              .ApplyTactic(slice = slice, target = rhs, args = IndexedSeq(lhs), argsSlice = opSlice + lhs.slice),
         ),
     )
   }

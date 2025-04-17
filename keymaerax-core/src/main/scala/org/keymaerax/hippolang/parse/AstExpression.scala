@@ -224,6 +224,22 @@ object AstExpression {
 
   /**
    * {{{
+   *   backward := ...
+   *   backward[$p1, $p2] := ...
+   * }}}
+   *
+   * @param assignSlice
+   *   Slice of `:=`.
+   */
+  case class BackwardAssign(
+      slice: SourceFile#Slice,
+      assignSlice: SourceFile#Slice,
+      premises: Seq[AstIdentifier],
+      value: AstExpression,
+  ) extends AstExpression
+
+  /**
+   * {{{
    *   graph { ... }
    * }}}
    */

@@ -34,9 +34,9 @@ val Limpl = dLf(r, h, v, w, vlo, rv) {
 
 val init = dLf(rv) { rp>=0 & hp>0 & rv>=0 & alo>0 };
 
-val loopInv = dLf(r, h, v, w, vlo, rv) { (w=wUp | w=wLo) & Limpl__(r,h,v,w,vlo,rv) };
+val loopInv = dLf(r, h, v, w, vlo, rv) { (w=wUp__ | w=wLo__) & Limpl__(r,h,v,w,vlo,rv) };
 
-val motion = dLp{ { r' = -rv, h' = -v, v' = a & w*v>=w*vlo|w*a>=alo } };
+val motion = dLp{ { r'=-rv, h'=-v, v'=a & w*v>=w*vlo | w*a>=alo } };
 
 print();
 print("Variables");
@@ -95,12 +95,10 @@ val safeUseCaseLowerBound = theorem
   :< belle.allL(-6, dLt{ 0 })
   :< belle.allL(-6, dLt{ 0 })
   :< belle.allL(-6, dLt{ 0 })
-  :< belle.fullSimplify()
+  :< belle.fullSimplify
   :< belle.implyL(-6)[
-    // These QEs should resolve the goals according to the original proof,
-    // but instead return false.
-    belle.QE() :< core.Sorry()[],
-    belle.QE() :< core.Sorry()[],
+    belle.QE :< core.Sorry[], // This one still breaks, but the other one is ok now.
+    belle.QE[],
   ];
 
 print(safeUseCaseLowerBound.conclusion);

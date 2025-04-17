@@ -8,8 +8,7 @@ package org.keymaerax.hippolib.core
 import org.keymaerax.core
 import org.keymaerax.core.hippolib.publish
 import org.keymaerax.hippocore.run.HippoContext
-import org.keymaerax.hippocore.tools.UniqueNameRegistry
-import org.keymaerax.hippolib.meta.{ProofInfo, TacticArg, TacticArgInfo, TacticInfo}
+import org.keymaerax.hippolib.meta.{ProofInfo, TacticArg, TacticArgInfo, TacticInfo, UniqueNameRegistry}
 import org.keymaerax.hippolib.{core as self, HippoLib}
 
 /**
@@ -18,7 +17,7 @@ import org.keymaerax.hippolib.{core as self, HippoLib}
  * Core axioms are the axioms from [[org.keymaerax.core.Provable.axioms]]. Core axiomatic rules are the rules from
  * [[org.keymaerax.core.Provable.rules]].
  */
-class Lib(implicit ctx: HippoContext, lib: HippoLib, names: UniqueNameRegistry) {
+class Lib(implicit ctx: HippoContext, lib: HippoLib) {
   /////////////////
   // Core axioms //
   /////////////////
@@ -223,108 +222,108 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib, names: UniqueNameRegistry) 
   // Core rules //
   ////////////////
 
-  @publish(name = "core.HideRight")
+  @publish
   val HideRight: TacticInfo = TacticInfo.arg1("core.HideRight", TacticArgInfo("pos", TacticArg.SuccPos)) { pos =>
     CoreRule(core.HideRight(pos))
   }
 
-  @publish(name = "core.HideLeft")
+  @publish
   val HideLeft: TacticInfo = TacticInfo.arg1("core.HideLeft", TacticArgInfo("pos", TacticArg.AntePos)) { pos =>
     CoreRule(core.HideLeft(pos))
   }
 
-  @publish(name = "core.ExchangeRightRule")
+  @publish
   val ExchangeRightRule: TacticInfo = TacticInfo.arg2(
     "core.ExchangeRightRule",
     TacticArgInfo("pos1", TacticArg.SuccPos),
     TacticArgInfo("pos2", TacticArg.SuccPos),
   ) { (pos1, pos2) => CoreRule(core.ExchangeRightRule(pos1, pos2)) }
 
-  @publish(name = "core.ExchangeLeftRule")
+  @publish
   val ExchangeLeftRule: TacticInfo = TacticInfo
     .arg2("core.ExchangeLeftRule", TacticArgInfo("pos1", TacticArg.AntePos), TacticArgInfo("pos2", TacticArg.AntePos)) {
       (pos1, pos2) => CoreRule(core.ExchangeLeftRule(pos1, pos2))
     }
 
-  @publish(name = "core.Close")
+  @publish
   val Close: TacticInfo = TacticInfo
     .arg2("core.Close", TacticArgInfo("assume", TacticArg.AntePos), TacticArgInfo("pos", TacticArg.SuccPos)) {
       (assume, pos) => CoreRule(core.Close(assume, pos))
     }
 
-  @publish(name = "core.CloseTrue")
+  @publish
   val CloseTrue: TacticInfo = TacticInfo.arg1("core.CloseTrue", TacticArgInfo("pos", TacticArg.SuccPos)) { pos =>
     CoreRule(core.CloseTrue(pos))
   }
 
-  @publish(name = "core.CloseFalse")
+  @publish
   val CloseFalse: TacticInfo = TacticInfo.arg1("core.CloseFalse", TacticArgInfo("pos", TacticArg.AntePos)) { pos =>
     CoreRule(core.CloseFalse(pos))
   }
 
-  @publish(name = "core.Cut")
+  @publish
   val Cut: TacticInfo = TacticInfo.arg1("core.Cut", TacticArgInfo("c", TacticArg.Formula)) { c =>
     CoreRule(core.Cut(c))
   }
 
-  @publish(name = "core.NotRight")
+  @publish
   val NotRight: TacticInfo = TacticInfo.arg1("core.NotRight", TacticArgInfo("pos", TacticArg.SuccPos)) { pos =>
     CoreRule(core.NotRight(pos))
   }
 
-  @publish(name = "core.NotLeft")
+  @publish
   val NotLeft: TacticInfo = TacticInfo.arg1("core.NotLeft", TacticArgInfo("pos", TacticArg.AntePos)) { pos =>
     CoreRule(core.NotLeft(pos))
   }
 
-  @publish(name = "core.AndRight")
+  @publish
   val AndRight: TacticInfo = TacticInfo.arg1("core.AndRight", TacticArgInfo("pos", TacticArg.SuccPos)) { pos =>
     CoreRule(core.AndRight(pos))
   }
 
-  @publish(name = "core.AndLeft")
+  @publish
   val AndLeft: TacticInfo = TacticInfo.arg1("core.AndLeft", TacticArgInfo("pos", TacticArg.AntePos)) { pos =>
     CoreRule(core.AndLeft(pos))
   }
 
-  @publish(name = "core.OrRight")
+  @publish
   val OrRight: TacticInfo = TacticInfo.arg1("core.OrRight", TacticArgInfo("pos", TacticArg.SuccPos)) { pos =>
     CoreRule(core.OrRight(pos))
   }
 
-  @publish(name = "core.OrLeft")
+  @publish
   val OrLeft: TacticInfo = TacticInfo.arg1("core.OrLeft", TacticArgInfo("pos", TacticArg.AntePos)) { pos =>
     CoreRule(core.OrLeft(pos))
   }
 
-  @publish(name = "core.ImplyRight")
+  @publish
   val ImplyRight: TacticInfo = TacticInfo.arg1("core.ImplyRight", TacticArgInfo("pos", TacticArg.SuccPos)) { pos =>
     CoreRule(core.ImplyRight(pos))
   }
 
-  @publish(name = "core.ImplyLeft")
+  @publish
   val ImplyLeft: TacticInfo = TacticInfo.arg1("core.ImplyLeft", TacticArgInfo("pos", TacticArg.AntePos)) { pos =>
     CoreRule(core.ImplyLeft(pos))
   }
 
-  @publish(name = "core.EquivRight")
+  @publish
   val EquivRight: TacticInfo = TacticInfo.arg1("core.EquivRight", TacticArgInfo("pos", TacticArg.SuccPos)) { pos =>
     CoreRule(core.EquivRight(pos))
   }
 
-  @publish(name = "core.EquivLeft")
+  @publish
   val EquivLeft: TacticInfo = TacticInfo.arg1("core.EquivLeft", TacticArgInfo("pos", TacticArg.AntePos)) { pos =>
     CoreRule(core.EquivLeft(pos))
   }
 
-  @publish(name = "core.UniformRenaming")
+  @publish
   val UniformRenaming: TacticInfo = TacticInfo.arg2(
     "core.UniformRenaming",
     TacticArgInfo("what", TacticArg.Variable),
     TacticArgInfo("repl", TacticArg.Variable),
   ) { (what, repl) => CoreRule(core.UniformRenaming(what, repl)) }
 
-  @publish(name = "core.BoundRenaming")
+  @publish
   val BoundRenaming: TacticInfo = TacticInfo.arg3(
     "core.BoundRenaming",
     TacticArgInfo("what", TacticArg.Variable),
@@ -332,52 +331,52 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib, names: UniqueNameRegistry) 
     TacticArgInfo("pos", TacticArg.SuccPos),
   ) { (what, repl, pos) => CoreRule(core.BoundRenaming(what, repl, pos)) }
 
-  @publish(name = "core.Skolemize")
+  @publish
   val Skolemize: TacticInfo = TacticInfo.arg1("core.Skolemize", TacticArgInfo("pos", TacticArg.SeqPos)) { pos =>
     CoreRule(core.Skolemize(pos))
   }
 
-  @publish(name = "core.CoHideRight")
+  @publish
   val CoHideRight: TacticInfo = TacticInfo.arg1("core.CoHideRight", TacticArgInfo("pos", TacticArg.SuccPos)) { pos =>
     CoreRule(core.CoHideRight(pos))
   }
 
-  @publish(name = "core.CoHideLeft")
+  @publish
   val CoHideLeft: TacticInfo = TacticInfo.arg1("core.CoHideLeft", TacticArgInfo("pos", TacticArg.AntePos)) { pos =>
     CoreRule(core.CoHideLeft(pos))
   }
 
-  @publish(name = "core.CoHide2")
+  @publish
   val CoHide2: TacticInfo = TacticInfo
     .arg2("core.CoHide2", TacticArgInfo("ante", TacticArg.AntePos), TacticArgInfo("succ", TacticArg.SuccPos)) {
       (ante, succ) => CoreRule(core.CoHide2(ante, succ))
     }
 
-  @publish(name = "core.CutRight")
+  @publish
   val CutRight: TacticInfo = TacticInfo
     .arg2("core.CutRight", TacticArgInfo("c", TacticArg.Formula), TacticArgInfo("pos", TacticArg.SuccPos)) { (c, pos) =>
       CoreRule(core.CutRight(c, pos))
     }
 
-  @publish(name = "core.CutLeft")
+  @publish
   val CutLeft: TacticInfo = TacticInfo
     .arg2("core.CutLeft", TacticArgInfo("c", TacticArg.Formula), TacticArgInfo("pos", TacticArg.AntePos)) { (c, pos) =>
       CoreRule(core.CutLeft(c, pos))
     }
 
-  @publish(name = "core.CommuteEquivRight")
+  @publish
   val CommuteEquivRight: TacticInfo = TacticInfo
     .arg1("core.CommuteEquivRight", TacticArgInfo("pos", TacticArg.SuccPos)) { pos =>
       CoreRule(core.CommuteEquivRight(pos))
     }
 
-  @publish(name = "core.CommuteEquivLeft")
+  @publish
   val CommuteEquivLeft: TacticInfo = TacticInfo
     .arg1("core.CommuteEquivLeft", TacticArgInfo("pos", TacticArg.AntePos)) { pos =>
       CoreRule(core.CommuteEquivLeft(pos))
     }
 
-  @publish(name = "core.EquivifyRight")
+  @publish
   val EquivifyRight: TacticInfo = TacticInfo
     .arg1("core.EquivifyRight", TacticArgInfo("pos", TacticArg.SuccPos)) { pos => CoreRule(core.EquivifyRight(pos)) }
 
@@ -385,22 +384,22 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib, names: UniqueNameRegistry) 
   // Tactics //
   /////////////
 
-  @publish(name = "core.CEqAt")
+  @publish
   val CEqAt: TacticInfo = TacticInfo.arg1("core.CEqAt", TacticArgInfo(name = "at", arg = TacticArg.ExprPath)) { at =>
     self.CEqAt(at)
   }
 
-  @publish(name = "core.QE")
+  @publish
   val QE: TacticInfo = TacticInfo.arg0("core.QE") { self.QE() }
 
-  @publish(name = "core.RewriteAt")
+  @publish
   val RewriteAt: TacticInfo = TacticInfo.arg2(
     "core.RewriteAt",
     TacticArgInfo(name = "at", arg = TacticArg.ExprPath),
     TacticArgInfo(name = "dir", arg = TacticArg.Option(TacticArg.String), default = Some(None)),
   ) { (at, dir) => self.RewriteAt(at = at, dir = dir.map(self.RewriteAt.Dir.parse)) }
 
-  @publish(name = "core.RewriteAtU")
+  @publish
   val RewriteAtU: TacticInfo = TacticInfo.arg3(
     "core.RewriteAtU",
     TacticArgInfo(name = "at", arg = TacticArg.ExprPath),
@@ -408,14 +407,14 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib, names: UniqueNameRegistry) 
     TacticArgInfo(name = "dir", arg = TacticArg.Option(TacticArg.String), default = Some(None)),
   ) { (at, eq, dir) => self.RewriteAtU(at = at, eq = eq, dir = dir.map(self.RewriteAt.Dir.parse)) }
 
-  @publish(name = "core.Sorry")
+  @publish
   val Sorry: TacticInfo = TacticInfo.arg0("core.Sorry") { self.Sorry() }
 
-  @publish(name = "core.Unify")
+  @publish
   val Unify: TacticInfo = TacticInfo
     .arg1("core.Unify", TacticArgInfo(name = "proof", arg = TacticArg.HippoProof)) { proof => self.Unify(proof) }
 
-  @publish(name = "core.US")
+  @publish
   val US: TacticInfo = TacticInfo.arg1(
     "core.US",
     TacticArgInfo(name = "subst", arg = TacticArg.Seq(TacticArg.Tuple2(TacticArg.Expression, TacticArg.Expression))),

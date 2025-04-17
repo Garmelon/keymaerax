@@ -26,7 +26,8 @@ case class HippoLibDb(
     copy(proofs = proofs.updated(name, proof))
   }
 
-  def addTactic(name: String, tactic: TacticInfo): HippoLibDb = {
+  def addTactic(tactic: TacticInfo): HippoLibDb = {
+    val name = tactic.constructor.uniqueName
     require(!isNameKnown(name))
     copy(tactics = tactics.updated(name, tactic))
   }
@@ -44,17 +45,18 @@ case class HippoLibDb(
       // TODO Fail gracefully if invoking fails
       val value = clazz.getMethod(field.getName).invoke(obj)
 
-      if (name == "") {
-        require(aliases.isEmpty)
-        result = result.addPublished(value)
-      } else {
-        value match {
-          case v: ProofInfo => result = result.addProof(name, v)
-          case v: TacticInfo => result = result.addTactic(name, v)
-          case _ =>
-            throw new Exception(s"Only ${classOf[ProofInfo]} and ${classOf[TacticInfo]} can be published under a name.")
-        }
-        for (alias <- aliases) result = result.addAlias(alias, name)
+      value match {
+        case v: ProofInfo =>
+          result = result.addProof(name, v)
+          for (alias <- aliases) result = result.addAlias(alias, name)
+        case v: TacticInfo =>
+          require(name == "", s"tactics can't be renamed with @publish ($name)")
+          result = result.addTactic(v)
+          for (alias <- aliases) result = result.addAlias(alias, v.constructor.uniqueName)
+        case v =>
+          require(name == "", s"recursive @publish can't have a name ($name)")
+          require(aliases.isEmpty, s"recursive @publish can't have aliases (${aliases.mkString(", ")})")
+          result = result.addPublished(v)
       }
     }
 

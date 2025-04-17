@@ -99,6 +99,7 @@ object HippoValue {
   }
 
   final case class TacticInfo(value: org.keymaerax.hippolib.meta.TacticInfo) extends HippoValue {
+    override def asTactic: hippocore.Tactic = value.constructor.constructPositional(IndexedSeq())
     override def format: java.lang.String = s"<tactic info for ${value.constructor.hash}>"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }

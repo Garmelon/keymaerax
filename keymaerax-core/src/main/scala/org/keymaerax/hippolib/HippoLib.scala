@@ -5,10 +5,12 @@
 
 package org.keymaerax.hippolib
 
+import org.keymaerax.btactics.macros.DerivationInfo
 import org.keymaerax.core.hippolib.publish
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.UniqueNameRegistry
 import org.keymaerax.hippolib
+import org.keymaerax.hippolib.HippoLib.addBelleDerivationInfos
 import org.keymaerax.hippolib.meta.{TacticArg, TacticArgInfo, TacticInfo}
 
 class HippoLib(implicit ctx: HippoContext) {
@@ -18,9 +20,9 @@ class HippoLib(implicit ctx: HippoContext) {
   @publish
   val core: hippolib.core.Lib = new hippolib.core.Lib
 
-  @publish
-  val belle: hippolib.belle.Lib = new hippolib.belle.Lib
-
+  // This tactic is not in the "belle" namespace because it would be annoying to have to type `belle.Belle("name")`.
+  // If hippolang ever gains the ability to import individual items to the current namespace,
+  // it might make sense to move it to the "belle" namespace.
   @publish(name = "Belle")
   val Belle: TacticInfo = TacticInfo.arg2(
     "Belle",
@@ -29,5 +31,22 @@ class HippoLib(implicit ctx: HippoContext) {
     vararg = true,
   ) { (name, args) => org.keymaerax.hippolib.belle.Belle(name, args) }
 
-  val db: HippoLibDb = HippoLibDb.empty.addPublished(this)
+  val db: HippoLibDb = addBelleDerivationInfos(HippoLibDb.empty.addPublished(this))
+}
+
+object HippoLib {
+
+  /** Add all of Bellerophon's [[DerivationInfo]]s as tactics to the `belle` namespace. */
+  private def addBelleDerivationInfos(db: HippoLibDb)(implicit names: UniqueNameRegistry): HippoLibDb = DerivationInfo
+    .allInfo
+    .values
+    .foldLeft(db) { (db, info) =>
+      val name = s"belle.${info.codeName}"
+      db.addTactic(
+        name,
+        TacticInfo.arg1(name, TacticArgInfo(name = "args", arg = TacticArg.Seq(TacticArg.BelleValue)), vararg = true) {
+          args => org.keymaerax.hippolib.belle.Belle(info.codeName, args)
+        },
+      )
+    }
 }

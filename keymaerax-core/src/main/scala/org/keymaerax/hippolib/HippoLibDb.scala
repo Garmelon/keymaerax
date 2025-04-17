@@ -26,9 +26,9 @@ case class HippoLibDb(
     copy(proofs = proofs.updated(name, proof))
   }
 
-  def addTactic(name: String, proof: TacticInfo): HippoLibDb = {
+  def addTactic(name: String, tactic: TacticInfo): HippoLibDb = {
     require(!isNameKnown(name))
-    copy(tactics = tactics.updated(name, proof))
+    copy(tactics = tactics.updated(name, tactic))
   }
 
   def addPublished(obj: Object): HippoLibDb = {

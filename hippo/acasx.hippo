@@ -87,25 +87,25 @@ val safeUseCaseLowerBound = theorem
   dLs{ ==> loopInv__(r, h, v, w, vlo, rv) & init__(rv) -> abs__(r)>rp | abs__(h)>hp }
   by backward -> $c {
     $c
-      := Belle("implyR", 1)
-      :< Belle("andL", -1)
-      :< Belle("andL", -2)
-      :< Belle("andL", -3)
-      :< Belle("andL", -4)
-      :< Belle("andL", -1)
-      :< Belle("allL", -6, dLt{ 0 })
-      :< Belle("allL", -6, dLt{ 0 })
-      :< Belle("allL", -6, dLt{ 0 })
-      :< Belle("fullSimplify")
-      :< Belle("implyL", -6)[
+      := belle.implyR(1)
+      :< belle.andL(-1)
+      :< belle.andL(-2)
+      :< belle.andL(-3)
+      :< belle.andL(-4)
+      :< belle.andL(-1)
+      :< belle.allL(-6, dLt{ 0 })
+      :< belle.allL(-6, dLt{ 0 })
+      :< belle.allL(-6, dLt{ 0 })
+      :< belle.fullSimplify()
+      :< belle.implyL(-6)[
         // These QEs should resolve the goals according to the original proof,
         // but instead return false.
-        Belle("QE")[$a],
-        Belle("QE")[$b],
+        belle.QE()[$a],
+        belle.QE()[$b],
       ];
 
-//    $a := core.Sorry()[];
-//    $b := core.Sorry()[];
+    $a := core.Sorry()[];
+    $b := core.Sorry()[];
   };
 
 print(safeUseCaseLowerBound.conclusion);

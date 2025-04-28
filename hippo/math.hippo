@@ -1,0 +1,26 @@
+// The math.kyx definitions translated into hippolang.
+
+// These definitions must match the math.kyx definitions exactly
+// or else they won't be translated to Mathematica expressions properly.
+
+// When writing an interpreted function foo<<...>>,
+// the argument names from dLt(...){...} can't be used inside the interpretation <<...>>.
+// Instead, ._0 is the return value and ._1 to ._n are the arguments.
+
+// Square root, defined as the unique number whose square is the non-negative input x.
+export val sqrt = dLt(x){ sqrt<< ._1 >= 0 & ._0^2 = ._1 >>(x) };
+
+// Division x/y for y!=0, defined as the unique number z s.t. x=y*z.
+export val div = dLt(x, y){ div<< ._2 != 0 & ._1 = ._2 * ._0 >>(x, y) };
+
+// Absolute value abs(x).
+export val abs = dLt(x){ abs<< (._1 < 0 & ._0 = -(._1)) | (._1 >= 0 & ._0 = ._1) >>(x) };
+
+// Maximum of two terms max(x,y).
+export val max = dLt(x, y){ max<< (._1 < ._2 & ._0 = ._2) | (._1 >= ._2 & ._0 = ._1) >>(x, y) };
+
+// Minimum of two terms min(x,y).
+export val min = dLt(x, y){ min<< (._1 < ._2 & ._0 = ._1) | (._1 >= ._2 & ._0 = ._2) >>(x, y) };
+
+// Hippolochos currently has no neat way to do implicit definitions,
+// so the remaining definitions from math.kyx are omitted.

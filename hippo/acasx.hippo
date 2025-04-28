@@ -1,16 +1,11 @@
+val math = import("math.hippo");
+val min = math.min;
+val max = math.max;
+val abs = math.abs;
+
 print("ACAS X");
 print("======");
 print();
-
-////////////////////////
-// Should-be-builtins //
-////////////////////////
-
-// These must match the definitions from math.kyx exactly
-// or else they won't be translated to Mathematica properly.
-val min = dLt(x, y) { min<< (._1 < ._2 & ._0 = ._1) | (._1 >= ._2 & ._0 = ._2) >>(x, y) };
-val max = dLt(x, y) { max<< (._1 < ._2 & ._0 = ._2) | (._1 >= ._2 & ._0 = ._1) >>(x, y) };
-val abs = dLt(x) { abs<< (._1 < 0 & ._0 = -(._1)) | (._1 >= 0 & ._0 = ._1) >>(x) };
 
 ///////////////
 // Variables //

@@ -118,12 +118,14 @@ class InterpreterBackward(
     val discrepancies = mutable.Buffer.empty[String]
 
     if (unopenedGoals.nonEmpty) {
-      val goals = unopenedGoals.map(goal => s"- $$$goal").mkString("\n")
+      val goals = unopenedGoals.toSeq.sorted.map(goal => s"- $$$goal").mkString("\n")
       discrepancies.append(s"The following goals should be open:\n$goals")
     }
 
     if (unclosedGoals.nonEmpty) {
       val goals = unclosedGoals
+        .toSeq
+        .sorted
         .map { goal =>
           val goalIdx = this.goals.indexOf(goal)
           val sequent = this.chain.proof.premises(goalIdx).sequent.prettyString

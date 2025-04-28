@@ -18,10 +18,10 @@ print();
 val wLo = 1; // Lower velocity bound
 val wUp = -1; // Upper velocity bound
 
-val minI = dLt(v, w) { min__(0, v * w) };
-val maxI = dLt(v, w, vlo) { max__(0, w * (vlo - v)) };
+val minI = dLt(v, w){ min__(0, v * w) };
+val maxI = dLt(v, w, vlo){ max__(0, w * (vlo - v)) };
 
-val Limpl = dLf(r, h, v, w, vlo, rv) {
+val Limpl = dLf(r, h, v, w, vlo, rv){
   \forall t \forall ro \forall ho (
       (0 <= t & t < maxI__(v,w,vlo)/alo & ro = rv * t & ho = (w * alo)/2 * t^2 + v * t)
     | (t >= maxI__(v,w,vlo)/alo & ro = rv * t & ho = vlo * t - w * maxI__(v,w,vlo)^2/(2*alo))
@@ -29,7 +29,7 @@ val Limpl = dLf(r, h, v, w, vlo, rv) {
   )
 };
 
-val init = dLf(rv) { rp>=0 & hp>0 & rv>=0 & alo>0 };
+val init = dLf(rv){ rp>=0 & hp>0 & rv>=0 & alo>0 };
 
 val loopInv = dLf(r, h, v, w, vlo, rv) { (w=wUp__ | w=wLo__) & Limpl__(r,h,v,w,vlo,rv) };
 

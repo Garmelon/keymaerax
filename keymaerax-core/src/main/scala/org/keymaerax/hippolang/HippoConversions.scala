@@ -183,6 +183,7 @@ object HippoConversions {
         Apply(slice = e.slice, target = e.target.toHExpr, args = e.args.map(_.toHExpr), argsSlice = e.argsSlice)
       case e: AstExpression.ApplyTactic =>
         ApplyTactic(slice = e.slice, target = e.target.toHExpr, args = e.args.map(_.toHExpr), argsSlice = e.argsSlice)
+      case e: AstExpression.PipeLeftTactic => convertPipeLeftTactic(e)
       case e: AstExpression.Not => Apply(
           slice = e.slice,
           target = BuiltinFunction.Not.toHValue.toHExpr(e.opSlice),
@@ -272,6 +273,37 @@ object HippoConversions {
           target = BuiltinFunction.List.toHValue.toHExpr(e.opSlice),
           args = IndexedSeq(e.left.toHExpr, e.right.toHExpr),
           argsSlice = e.slice,
+        )
+    }
+
+    private def convertPipeLeftTactic(e: AstExpression.PipeLeftTactic): HippoExpression = e.target match {
+      case t: AstExpression.ApplyTactic =>
+        def isPlaceholder(e: AstExpression): Boolean = e match {
+          case arg: AstExpression.Lookup if arg.name == AstIdentifier("_") => true
+          case _ => false
+        }
+
+        val placeholderI = t.args.indexWhere(isPlaceholder)
+        val lastPlaceholderI = t.args.lastIndexWhere(isPlaceholder)
+        if (placeholderI < 0 || placeholderI != lastPlaceholderI)
+          throw HlangException("Parsing failed", t.argsSlice, "expected exactly one placeholder _")
+
+        val beforePlaceholder = t.args.take(placeholderI).map(_.toHExpr)
+        val afterPlaceholder = t.args.drop(placeholderI + 1).map(_.toHExpr)
+        val placeholder = e.arg.toHExpr
+
+        ApplyTactic(
+          slice = e.slice,
+          argsSlice = t.argsSlice,
+          target = t.target.toHExpr,
+          args = (beforePlaceholder :+ placeholder) ++ afterPlaceholder,
+        )
+
+      case _ => ApplyTactic(
+          slice = e.slice,
+          argsSlice = e.opSlice + e.arg.slice,
+          target = e.target.toHExpr,
+          args = IndexedSeq(e.arg.toHExpr),
         )
     }
   }

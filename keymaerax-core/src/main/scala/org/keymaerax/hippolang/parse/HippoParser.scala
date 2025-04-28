@@ -279,16 +279,20 @@ class HippoParser(source: SourceFile) {
   }
 
   private def applyTacticExpression[$: P]: P[SuffixOpConstructor] = P {
-    def bracketed = "[" ~/ expression.rep(sep = ",") ~ ",".? ~ "]"
-    def continued = ":<" ~/ expression.map(Seq(_))
-    sliced(bracketed | continued).map { case (args, argsSlice) =>
+    sliced("[" ~/ expression.rep(sep = ",") ~ ",".? ~ "]").map { case (args, argsSlice) =>
       (slice, inner) =>
         AstExpression.ApplyTactic(slice = slice, target = inner, args = args.toIndexedSeq, argsSlice = argsSlice)
     }
   }
 
+  private def pipeTacticExpression[$: P]: P[SuffixOpConstructor] = P {
+    (slice(":<") ~/ expression).map { case (opSlice, arg) =>
+      (slice, inner) => AstExpression.PipeLeftTactic(slice = slice, opSlice = opSlice, target = inner, arg = arg)
+    }
+  }
+
   private def suffixExpression[$: P]: P[SuffixOpConstructor] =
-    P { builtinAccessExpression | accessExpression | applyExpression | applyTacticExpression }
+    P { builtinAccessExpression | accessExpression | applyExpression | applyTacticExpression | pipeTacticExpression }
 
   private type PrefixOpConstructor = (SourceFile#Slice, AstExpression) => AstExpression
 

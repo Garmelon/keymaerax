@@ -14,6 +14,7 @@ import org.keymaerax.hippocore.tools.PremisePermuter
 import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 import org.keymaerax.hippolang.{HippoExpression, HippoIdentifier, HippoValue, HlangException}
+import org.keymaerax.hippolib.primitive.Cached
 
 import scala.collection.mutable
 
@@ -76,7 +77,7 @@ class InterpreterBackward(
       // TODO Use arguments that return a plain HippoProof as hints for the tactic
 
       val tactic = eval(namespace, e.target).asTactic.asInstanceOf[BackwardTactic]
-      var proof = HlangException.at(e.slice, "while executing this tactic") { ctx.backward(tactic, conclusion) }
+      var proof = HlangException.at(e.slice, "while executing this tactic") { ctx.backward(Cached(tactic), conclusion) }
 
       val nPremises = proof.premises.length
       val nArguments = e.args.length

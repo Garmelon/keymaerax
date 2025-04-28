@@ -390,6 +390,14 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
   }
 
   @publish
+  val Hide: TacticInfo = TacticInfo
+    .arg1("core.Hide", TacticArgInfo(name = "at", arg = TacticArg.Seq(TacticArg.SeqPos))) { at => self.Hide(at*) }
+
+  @publish
+  val Keep: TacticInfo = TacticInfo
+    .arg1("core.Keep", TacticArgInfo(name = "at", arg = TacticArg.Seq(TacticArg.SeqPos))) { at => self.Keep(at*) }
+
+  @publish
   val QE: TacticInfo = TacticInfo.arg0("core.QE") { self.QE() }
 
   @publish

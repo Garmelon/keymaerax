@@ -180,13 +180,45 @@ val safeLowerBound = theorem
       :< core.Sorry[],
 
       belle.prop[
-        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-        core.Sorry[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-        belle.QE[], belle.QE[],
+        belle.QE[],
+        belle.QE[],
+        belle.QE[],
+        belle.QE[],
+        belle.QE[],
+        belle.QE[],
+        belle.QE[],
+        belle.QE[],
+        belle.QE[],
+        belle.QE[],
+        core.Sorry[], // Counterexample
+        belle.QE[],
+        belle.QE[],
+        core.Sorry[], // Counterexample
+        belle.QE[],
+        belle.QE[],
+        core.Sorry[], // Takes forever
+        core.Sorry[], // Takes forever
+        core.Sorry[], // Counterexample
+        core.Sorry[],
+        core.Sorry[],
+        core.Sorry[],
+        core.Sorry[],
+        core.Sorry[],
+        core.Sorry[],
+        core.Sorry[],
+        core.Sorry[],
+        core.Sorry[],
+        core.Sorry[],
+        core.Sorry[],
+        core.Sorry[],
+        core.Sorry[],
+//        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+//        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+//        core.Sorry[], belle.QE[], belle.QE[], core.Sorry[], belle.QE[],
+//        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+//        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+//        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+//        belle.QE[], belle.QE[],
       ],
     ];
   };

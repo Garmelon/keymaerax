@@ -3,10 +3,6 @@ val min = math.min;
 val max = math.max;
 val abs = math.abs;
 
-print("ACAS X");
-print("======");
-print();
-
 ///////////////
 // Variables //
 ///////////////
@@ -35,28 +31,9 @@ val loopInv = dLf(r, h, v, w, vlo, rv) { (w=wUp__ | w=wLo__) & Limpl__(r,h,v,w,v
 
 val motion = dLp{ { r'=-rv, h'=-v, v'=a & w*v>=w*vlo | w*a>=alo } };
 
-print();
-print("Variables");
-print("---------");
-print();
-print("      wLo: ", wLo);
-print("      wUp: ", wUp);
-print("     minI: ", minI);
-print("     maxI: ", maxI);
-print("    Limpl: ", Limpl);
-print("     init: ", init);
-print("  loopInv: ", loopInv);
-print("   motion: ", motion);
-print();
-
 //////////////////////////////////////
 // Lemma: Safe use case lower bound //
 //////////////////////////////////////
-
-print();
-print("Safe use case lower bound");
-print("-------------------------");
-print();
 
 // Horizontal
 //
@@ -74,13 +51,13 @@ print();
 //   h := hi - ho
 //   z = h
 //
-// v: Vertical verlocity of ownship
+// v: Vertical velocity of ownship
 //
 // vlo: Target minimum velocity
 //
 // w: Velocity direction
 
-val safeUseCaseLowerBound = theorem
+val safeUseCaseLowerBound = verified theorem
   dLs{ ==> loopInv__(r, h, v, w, vlo, rv) & init__(rv) -> abs__(r)>rp | abs__(h)>hp }
   by backward
   := belle.implyR(1)
@@ -98,4 +75,158 @@ val safeUseCaseLowerBound = theorem
     belle.QE[],
   ];
 
-print(safeUseCaseLowerBound.conclusion);
+print("safeUseCaseLowerBound proved");
+
+/////////////////////////////
+// Lemma: Safe lower bound //
+/////////////////////////////
+
+// Horizontal
+//
+// r: Relative distance in ft
+//   xi - xo
+//   x = r
+//
+// rv: Relative speed
+//   -(vi - vo)
+
+// Vertical
+//
+// h: Relative altitude in ft
+//   If negative, the intruder is lower than the ownship.
+//   h := hi - ho
+//   z = h
+//
+// v: Vertical velocity of ownship
+//
+// vlo: Target minimum velocity
+//
+// w: Velocity bound
+//
+// a
+
+val safeLowerBound = theorem
+  dLs{
+  ==>
+      (w*v >= w*vlo | w*a >= alo)
+    & (w=wUp__ | w=wLo__)
+    & Limpl__(r, h, v, w, vlo, rv)
+    & init__(rv)
+    ->
+    [motion__;]((w=wUp__ | w=wLo__) & Limpl__(r, h, v, w, vlo, rv))
+  }
+  by backward -> $conclusion {
+    $conclusion
+    := belle.implyR(1)
+    :< belle.boxAnd(1)
+    :< belle.andR(1)[
+      belle.GV(1) :< belle.propClose[], // [motion;](w=wUp | w=wLo)
+      _, // [motion;]Limpl
+    ]
+    :< belle.solve(1)
+    :< belle.allR(1)
+    :< belle.implyR(1)
+    :< belle.implyR(1)
+    :< belle.allL(-3, dLt{ t_ })
+    :< belle.simplify(-3)
+    :< belle.allR(1)
+    :< belle.allR(1)
+    :< belle.allR(1)
+    :< belle.andL(-1)
+    :< belle.andL(-4)
+    :< belle.andL(-5)
+    :< belle.allL(-5, dLt{ t_+1 })
+    :< belle.allL(-5, dLt{ rv*(t_+t) })
+    :< belle.cut(dLf{ 0<=t+t_ & t+t_<maxI__(v,w,vlo)/alo() | t+t_>=maxI__(v,w,vlo)/alo() })[
+      $use,
+      $show,
+    ];
+
+    $show
+    := belle.implyR(1)
+    :< core.Keep(list(-1, -4, -6, -7, 1))
+    :< belle.QE[];
+
+    $use
+    := belle.implyR(1)
+    :< belle.orL(-7)[$orL, $orR];
+
+    $orL
+    := belle.allL(-5, dLt{ w*alo()/2*(t+t_)^2+v*(t+t_) })
+    :< belle.implyL(-5)[
+      belle.orR(2)
+      :< core.Keep(list(-1, -2, -3, -4, -6, -7, 2))
+      // :< belle.QE[],
+      :< core.Sorry[],
+
+      belle.prop[
+        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+        core.Sorry[], belle.QE[], belle.QE[], core.Sorry[], belle.QE[],
+        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+        belle.QE[], belle.QE[],
+      ],
+    ];
+
+    $orR
+    := belle.orR(1)
+    :< belle.allL(-5, dLt{ vlo*(t+t_)-w*maxI__(v,w,vlo)^2/(2*alo()) })
+    :< belle.implyL(-5)[
+      belle.orR(3)
+      :< core.Keep(list(-1, -6, -7, 4))
+      // :< belle.QE[],
+      :< core.Sorry[],
+
+      belle.prop[
+        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+        core.Sorry[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
+        belle.QE[], belle.QE[],
+      ],
+    ];
+  };
+
+print("safeLowerBound proved");
+
+/*
+implyR('R=="0<=t&t < maxI(a*t_+v,w,vlo)/alo()&ro=rv*t&ho=w*alo()/2*t^2+(a*t_+v)*t|t>=maxI(a*t_+v,w,vlo)/alo()&ro=rv*t&ho=vlo*t-w*maxI(a*t_+v,w,vlo)^2/(2*alo())->abs((-rv)*t_+r-ro)>rp()|w*(-(a*(t_^2/2)+v*t_)+h) < w*ho-hp()");
+orL('L=="0<=t+t_&t+t_ < maxI(v,w,vlo)/alo()|t+t_>=maxI(v,w,vlo)/alo()"); <(
+  "0<=t+t_&t+t_ < maxI(v,w,vlo)/alo()":
+    allL("w*alo()/2*(t+t_)^2+v*(t+t_)", 'L=="\forall ho (0<=t_+t&t_+t < maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&ho=w*alo()/2*(t_+t)^2+v*(t_+t)|t_+t>=maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&ho=vlo*(t_+t)-w*maxI(v,w,vlo)^2/(2*alo())->abs(r-rv*(t_+t))>rp()|w*h < w*ho-hp())");
+    implyL('L=="0<=t_+t&t_+t < maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&w*alo()/2*(t+t_)^2+v*(t+t_)=w*alo()/2*(t_+t)^2+v*(t_+t)|t_+t>=maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&w*alo()/2*(t+t_)^2+v*(t+t_)=vlo*(t_+t)-w*maxI(v,w,vlo)^2/(2*alo())->abs(r-rv*(t_+t))>rp()|w*h < w*(w*alo()/2*(t+t_)^2+v*(t+t_))-hp()"); <(
+      "0<=t_+t&t_+t < maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&w*alo()/2*(t+t_)^2+v*(t+t_)=w*alo()/2*(t_+t)^2+v*(t_+t)|t_+t>=maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&w*alo()/2*(t+t_)^2+v*(t+t_)=vlo*(t_+t)-w*maxI(v,w,vlo)^2/(2*alo())":
+        orR('R=="0<=t_+t&t_+t < maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&w*alo()/2*(t+t_)^2+v*(t+t_)=w*alo()/2*(t_+t)^2+v*(t_+t)|t_+t>=maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&w*alo()/2*(t+t_)^2+v*(t+t_)=vlo*(t_+t)-w*maxI(v,w,vlo)^2/(2*alo())");
+        QE using "
+        t_>=0 ::
+        w*(a*t_+v)>=w*vlo|w*a>=alo() ::
+        w*v>=w*vlo|w*a>=alo() ::
+        w=wUp()|w=wLo() ::
+        0<=t+t_&t+t_ < maxI(v,w,vlo)/alo() ::
+        0<=t&t < maxI(a*t_+v,w,vlo)/alo()&ro=rv*t&ho=w*alo()/2*t^2+(a*t_+v)*t|t>=maxI(a*t_+v,w,vlo)/alo()&ro=rv*t&ho=vlo*t-w*maxI(a*t_+v,w,vlo)^2/(2*alo()) ::
+        0<=t_+t&t_+t < maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&w*alo()/2*(t+t_)^2+v*(t+t_)=w*alo()/2*(t_+t)^2+v*(t_+t) ::
+        nil",
+      "abs(r-rv*(t_+t))>rp()|w*h < w*(w*alo()/2*(t+t_)^2+v*(t+t_))-hp()":
+        prop ; doall(print("QE...") ; QE ; print("...done"))
+    ),
+  "t+t_>=maxI(v,w,vlo)/alo()":
+    orR('R=="abs((-rv)*t_+r-ro)>rp()|w*(-(a*(t_^2/2)+v*t_)+h) < w*ho-hp()");
+    allL("vlo*(t+t_)-w*maxI(v,w,vlo)^2/(2*alo())", 'L=="\forall ho (0<=t_+t&t_+t < maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&ho=w*alo()/2*(t_+t)^2+v*(t_+t)|t_+t>=maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&ho=vlo*(t_+t)-w*maxI(v,w,vlo)^2/(2*alo())->abs(r-rv*(t_+t))>rp()|w*h < w*ho-hp())");
+    implyL('L=="0<=t_+t&t_+t < maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&vlo*(t+t_)-w*maxI(v,w,vlo)^2/(2*alo())=w*alo()/2*(t_+t)^2+v*(t_+t)|t_+t>=maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&vlo*(t+t_)-w*maxI(v,w,vlo)^2/(2*alo())=vlo*(t_+t)-w*maxI(v,w,vlo)^2/(2*alo())->abs(r-rv*(t_+t))>rp()|w*h < w*(vlo*(t+t_)-w*maxI(v,w,vlo)^2/(2*alo()))-hp()"); <(
+      "0<=t_+t&t_+t < maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&vlo*(t+t_)-w*maxI(v,w,vlo)^2/(2*alo())=w*alo()/2*(t_+t)^2+v*(t_+t)|t_+t>=maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&vlo*(t+t_)-w*maxI(v,w,vlo)^2/(2*alo())=vlo*(t_+t)-w*maxI(v,w,vlo)^2/(2*alo())":
+        orR('R=="0<=t_+t&t_+t < maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&vlo*(t+t_)-w*maxI(v,w,vlo)^2/(2*alo())=w*alo()/2*(t_+t)^2+v*(t_+t)|t_+t>=maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&vlo*(t+t_)-w*maxI(v,w,vlo)^2/(2*alo())=vlo*(t_+t)-w*maxI(v,w,vlo)^2/(2*alo())");
+        QE using "
+        t_>=0 ::
+        t+t_>=maxI(v,w,vlo)/alo() ::
+        0<=t&t < maxI(a*t_+v,w,vlo)/alo()&ro=rv*t&ho=w*alo()/2*t^2+(a*t_+v)*t|t>=maxI(a*t_+v,w,vlo)/alo()&ro=rv*t&ho=vlo*t-w*maxI(a*t_+v,w,vlo)^2/(2*alo()) ::
+        t_+t>=maxI(v,w,vlo)/alo()&rv*(t_+t)=rv*(t_+t)&vlo*(t+t_)-w*maxI(v,w,vlo)^2/(2*alo())=vlo*(t_+t)-w*maxI(v,w,vlo)^2/(2*alo()) ::
+        nil",    list(-1, -6, -7, 4)
+      "abs(r-rv*(t_+t))>rp()|w*h < w*(vlo*(t+t_)-w*maxI(v,w,vlo)^2/(2*alo()))-hp()":
+        prop ; doall(print("QE...") ; QE ; print("...done"))
+    )
+),
+*/

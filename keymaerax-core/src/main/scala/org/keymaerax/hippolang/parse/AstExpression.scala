@@ -292,6 +292,19 @@ object AstExpression {
       argsSlice: SourceFile#Slice,
   ) extends AstExpression
 
+  /**
+   * {{{
+   *   <target> :< <arg>
+   *   <target>[..., _, ...] :< <arg>
+   * }}}
+   */
+  case class PipeLeftTactic(
+      slice: SourceFile#Slice,
+      opSlice: SourceFile#Slice,
+      target: AstExpression,
+      arg: AstExpression,
+  ) extends AstExpression
+
   ////////////
   // Prefix //
   ////////////

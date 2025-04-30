@@ -5,10 +5,13 @@
 
 package org.keymaerax.hippolang.interpret
 
+import org.keymaerax.core
+import org.keymaerax.core.DotTerm
 import org.keymaerax.hippolang.HippoConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace, Namespace}
 import org.keymaerax.hippolang.{BuiltinFunction, HippoIdentifier, HippoValue}
 import org.keymaerax.hippolib.HippoLib
+import org.keymaerax.parser.InterpretedSymbols
 
 import scala.collection.mutable
 
@@ -40,6 +43,38 @@ class EnvBuilder(child: Option[Namespace] = None) {
       addPath(List(HippoIdentifier("builtins"), builtin.name), builtin.toHValue)
       if (!builtin.hidden) add(builtin.name, builtin.toHValue)
     }
+
+    this
+  }
+
+  def addMathKyx(): EnvBuilder = {
+    def argsTerm(args: List[DotTerm]): core.Term = args match {
+      case Nil => core.Nothing
+      case ::(head, Nil) => head
+      case ::(head, next) => core.Pair(head, argsTerm(next))
+    }
+
+    def addMathKyxDef(name: String) = {
+      val func = InterpretedSymbols.mathKyxDefs.asNamedSymbols.find(_.name == name).get.asInstanceOf[core.Function]
+      val args = (0 until func.realDomainDim.get).map(i => core.DotTerm(idx = Some(i))).toList
+      val funcOf = core.FuncOf(func = func, child = argsTerm(args))
+      addPath(List(HippoIdentifier("math"), HippoIdentifier(name)), funcOf.toHValue)
+    }
+
+    addMathKyxDef("sqrt")
+    addMathKyxDef("div")
+    addMathKyxDef("abs")
+    addMathKyxDef("max")
+    addMathKyxDef("min")
+    addMathKyxDef("exp")
+    addMathKyxDef("e")
+    addMathKyxDef("sin")
+    addMathKyxDef("cos")
+    addMathKyxDef("pi")
+    addMathKyxDef("tan")
+    addMathKyxDef("tanh")
+    addMathKyxDef("arcsin")
+    addMathKyxDef("arctan")
 
     this
   }

@@ -47,7 +47,7 @@ case class HippoInterpreterContext(ctx: HippoContext, env: Option[ImmutableNames
 object HippoInterpreterContext {
   def withHippoLib(ctx: HippoContext): HippoInterpreterContext = {
     val lib = new HippoLib()(ctx)
-    val env = new EnvBuilder().addBuiltins().addHippoLib(lib).build()
+    val env = new EnvBuilder().addBuiltins().addMathKyx().addHippoLib(lib).build()
     HippoInterpreterContext(ctx = ctx, env = Some(env))
   }
 }

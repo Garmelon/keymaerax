@@ -1,4 +1,3 @@
-val math = import("math.hippo");
 val min = math.min;
 val max = math.max;
 val abs = math.abs;

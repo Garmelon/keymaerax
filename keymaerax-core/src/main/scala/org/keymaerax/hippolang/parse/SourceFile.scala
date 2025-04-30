@@ -6,6 +6,7 @@
 package org.keymaerax.hippolang.parse
 
 import java.nio.file.Path
+import scala.util.control.Breaks.{break, breakable}
 
 case class SourceFile(text: String, path: Option[Path] = None) {
   private val newlines = text.zipWithIndex.filter(_._1 == '\n').map(_._2)
@@ -37,9 +38,9 @@ case class SourceFile(text: String, path: Option[Path] = None) {
       val firstRow = (startRow - 1) max 0
       val lastRow = (endRow + 1) min (SourceFile.this.lines - 1)
 
-      val lineNumberWidth = (lastRow + 1).toString.length
+      val lineNumberWidth = (lastRow + 1).toString.length max 3
       val preEmpty = " " * lineNumberWidth
-      def preOf(line: Int): String = line.toString.reverse.padTo(lineNumberWidth, ' ').reverse
+      def preOf(str: String): String = str.reverse.padTo(lineNumberWidth, ' ').reverse
 
       val lines = Seq.newBuilder[String]
 
@@ -51,9 +52,14 @@ case class SourceFile(text: String, path: Option[Path] = None) {
 
       lines.addOne(s" $preEmpty |")
 
-      for (row <- firstRow to lastRow) {
+      for (row <- firstRow to lastRow) breakable {
+        if (startRow + 1 < row && row < endRow - 1) {
+          if (row == startRow + 2) lines.addOne(s" ${preOf("...")} | |")
+          break()
+        }
+
         val rowText = line(row).text.stripLineEnd
-        val lineNumber = preOf(row + 1)
+        val lineNumber = preOf((row + 1).toString)
 
         if ((row == firstRow || row == lastRow) && rowText.isBlank) () // Skip, otherwise it looks too spacious
         else if (startRow == endRow) lines.addOne(s" $lineNumber | $rowText")

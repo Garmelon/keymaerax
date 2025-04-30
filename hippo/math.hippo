@@ -22,5 +22,43 @@ export val max = dLt(x, y){ max<< (._1 < ._2 & ._0 = ._2) | (._1 >= ._2 & ._0 = 
 // Minimum of two terms min(x,y).
 export val min = dLt(x, y){ min<< (._1 < ._2 & ._0 = ._1) | (._1 >= ._2 & ._0 = ._2) >>(x, y) };
 
-// Hippolochos currently has no neat way to do implicit definitions,
-// so the remaining definitions from math.kyx are omitted.
+// Exponential function exp(x).
+export val exp = dLt(x){ exp<< <{exp:=._0;t:=._1;}{{exp'=-exp,t'=-1}++{exp'=exp,t'=1}}>(exp=1&t=0) >>(x) };
+
+// Euler number e.
+export val e = dLt{ e<< ._0=exp<< <{exp:=._0;t:=._1;}{{exp'=-exp,t'=-1}++{exp'=exp,t'=1}}>(exp=1&t=0) >>(1) >>() };
+
+/////////////////////////////
+// Trigonometric functions //
+/////////////////////////////
+
+// Sine and cosine sin(t), cos(t)
+export val sin = dLt(x){ sin<<
+  <{cos:=*;sin:=._0;t:=._1;}{{sin'=-cos,cos'=--sin,t'=-1}++{sin'=cos,cos'=-sin,t'=1}}>(sin=0&cos=1&t=0)
+>>(x) };
+export val cos = dLt(x){ cos<<
+  <{sin:=*;cos:=._0;t:=._1;}{{sin'=-cos,cos'=--sin,t'=-1}++{sin'=cos,cos'=-sin,t'=1}}>(sin=0&cos=1&t=0)
+>>(x) };
+
+// The number pi as the unique y s.t. y > 0 & sin(y) = 0 & forall 0 < x < y, sin(x) > 0.
+export val pi = dLt{ pi<<
+  ._0>0
+  & sin<< <{cos:=*;sin:=._0;t:=._1;}{{sin'=-cos,cos'=--sin,t'=-1}++{sin'=cos,cos'=-sin,t'=1}}>(sin=0&cos=1&t=0) >>(._0)=0
+  & \forall x_ (0<x_ & x_<._0 -> sin<< <{cos:=*;sin:=._0;t:=._1;}{{sin'=-cos,cos'=--sin,t'=-1}++{sin'=cos,cos'=-sin,t'=1}}>(sin=0&cos=1&t=0) >>(x_)>0)
+>>() };
+
+// Tangent tan(x).
+export val tan = dLt(x){ tan<<
+  ._0 =
+    sin<< <{cos:=*;sin:=._0;t:=._1;}{{sin'=-cos,cos'=--sin,t'=-1}++{sin'=cos,cos'=-sin,t'=1}}>(sin=0&cos=1&t=0) >>(._1)
+  / cos<< <{sin:=*;cos:=._0;t:=._1;}{{sin'=-cos,cos'=--sin,t'=-1}++{sin'=cos,cos'=-sin,t'=1}}>(sin=0&cos=1&t=0) >>(._1)
+>>(x) };
+
+// Hyperbolic tangent tanh(x).
+// implicit Real tanh(Real t) = {{tanh:=0;}; {tanh'=1-tanh^2}};
+
+// Inverse sin arcsin(x).
+// implicit Real arcsin(Real t) = {{arcsin:=0; t:=0;}; {arcsin'=1/sqrt(1-t^2), t'=1}};
+
+// Inverse tangent arctan(x).
+// implicit Real arctan(Real t) = {{arctan:=0; t:=0;}; {arctan'=1/(1+t^2), t'=1}};

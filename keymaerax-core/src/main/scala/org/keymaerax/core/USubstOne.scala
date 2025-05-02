@@ -174,6 +174,15 @@ final case class USubstOne(subsDefsInput: immutable.Seq[SubstitutionPair]) exten
     catch { case ex: ProverException => throw ex.inContext(s.toString) }
 
   /**
+   * apply this uniform substitution everywhere in a term with [[SetLattice.allVars]] as taboos.
+   * @throws SubstitutionClashException
+   *   if this substitution is not admissible for f (e.g. because it introduces any free variables).
+   */
+  def applyAllTaboo(t: Term): Term =
+    try usubst(allVars, t)
+    catch { case ex: ProverException => throw ex.inContext(t.prettyString) }
+
+  /**
    * apply this uniform substitution everywhere in a formula with [[SetLattice.allVars]] as taboos.
    * @throws SubstitutionClashException
    *   if this substitution is not admissible for f (e.g. because it introduces any free variables).
@@ -181,6 +190,15 @@ final case class USubstOne(subsDefsInput: immutable.Seq[SubstitutionPair]) exten
   def applyAllTaboo(f: Formula): Formula =
     try usubst(allVars, f)
     catch { case ex: ProverException => throw ex.inContext(f.prettyString) }
+
+  /**
+   * apply this uniform substitution everywhere in a program with [[SetLattice.allVars]] as taboos.
+   * @throws SubstitutionClashException
+   *   if this substitution is not admissible for f (e.g. because it introduces any free variables).
+   */
+  def applyAllTaboo(p: Program): Program =
+    try usubst(allVars, p)._2
+    catch { case ex: ProverException => throw ex.inContext(p.prettyString) }
 
   /**
    * Apply uniform substitution everywhere in the sequent with [[SetLattice.allVars]] as taboos.

@@ -6,7 +6,7 @@
 package org.keymaerax.hippolib.primitive
 
 import org.keymaerax.core.Sequent
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
@@ -16,14 +16,14 @@ import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
  *
  * Uses the original tactic without modification when run backwards.
  */
-case class BidiBackward(tactic: BackwardTactic, conclusion: Sequent) extends ForwardTactic with BackwardTactic {
+case class BidiBackward(tactic: BackwardTactic, conclusion: HippoSequent) extends ForwardTactic with BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(tactic.hash).digest(conclusion).hash
 
-  override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof = {
+  override def runForward(ctx: HippoContext, premises: IndexedSeq[HippoSequent]): HippoProof = {
     val premiseMap = premises.zipWithIndex.map { case (p, i) => (i, p) }.toMap
     ctx.backward(tactic, conclusion, premiseMap)
   }
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = ctx
-    .backward(tactic, conclusion, premises)
+  override def runBackward(ctx: HippoContext, conclusion: HippoSequent, premises: Map[Int, HippoSequent]): HippoProof =
+    ctx.backward(tactic, conclusion, premises)
 }

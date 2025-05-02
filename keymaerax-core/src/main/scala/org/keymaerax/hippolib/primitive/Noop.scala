@@ -5,8 +5,7 @@
 
 package org.keymaerax.hippolib.primitive
 
-import org.keymaerax.core.Sequent
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
@@ -20,11 +19,11 @@ import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
 case object Noop extends ForwardTactic with BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].hash
 
-  override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof = {
+  override def runForward(ctx: HippoContext, premises: IndexedSeq[HippoSequent]): HippoProof = {
     require(premises.length == 1)
     HippoProof.Sequent(premises.head)
   }
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = ctx
-    .sequent(conclusion)
+  override def runBackward(ctx: HippoContext, conclusion: HippoSequent, premises: Map[Int, HippoSequent]): HippoProof =
+    ctx.sequent(conclusion)
 }

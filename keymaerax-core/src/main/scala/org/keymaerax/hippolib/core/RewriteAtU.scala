@@ -6,8 +6,8 @@
 package org.keymaerax.hippolib.core
 
 import org.keymaerax.bellerophon.UnificationException
-import org.keymaerax.core.{Equal, Equiv, Expression, Sequent}
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.core.{Equal, Equiv, Expression}
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{ExprPath, Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
@@ -34,22 +34,22 @@ case class RewriteAtU(at: ExprPath, eq: HippoProof, dir: Option[RewriteAt.Dir] =
     .hash
 
   require(eq.proved)
-  require(eq.conclusion.ante.isEmpty)
-  require(eq.conclusion.succ.length == 1)
+  require(eq.conclusion.sequent.ante.isEmpty)
+  require(eq.conclusion.sequent.succ.length == 1)
 
-  private val Seq(eqF) = eq.conclusion.succ
+  private val Seq(eqF) = eq.conclusion.sequent.succ
   private val (leftE: Expression, rightE: Expression) = eqF match {
     case f: Equal => (f.left, f.right)
     case f: Equiv => (f.left, f.right)
     case _ => ???
   }
 
-  override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof = {
+  override def runForward(ctx: HippoContext, premises: IndexedSeq[HippoSequent]): HippoProof = {
     require(premises.length == 1, "exactly one premise required")
     val Seq(before) = premises
 
-    require(before.succ.length == 1)
-    val Seq(beforeF) = before.succ
+    require(before.sequent.succ.length == 1)
+    val Seq(beforeF) = before.sequent.succ
 
     val beforeInner = at.select(beforeF)
     val (actualDir, subst) = dir match {
@@ -63,11 +63,15 @@ case class RewriteAtU(at: ExprPath, eq: HippoProof, dir: Option[RewriteAt.Dir] =
     ctx.chain(before).forwardJoin(RewriteAt(at, dir = Some(actualDir)), subst.toHippo(eq)).proof
   }
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
+  override def runBackward(
+      ctx: HippoContext,
+      conclusion: HippoSequent,
+      premises: Map[Int, HippoSequent],
+  ): HippoProof = {
     val after = conclusion
 
-    require(after.succ.length == 1)
-    val Seq(afterF) = after.succ
+    require(after.sequent.succ.length == 1)
+    val Seq(afterF) = after.sequent.succ
 
     val afterInner = at.select(afterF)
     val (actualDir, subst) = dir match {

@@ -5,8 +5,7 @@
 
 package org.keymaerax.hippolib.primitive
 
-import org.keymaerax.core.Sequent
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
@@ -16,21 +15,27 @@ import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
  *
  * Uses the original tactic without modification when run forwards.
  */
-case class BidiForward(tactic: ForwardTactic, premises: Map[Int, Sequent]) extends ForwardTactic with BackwardTactic {
+case class BidiForward(tactic: ForwardTactic, premises: Map[Int, HippoSequent])
+    extends ForwardTactic with BackwardTactic {
   override lazy val hash: Hash = Hasher()
     .digest[this.type]
     .digest(tactic.hash)
     .digestSeqWith(premises.toSeq.sortBy(_._1)) { case (b, (i, premise)) => b.digest(i).digest(premise) }
     .hash
 
-  override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof = ctx.forward(tactic, premises)
+  override def runForward(ctx: HippoContext, premises: IndexedSeq[HippoSequent]): HippoProof = ctx
+    .forward(tactic, premises)
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
+  override def runBackward(
+      ctx: HippoContext,
+      conclusion: HippoSequent,
+      premises: Map[Int, HippoSequent],
+  ): HippoProof = {
     val premiseList = (this.premises ++ premises).toIndexedSeq.sortBy(_._1).map(_._2)
     ctx.forward(tactic, premiseList)
   }
 }
 
 object BidiForward {
-  def apply(tactic: ForwardTactic, premises: (Int, Sequent)*): BidiForward = BidiForward(tactic, premises.toMap)
+  def apply(tactic: ForwardTactic, premises: (Int, HippoSequent)*): BidiForward = BidiForward(tactic, premises.toMap)
 }

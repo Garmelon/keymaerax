@@ -5,14 +5,14 @@
 
 package org.keymaerax.hippolib.primitive
 
-import org.keymaerax.core.Sequent
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, PureTactic}
 
 /** Run a [[BackwardTactic]] like a [[PureTactic]] by manually supplying it with the required conclusion. */
-case class PureBackward(tactic: BackwardTactic, conclusion: Sequent, premises: Map[Int, Sequent]) extends PureTactic {
+case class PureBackward(tactic: BackwardTactic, conclusion: HippoSequent, premises: Map[Int, HippoSequent])
+    extends PureTactic {
   override lazy val hash: Hash = Hasher()
     .digest[this.type]
     .digest(tactic.hash)
@@ -24,6 +24,6 @@ case class PureBackward(tactic: BackwardTactic, conclusion: Sequent, premises: M
 }
 
 object PureBackward {
-  def apply(tactic: BackwardTactic, conclusion: Sequent, premises: (Int, Sequent)*): PureBackward =
+  def apply(tactic: BackwardTactic, conclusion: HippoSequent, premises: (Int, HippoSequent)*): PureBackward =
     PureBackward(tactic, conclusion, premises.toMap)
 }

@@ -5,8 +5,7 @@
 
 package org.keymaerax.hippolib.primitive
 
-import org.keymaerax.core.Sequent
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
@@ -15,8 +14,9 @@ import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
 case class Bidi(forward: ForwardTactic, backward: BackwardTactic) extends ForwardTactic with BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(forward.hash).digest(backward.hash).hash
 
-  override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof = ctx.forward(forward, premises)
+  override def runForward(ctx: HippoContext, premises: IndexedSeq[HippoSequent]): HippoProof = ctx
+    .forward(forward, premises)
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = ctx
-    .backward(backward, conclusion, premises)
+  override def runBackward(ctx: HippoContext, conclusion: HippoSequent, premises: Map[Int, HippoSequent]): HippoProof =
+    ctx.backward(backward, conclusion, premises)
 }

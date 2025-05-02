@@ -29,7 +29,7 @@ import org.keymaerax.btactics.macros.{
   VariableArg,
 }
 import org.keymaerax.core.*
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, HippoException}
@@ -40,7 +40,11 @@ import org.keymaerax.pt.ElidingProvable
 case class Belle(name: String, args: Seq[BelleValue]) extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(name).digestSeq(args).hash
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
+  override def runBackward(
+      ctx: HippoContext,
+      conclusion: HippoSequent,
+      premises: Map[Int, HippoSequent],
+  ): HippoProof = {
     HippoException.require(DerivationInfo.hasCodeName(name), s"No bellerophon tactic named $name exists")
     val info = DerivationInfo.ofCodeName(name)
 
@@ -184,8 +188,8 @@ object Belle {
     (positionArgs.map(Right.apply) ++ nonPositionArgs.map(Left.apply)).toList
   }
 
-  def runBelleExpr(ctx: HippoContext, conclusion: Sequent, belleExpr: BelleExpr): HippoProof = {
-    val startProvable = Provable.startProof(conclusion)
+  def runBelleExpr(ctx: HippoContext, conclusion: HippoSequent, belleExpr: BelleExpr): HippoProof = {
+    val startProvable = Provable.startProof(conclusion.sequent)
     val startProvableSig = ElidingProvable(startProvable, Declaration(Map.empty))
 
     val resultValue = BelleInterpreter(belleExpr, BelleProvable(startProvableSig, None))
@@ -194,6 +198,6 @@ object Belle {
       case _ => HippoException.fail("Bellerophon interpreter did not return a Provable")
     }
 
-    ctx.belle(resultProvable)
+    ctx.belle(resultProvable, conclusion.defs)
   }
 }

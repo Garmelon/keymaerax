@@ -5,16 +5,16 @@
 
 package org.keymaerax.hippolib.core
 
-import org.keymaerax.core.{Expression, Sequent, SubstitutionPair, USubst}
+import org.keymaerax.core.{Expression, SubstitutionPair, USubst}
 import org.keymaerax.hippocore.ForwardTactic
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 
 case class US(subst: USubst) extends ForwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(subst).hash
 
-  override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof = {
+  override def runForward(ctx: HippoContext, premises: IndexedSeq[HippoSequent]): HippoProof = {
     require(premises.length == 1)
     val Seq(premise) = premises
     ctx.uSubstGlobal(premise, subst)

@@ -5,9 +5,8 @@
 
 package org.keymaerax.hippolib.core
 
-import org.keymaerax.core.Sequent
 import org.keymaerax.hippocore.BackwardTactic
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.infrastruct.UnificationMatch
@@ -15,16 +14,20 @@ import org.keymaerax.infrastruct.UnificationMatch
 case class Unify(proof: HippoProof) extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(proof).hash
 
-  require(proof.conclusion.ante.isEmpty)
-  require(proof.conclusion.succ.length == 1)
+  require(proof.conclusion.sequent.ante.isEmpty)
+  require(proof.conclusion.sequent.succ.length == 1)
 
-  private val Seq(proofF) = proof.conclusion.succ
+  private val Seq(proofF) = proof.conclusion.sequent.succ
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
-    require(conclusion.ante.isEmpty)
-    require(conclusion.succ.length == 1)
+  override def runBackward(
+      ctx: HippoContext,
+      conclusion: HippoSequent,
+      premises: Map[Int, HippoSequent],
+  ): HippoProof = {
+    require(conclusion.sequent.ante.isEmpty)
+    require(conclusion.sequent.succ.length == 1)
 
-    val Seq(concF) = conclusion.succ
+    val Seq(concF) = conclusion.sequent.succ
 
     UnificationMatch(proofF, concF).toHippo(proof)
   }

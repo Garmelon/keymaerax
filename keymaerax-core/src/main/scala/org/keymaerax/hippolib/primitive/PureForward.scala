@@ -5,14 +5,13 @@
 
 package org.keymaerax.hippolib.primitive
 
-import org.keymaerax.core.Sequent
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippocore.{ForwardTactic, PureTactic}
 
 /** Run a [[ForwardTactic]] like a [[PureTactic]] by manually supplying it with the required premises. */
-case class PureForward(tactic: ForwardTactic, premises: IndexedSeq[Sequent]) extends PureTactic {
+case class PureForward(tactic: ForwardTactic, premises: IndexedSeq[HippoSequent]) extends PureTactic {
   override lazy val hash: Hash = Hasher()
     .digest[this.type]
     .digest(tactic.hash)
@@ -23,5 +22,5 @@ case class PureForward(tactic: ForwardTactic, premises: IndexedSeq[Sequent]) ext
 }
 
 object PureForward {
-  def apply(tactic: ForwardTactic, premises: Sequent*): PureForward = PureForward(tactic, premises.toIndexedSeq)
+  def apply(tactic: ForwardTactic, premises: HippoSequent*): PureForward = PureForward(tactic, premises.toIndexedSeq)
 }

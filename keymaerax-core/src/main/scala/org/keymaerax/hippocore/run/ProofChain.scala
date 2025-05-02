@@ -6,7 +6,7 @@
 package org.keymaerax.hippocore.run
 
 import org.keymaerax.core.{Expression, Sequent, SubstitutionPair, URename, USubst, Variable}
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
 
 case class ProofChain(ctx: HippoContext, proof: HippoProof) {
@@ -30,7 +30,7 @@ case class ProofChain(ctx: HippoContext, proof: HippoProof) {
 
   def deduplicate(premise: Int, duplicate: Int): HippoProof = ctx.deduplicate(proof, premise, duplicate)
 
-  def weaken(premise: Sequent): HippoProof = ctx.weaken(proof, premise)
+  def weaken(premise: HippoSequent): HippoProof = ctx.weaken(proof, premise)
 
   /////////////////////////
   // Extending the proof //
@@ -46,36 +46,36 @@ case class ProofChain(ctx: HippoContext, proof: HippoProof) {
 
   def joinBackwardAt(at: Int)(proof: HippoProof): ProofChain = copy(proof = ctx.joinAt(at)(this.proof, proof))
 
-  def joinBackwardAll(proofs: HippoProof*): ProofChain = copy(proof = ctx.joinAll(this.proof, proofs: _*))
+  def joinBackwardAll(proofs: HippoProof*): ProofChain = copy(proof = ctx.joinAll(this.proof, proofs*))
 
   // Ways to extend a proof with tactics
 
-  def forward(tactic: ForwardTactic, otherPremises: Sequent*): ProofChain = forwardAt(0)(tactic, otherPremises: _*)
+  def forward(tactic: ForwardTactic, otherPremises: HippoSequent*): ProofChain = forwardAt(0)(tactic, otherPremises*)
 
-  def forwardAt(at: Int)(tactic: ForwardTactic, otherPremises: Sequent*): ProofChain = {
+  def forwardAt(at: Int)(tactic: ForwardTactic, otherPremises: HippoSequent*): ProofChain = {
     val premises = (otherPremises.take(at) :+ proof.conclusion) ++ otherPremises.drop(at)
-    joinForward(ctx.forward(tactic, premises: _*))
+    joinForward(ctx.forward(tactic, premises*))
   }
 
   def forwardJoin(tactic: ForwardTactic, otherPremises: HippoProof*): ProofChain = {
-    forwardJoinAt(0)(tactic, otherPremises: _*)
+    forwardJoinAt(0)(tactic, otherPremises*)
   }
 
   def forwardJoinAt(at: Int)(tactic: ForwardTactic, otherPremises: HippoProof*): ProofChain = {
     val premises = (otherPremises.take(at) :+ proof) ++ otherPremises.drop(at)
-    copy(proof = ctx.forwardJoin(tactic, premises: _*))
+    copy(proof = ctx.forwardJoin(tactic, premises*))
   }
 
-  def backward(tactic: BackwardTactic, premises: (Int, Sequent)*): ProofChain = backwardAt(0)(tactic, premises: _*)
+  def backward(tactic: BackwardTactic, premises: (Int, HippoSequent)*): ProofChain = backwardAt(0)(tactic, premises: _*)
 
-  def backwardAt(at: Int)(tactic: BackwardTactic, premises: (Int, Sequent)*): ProofChain =
-    copy(proof = ctx.backwardJoinAt(at)(tactic, proof, premises: _*))
+  def backwardAt(at: Int)(tactic: BackwardTactic, premises: (Int, HippoSequent)*): ProofChain =
+    copy(proof = ctx.backwardJoinAt(at)(tactic, proof, premises*))
 
   def backwardJoin(tactic: BackwardTactic, premises: (Int, HippoProof)*): ProofChain =
-    backwardJoinAt(0)(tactic, premises: _*)
+    backwardJoinAt(0)(tactic, premises*)
 
   def backwardJoinAt(at: Int)(tactic: BackwardTactic, premises: (Int, HippoProof)*): ProofChain = {
-    val chain = backwardAt(at)(tactic, premises.map { case (i, p) => (i, p.conclusion) }: _*)
+    val chain = backwardAt(at)(tactic, premises.map { case (i, p) => (i, p.conclusion) }*)
     premises.toMap.toSeq.sortBy(_._1).reverseIterator.foldLeft(chain) { case (c, (i, p)) => c.joinBackwardAt(i)(p) }
   }
 }

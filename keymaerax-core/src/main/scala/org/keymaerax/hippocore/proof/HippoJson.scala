@@ -67,21 +67,23 @@ object HippoJson {
     val fields = jsProof.asJsObject.fields
     val proof = fields(discriminant).convertTo[String] match {
       case "external" => HippoProof.External(
-          conclusion = fields("conclusion").convertTo[Sequent],
+          conclusion = fields("conclusion").convertTo[HippoSequent],
           premises = fields("premises").convertTo[IndexedSeq[HippoPremise]],
           source = fields("source").convertTo[ExternalSource],
         )
-      case "sequent" => HippoProof.Sequent(conclusion = fields("conclusion").convertTo[Sequent])
+      case "sequent" => HippoProof.Sequent(conclusion = fields("conclusion").convertTo[HippoSequent])
       case "coreAxiom" => HippoProof.CoreAxiom(name = fields("name").convertTo[String])
       case "coreAxiomaticRule" => HippoProof.CoreAxiomaticRule(name = fields("name").convertTo[String])
-      case "coreProofRule" => HippoProof
-          .CoreProofRule(conclusion = fields("conclusion").convertTo[Sequent], rule = fields("rule").convertTo[Rule])
+      case "coreProofRule" => HippoProof.CoreProofRule(
+          conclusion = fields("conclusion").convertTo[HippoSequent],
+          rule = fields("rule").convertTo[Rule],
+        )
       case "uRename" =>
         HippoProof.URename(proof = proofs(fields("proof").convertTo[Int]), rename = fields("rename").convertTo[URename])
       case "uSubst" =>
         HippoProof.USubst(proof = proofs(fields("proof").convertTo[Int]), subst = fields("subst").convertTo[USubst])
       case "globallySoundUSubst" => HippoProof.GloballySoundUSubst(
-          premise = fields("premise").convertTo[Sequent],
+          premise = fields("premise").convertTo[HippoSequent],
           subst = fields("subst").convertTo[USubst],
         )
       case "join" => HippoProof.Join(
@@ -100,7 +102,7 @@ object HippoJson {
           duplicate = fields("duplicate").convertTo[Int],
         )
       case "weaken" => HippoProof
-          .Weaken(proof = proofs(fields("proof").convertTo[Int]), premise = fields("premise").convertTo[Sequent])
+          .Weaken(proof = proofs(fields("proof").convertTo[Int]), premise = fields("premise").convertTo[HippoSequent])
 
     }
 

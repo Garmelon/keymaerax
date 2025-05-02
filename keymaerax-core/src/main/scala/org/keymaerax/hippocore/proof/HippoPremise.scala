@@ -5,7 +5,6 @@
 
 package org.keymaerax.hippocore.proof
 
-import org.keymaerax.core.Sequent
 import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 
 /**
@@ -14,11 +13,14 @@ import org.keymaerax.hippocore.tools.{Hashable, Hasher}
  * @param mustBeProved
  *   This premise must be proved for the proof to be locally sound.
  */
-case class HippoPremise(sequent: Sequent, mustBeProved: Boolean) extends Hashable {
+case class HippoPremise(sequent: HippoSequent, mustBeProved: Boolean) extends Hashable {
+  @inline
+  def mapSequent(f: HippoSequent => HippoSequent): HippoPremise = copy(sequent = f(sequent))
+
   override def digestInto(hasher: Hasher): Unit = hasher.digest(sequent).digest(mustBeProved)
 }
 
 object HippoPremise {
-  def locallySound(sequent: Sequent): HippoPremise = new HippoPremise(sequent, mustBeProved = false)
-  def locallyUnsound(sequent: Sequent): HippoPremise = new HippoPremise(sequent, mustBeProved = true)
+  def locallySound(sequent: HippoSequent): HippoPremise = new HippoPremise(sequent, mustBeProved = false)
+  def locallyUnsound(sequent: HippoSequent): HippoPremise = new HippoPremise(sequent, mustBeProved = true)
 }

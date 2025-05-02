@@ -8,7 +8,8 @@ package org.keymaerax.hippocore.run
 import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
 import org.keymaerax.hippocore.cache.{Cache, HippoProofFsCache, LruCache, ProvableFsCache}
-import org.keymaerax.hippocore.proof.{ExternalSource, HippoPremise, HippoProof}
+import org.keymaerax.hippocore.definitions.Definitions
+import org.keymaerax.hippocore.proof.{ExternalSource, HippoPremise, HippoProof, HippoSequent}
 import org.keymaerax.hippocore.tools.Hasher
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, HippoException, PureTactic, Tactic}
 
@@ -31,33 +32,33 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
   // In some occasions, they also perform slight optimizations to keep the resulting Proof smaller.
   // The Join constructor is wrapped separately later.
 
-  def sorry(conclusion: Sequent, premises: IndexedSeq[HippoPremise]): HippoProof = HippoProof
+  def sorry(conclusion: HippoSequent, premises: IndexedSeq[HippoPremise]): HippoProof = HippoProof
     .External(conclusion, premises, ExternalSource.Sorry)
 
-  def sorry(conclusion: Sequent, premises: HippoPremise*): HippoProof = sorry(conclusion, premises.toIndexedSeq)
+  def sorry(conclusion: HippoSequent, premises: HippoPremise*): HippoProof = sorry(conclusion, premises.toIndexedSeq)
 
-  def qe(formula: Formula): HippoProof = {
+  def qe(formula: Formula, defs: Definitions = Definitions.empty): HippoProof = {
     val provable = computeQe(formula)
     HippoProof.External(
-      conclusion = provable.conclusion,
-      premises = provable.subgoals.map(HippoPremise(_, mustBeProved = false)),
+      conclusion = HippoSequent(provable.conclusion, defs),
+      premises = provable.subgoals.map(HippoSequent(_, defs)).map(HippoPremise.locallySound),
       source = ExternalSource.QeTool(formula),
     )
   }
 
-  def belle(provable: Provable): HippoProof = HippoProof.External(
-    conclusion = provable.conclusion,
-    premises = provable.subgoals.map(HippoPremise(_, mustBeProved = false)),
+  def belle(provable: Provable, defs: Definitions = Definitions.empty): HippoProof = HippoProof.External(
+    conclusion = HippoSequent(provable.conclusion, defs),
+    premises = provable.subgoals.map(HippoSequent(_, defs)).map(HippoPremise.locallySound),
     source = ExternalSource.Bellerophon(provable),
   )
 
-  def sequent(conclusion: Sequent): HippoProof = HippoProof.Sequent(conclusion)
+  def sequent(conclusion: HippoSequent): HippoProof = HippoProof.Sequent(conclusion)
 
   def coreAxiom(name: String): HippoProof = HippoProof.CoreAxiom(name)
 
   def coreAxiomaticRule(name: String): HippoProof = HippoProof.CoreAxiomaticRule(name)
 
-  def coreProofRule(rule: Rule, conclusion: Sequent): HippoProof = HippoProof.CoreProofRule(conclusion, rule)
+  def coreProofRule(rule: Rule, conclusion: HippoSequent): HippoProof = HippoProof.CoreProofRule(conclusion, rule)
 
   def uRename(proof: HippoProof, uRename: URename): HippoProof = HippoProof.URename(proof, uRename)
 
@@ -69,9 +70,9 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
   def uSubst(proof: HippoProof, substs: (Expression, Expression)*): HippoProof =
     uSubst(proof, USubst(substs.map { case (from, to) => SubstitutionPair(from, to) }))
 
-  def uSubstGlobal(premise: Sequent, subst: USubst): HippoProof = HippoProof.GloballySoundUSubst(premise, subst)
+  def uSubstGlobal(premise: HippoSequent, subst: USubst): HippoProof = HippoProof.GloballySoundUSubst(premise, subst)
 
-  def uSubstGlobal(premise: Sequent, substs: (Expression, Expression)*): HippoProof =
+  def uSubstGlobal(premise: HippoSequent, substs: (Expression, Expression)*): HippoProof =
     uSubstGlobal(premise, USubst(substs.map { case (from, to) => SubstitutionPair(from, to) }))
 
   def swap(proof: HippoProof, premise1: Int, premise2: Int): HippoProof = {
@@ -84,7 +85,7 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
   def deduplicate(proof: HippoProof, premise: Int, duplicate: Int): HippoProof = HippoProof
     .Deduplicate(proof, premise, duplicate)
 
-  def weaken(proof: HippoProof, premise: Sequent): HippoProof = HippoProof.Weaken(proof, premise)
+  def weaken(proof: HippoProof, premise: HippoSequent): HippoProof = HippoProof.Weaken(proof, premise)
 
   /////////////////////////
   // Tactic applications //
@@ -94,17 +95,17 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
 
   def pure(tactic: PureTactic): HippoProof = tactic.runPure(this)
 
-  def forward(tactic: ForwardTactic, premises: IndexedSeq[Sequent]): HippoProof = tactic.runForward(this, premises)
+  def forward(tactic: ForwardTactic, premises: IndexedSeq[HippoSequent]): HippoProof = tactic.runForward(this, premises)
 
-  def forward(tactic: ForwardTactic, premises: Sequent*): HippoProof = forward(tactic, premises.toIndexedSeq)
+  def forward(tactic: ForwardTactic, premises: HippoSequent*): HippoProof = forward(tactic, premises.toIndexedSeq)
 
-  def backward(tactic: BackwardTactic, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = tactic
+  def backward(tactic: BackwardTactic, conclusion: HippoSequent, premises: Map[Int, HippoSequent]): HippoProof = tactic
     .runBackward(this, conclusion, premises)
 
-  def backward(tactic: BackwardTactic, conclusion: Sequent, premises: (Int, Sequent)*): HippoProof =
+  def backward(tactic: BackwardTactic, conclusion: HippoSequent, premises: (Int, HippoSequent)*): HippoProof =
     backward(tactic, conclusion, premises.toMap)
 
-  def tactic(tactic: Tactic, conclusion: Sequent, premises: IndexedSeq[Sequent]): HippoProof = tactic match {
+  def tactic(tactic: Tactic, conclusion: HippoSequent, premises: IndexedSeq[HippoSequent]): HippoProof = tactic match {
     // We want to give the tactic as much information as possible,
     // so we try running it backwards before we try running it forwards.
     // Any PureTactic is also a BackwardTactic, so we don't need to match it separately.
@@ -123,13 +124,13 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
     HippoProof.External(proof.conclusion, proof.premises, ExternalSource.Cache(hash))
   }
 
-  def cachedForward(tactic: ForwardTactic, premises: IndexedSeq[Sequent]): HippoProof = {
+  def cachedForward(tactic: ForwardTactic, premises: IndexedSeq[HippoSequent]): HippoProof = {
     val hash = Hasher().digest("forward").digest(tactic.hash).digestSeqWith(premises)(_.digest(_)).hash
     val proof = tacticCache.getOrCompute(hash) { forward(tactic, premises) }
     HippoProof.External(proof.conclusion, proof.premises, ExternalSource.Cache(hash))
   }
 
-  def cachedBackward(tactic: BackwardTactic, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
+  def cachedBackward(tactic: BackwardTactic, conclusion: HippoSequent, premises: Map[Int, HippoSequent]): HippoProof = {
     val hash = Hasher()
       .digest("backward")
       .digest(tactic.hash)
@@ -161,20 +162,22 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
   }
 
   def forwardJoin(tactic: ForwardTactic, premises: HippoProof*): HippoProof =
-    joinAll(forward(tactic, premises.map(_.conclusion): _*), premises: _*)
+    joinAll(forward(tactic, premises.map(_.conclusion)*), premises*)
 
-  def backwardJoin(tactic: BackwardTactic, conclusion: HippoProof, premises: (Int, Sequent)*): HippoProof =
-    backwardJoinAt(0)(tactic, conclusion, premises: _*)
+  def backwardJoin(tactic: BackwardTactic, conclusion: HippoProof, premises: (Int, HippoSequent)*): HippoProof =
+    backwardJoinAt(0)(tactic, conclusion, premises*)
 
-  def backwardJoinAt(at: Int)(tactic: BackwardTactic, conclusion: HippoProof, premises: (Int, Sequent)*): HippoProof =
-    joinAt(at)(conclusion, backward(tactic, conclusion.premises(at).sequent, premises: _*))
+  def backwardJoinAt(
+      at: Int
+  )(tactic: BackwardTactic, conclusion: HippoProof, premises: (Int, HippoSequent)*): HippoProof =
+    joinAt(at)(conclusion, backward(tactic, conclusion.premises(at).sequent, premises*))
 
   ///////////////////////////
   // Starting proof chains //
   ///////////////////////////
 
   def chain(proof: HippoProof): ProofChain = ProofChain(this, proof)
-  def chain(sequent: Sequent): ProofChain = chain(this.sequent(sequent))
+  def chain(sequent: HippoSequent): ProofChain = chain(this.sequent(sequent))
 
   //////////////////////////
   // Extracting Provables //

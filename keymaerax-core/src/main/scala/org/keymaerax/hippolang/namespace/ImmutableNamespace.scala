@@ -6,21 +6,21 @@
 package org.keymaerax.hippolang.namespace
 
 import org.keymaerax.hippocore.tools.{Hash, Hashable, Hasher}
-import org.keymaerax.hippolang.{HippoIdentifier, HippoValue}
+import org.keymaerax.hippolang.{HlangIdentifier, HlangValue}
 
-final case class ImmutableNamespace(variables: Map[HippoIdentifier, HippoValue], child: Option[ImmutableNamespace])
+final case class ImmutableNamespace(variables: Map[HlangIdentifier, HlangValue], child: Option[ImmutableNamespace])
     extends Namespace with Hashable {
 
-  override def declare(name: HippoIdentifier, value: HippoValue, mutable: Boolean): Unit =
+  override def declare(name: HlangIdentifier, value: HlangValue, mutable: Boolean): Unit =
     throw new UnsupportedOperationException("immutable namespace can't declare")
 
-  override def assign(name: HippoIdentifier, value: HippoValue): Unit =
+  override def assign(name: HlangIdentifier, value: HlangValue): Unit =
     throw new UnsupportedOperationException("immutable namespace can't assign")
 
-  override def lookup(name: HippoIdentifier): HippoValue = lookupOpt(name)
+  override def lookup(name: HlangIdentifier): HlangValue = lookupOpt(name)
     .getOrElse(throw new IllegalArgumentException(s"variable $name does not exist"))
 
-  override def lookupOpt(name: HippoIdentifier): Option[HippoValue] = variables
+  override def lookupOpt(name: HlangIdentifier): Option[HlangValue] = variables
     .get(name)
     .orElse(child.flatMap(_.lookupOpt(name)))
 

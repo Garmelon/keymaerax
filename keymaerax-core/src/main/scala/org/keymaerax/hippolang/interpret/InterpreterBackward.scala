@@ -11,17 +11,17 @@ import org.keymaerax.hippocore.proof.HippoProof
 import org.keymaerax.hippocore.run.{HippoContext, ProofChain}
 import org.keymaerax.hippocore.tools.HumanFormat.pluralizeN
 import org.keymaerax.hippocore.tools.PremisePermuter
-import org.keymaerax.hippolang.HippoConversions.*
+import org.keymaerax.hippolang.HlangConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
-import org.keymaerax.hippolang.{HippoExpression, HippoIdentifier, HippoValue, HlangException}
+import org.keymaerax.hippolang.{HlangException, HlangExpression, HlangIdentifier, HlangValue}
 import org.keymaerax.hippolib.primitive.Cached
 
 import scala.collection.mutable
 
 class InterpreterBackward(
-    ictx: HippoInterpreterContext,
+    ictx: InterpreterContext,
     ctx: HippoContext,
-    expr: HippoExpression.BackwardBlock,
+    expr: HlangExpression.BackwardBlock,
     conclusion: Sequent,
 ) extends InterpreterPure(ictx, ctx) {
 
@@ -31,7 +31,7 @@ class InterpreterBackward(
   require(expr.premises.length == expr.premises.toSet.size)
 
   private var chain: ProofChain = ctx.chain(conclusion)
-  private var goals: IndexedSeq[HippoIdentifier] = IndexedSeq(expr.conclusion)
+  private var goals: IndexedSeq[HlangIdentifier] = IndexedSeq(expr.conclusion)
   assert(goalsAreConsistent)
 
   private def goalsAreConsistent: Boolean = {
@@ -40,8 +40,8 @@ class InterpreterBackward(
     true
   }
 
-  override def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {
-    case e: HippoExpression.AssignGoal =>
+  override def eval(namespace: MutableNamespace, expr: HlangExpression): HlangValue = expr match {
+    case e: HlangExpression.AssignGoal =>
       val goalIdx = goals.indexOf(e.name)
       if (goalIdx < 0) throw HlangException(s"invalid goal", e.nameSlice, "this goal is not currently open")
       val goalSequent = chain.proof.premises(goalIdx).sequent
@@ -52,14 +52,14 @@ class InterpreterBackward(
       goals = goals.slice(0, goalIdx) ++ subgoals ++ goals.slice(goalIdx + 1, goals.length)
       assert(goalsAreConsistent)
 
-      HippoValue.Null
+      HlangValue.Null
 
-    case e: HippoExpression.LookupGoal =>
+    case e: HlangExpression.LookupGoal =>
       val goalIdx = goals.indexOf(e.name)
       if (goalIdx < 0) throw HlangException(s"invalid goal", e.slice, "this goal is not currently open")
       chain.proof.premises(goalIdx).sequent.toHValue
 
-    case e: HippoExpression.ApplyTactic =>
+    case e: HlangExpression.ApplyTactic =>
       throw HlangException(s"tactic application not allowed outside goal assignment $during", slice = e.slice)
 
     case _ => super.eval(namespace, expr)
@@ -67,12 +67,12 @@ class InterpreterBackward(
 
   private def evalInAssignGoal(
       namespace: MutableNamespace,
-      expr: HippoExpression,
+      expr: HlangExpression,
       conclusion: Sequent,
-  ): (HippoProof, IndexedSeq[HippoIdentifier]) = expr match {
-    case e: HippoExpression.LookupGoal => (ctx.sequent(conclusion), IndexedSeq(e.name))
+  ): (HippoProof, IndexedSeq[HlangIdentifier]) = expr match {
+    case e: HlangExpression.LookupGoal => (ctx.sequent(conclusion), IndexedSeq(e.name))
 
-    case e: HippoExpression.ApplyTactic =>
+    case e: HlangExpression.ApplyTactic =>
       // TODO Better error handling
       // TODO Use arguments that return a plain HippoProof as hints for the tactic
 
@@ -150,8 +150,8 @@ class InterpreterBackward(
 
 object InterpreterBackward {
   def tactic(
-      ictx: HippoInterpreterContext,
+      ictx: InterpreterContext,
       namespace: ImmutableNamespace,
-      expr: HippoExpression.BackwardBlock,
+      expr: HlangExpression.BackwardBlock,
   ): InterpreterBackwardTactic = InterpreterBackwardTactic(ictx, namespace, expr)
 }

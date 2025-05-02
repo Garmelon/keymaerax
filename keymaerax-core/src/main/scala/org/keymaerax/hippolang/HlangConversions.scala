@@ -13,108 +13,108 @@ import org.keymaerax.hippolang.namespace.ImmutableNamespace
 import org.keymaerax.hippolang.parse.{AstExpression, AstIdentifier, SourceFile}
 import org.keymaerax.hippolib.meta.{ProofInfo, TacticInfo}
 
-object HippoConversions {
+object HlangConversions {
   //////////////////////////////
   // Converting to HippoValue //
   //////////////////////////////
 
-  implicit class OptionConversion(val it: Option[HippoValue]) {
-    def toHValue: HippoValue = it.getOrElse(HippoValue.Null)
+  implicit class OptionConversion(val it: Option[HlangValue]) {
+    def toHValue: HlangValue = it.getOrElse(HlangValue.Null)
   }
 
   implicit class BooleanConversion(val it: Boolean) {
-    def toHValue: HippoValue.Bool = HippoValue.Bool(it)
+    def toHValue: HlangValue.Bool = HlangValue.Bool(it)
   }
 
   implicit class IntConversion(val it: Int) {
-    def toHValue: HippoValue.Int = HippoValue.Int(it)
+    def toHValue: HlangValue.Int = HlangValue.Int(it)
   }
 
   implicit class StringConversion(val it: String) {
-    def toHValue: HippoValue.String = HippoValue.String(it)
+    def toHValue: HlangValue.String = HlangValue.String(it)
   }
 
-  implicit class ListConversion(val it: IndexedSeq[HippoValue]) {
-    def toHValue: HippoValue.List = HippoValue.List(it)
+  implicit class ListConversion(val it: IndexedSeq[HlangValue]) {
+    def toHValue: HlangValue.List = HlangValue.List(it)
   }
 
   implicit class ExpressionConversion(val it: Expression) {
-    def toHValue: HippoValue.DlExpression = HippoValue.DlExpression(it)
+    def toHValue: HlangValue.DlExpression = HlangValue.DlExpression(it)
   }
 
   implicit class SequentConversion(val it: Sequent) {
-    def toHValue: HippoValue.DlSequent = HippoValue.DlSequent(it)
+    def toHValue: HlangValue.DlSequent = HlangValue.DlSequent(it)
   }
 
   implicit class HippoBuiltinFunctionConversion(val it: BuiltinFunction) {
-    def toHValue: HippoValue.BuiltinFunction = HippoValue.BuiltinFunction(it)
+    def toHValue: HlangValue.BuiltinFunction = HlangValue.BuiltinFunction(it)
   }
 
   implicit class ImmutableNamespaceConversion(val it: ImmutableNamespace) {
-    def toHValue: HippoValue.Namespace = HippoValue.Namespace(it)
+    def toHValue: HlangValue.Namespace = HlangValue.Namespace(it)
   }
 
   implicit class HippoProofConversion(val it: HippoProof) {
-    def toHValue: HippoValue.Proof = HippoValue.Proof(it)
+    def toHValue: HlangValue.Proof = HlangValue.Proof(it)
   }
 
   implicit class TacticConversion(val it: hippocore.Tactic) {
-    def toHValue: HippoValue.Tactic = HippoValue.Tactic(it)
+    def toHValue: HlangValue.Tactic = HlangValue.Tactic(it)
   }
 
-  implicit class HippoIdentifierConversion(val it: HippoIdentifier) {
-    def toHValue: HippoValue.String = it.value.toHValue
+  implicit class HippoIdentifierConversion(val it: HlangIdentifier) {
+    def toHValue: HlangValue.String = it.value.toHValue
   }
 
   implicit class ProofInfoConversion(val it: ProofInfo) {
-    def toHValue: HippoValue.ProofInfo = HippoValue.ProofInfo(it)
+    def toHValue: HlangValue.ProofInfo = HlangValue.ProofInfo(it)
   }
 
   implicit class TacticInfoConversion(val it: TacticInfo) {
-    def toHValue: HippoValue.TacticInfo = HippoValue.TacticInfo(it)
+    def toHValue: HlangValue.TacticInfo = HlangValue.TacticInfo(it)
   }
 
   implicit class AstIdentifierConversion(val it: AstIdentifier) {
-    def toHValue: HippoValue.String = it.name.toHValue
+    def toHValue: HlangValue.String = it.name.toHValue
   }
 
   ///////////////////////////////////
   // Converting to HippoExpression //
   ///////////////////////////////////
 
-  implicit class HippoValueConversion(val it: HippoValue) {
-    def toHExpr(slice: SourceFile#Slice): HippoExpression.Const = HippoExpression.Const(slice, it)
+  implicit class HippoValueConversion(val it: HlangValue) {
+    def toHExpr(slice: SourceFile#Slice): HlangExpression.Const = HlangExpression.Const(slice, it)
   }
 
   implicit class AstExpressionConversion(val it: AstExpression) {
-    import org.keymaerax.hippolang.HippoExpression.*
+    import org.keymaerax.hippolang.HlangExpression.*
 
-    def toHExpr: HippoExpression = it match {
-      case e: AstExpression.Null => HippoValue.Null.toHExpr(e.slice)
-      case e: AstExpression.Bool => HippoValue.Bool(e.value).toHExpr(e.slice)
-      case e: AstExpression.Int => HippoValue.Int(e.value).toHExpr(e.slice)
-      case e: AstExpression.String => HippoValue.String(e.value).toHExpr(e.slice)
+    def toHExpr: HlangExpression = it match {
+      case e: AstExpression.Null => HlangValue.Null.toHExpr(e.slice)
+      case e: AstExpression.Bool => HlangValue.Bool(e.value).toHExpr(e.slice)
+      case e: AstExpression.Int => HlangValue.Int(e.value).toHExpr(e.slice)
+      case e: AstExpression.String => HlangValue.String(e.value).toHExpr(e.slice)
       case e: AstExpression.DlTerm =>
         val value = e.args match {
           case None => e.value
           case Some(args) => Interpolator.replaceFuncArgs(args.map(_.name.value), e.value)
         }
-        HippoExpression.DlExpression(e.slice, value)
+        HlangExpression.DlExpression(e.slice, value)
       case e: AstExpression.DlFormula =>
         val value = e.args match {
           case None => e.value
           case Some(args) => Interpolator.replacePredArgs(args.map(_.name.value), e.value)
         }
-        HippoExpression.DlExpression(e.slice, value)
+        HlangExpression.DlExpression(e.slice, value)
       case e: AstExpression.DlFormulaPredicational =>
         val value = e.arg match {
           case None => e.value
           case Some(arg) => Interpolator.replacePredicationalArg(arg.name.value, e.value)
         }
-        HippoExpression.DlExpression(e.slice, value)
-      case e: AstExpression.DlProgram => HippoExpression.DlExpression(e.slice, e.value)
-      case e: AstExpression.DlSequent => HippoExpression.DlSequent(e.slice, e.value)
-      case e: AstExpression.BuiltinFunction => HippoValue.BuiltinFunction(e.value).toHExpr(e.slice)
+        HlangExpression.DlExpression(e.slice, value)
+      case e: AstExpression.DlProgram => HlangExpression.DlExpression(e.slice, e.value)
+      case e: AstExpression.DlSequent => HlangExpression.DlSequent(e.slice, e.value)
+      case e: AstExpression.BuiltinFunction => HlangValue.BuiltinFunction(e.value).toHExpr(e.slice)
       case e: AstExpression.Import => Import(slice = e.slice, path = e.path.toHExpr)
       case e: AstExpression.Declare => Declare(
           slice = e.slice,
@@ -157,7 +157,7 @@ object HippoConversions {
           inner = e.inner.toHExpr,
         )
       case e: AstExpression.BackwardAssign =>
-        val goal = HippoIdentifier("conclusion")
+        val goal = HlangIdentifier("conclusion")
         val assignValueSlice = e.assignSlice + e.value.slice
         BackwardBlock(
           slice = e.slice,
@@ -276,7 +276,7 @@ object HippoConversions {
         )
     }
 
-    private def convertPipeLeftTactic(e: AstExpression.PipeLeftTactic): HippoExpression = e.target match {
+    private def convertPipeLeftTactic(e: AstExpression.PipeLeftTactic): HlangExpression = e.target match {
       case t: AstExpression.ApplyTactic =>
         def isPlaceholder(e: AstExpression): Boolean = e match {
           case arg: AstExpression.Lookup if arg.name == AstIdentifier("_") => true

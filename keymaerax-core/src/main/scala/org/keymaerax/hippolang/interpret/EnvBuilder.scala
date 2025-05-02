@@ -7,23 +7,23 @@ package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.core
 import org.keymaerax.core.DotTerm
-import org.keymaerax.hippolang.HippoConversions.*
+import org.keymaerax.hippolang.HlangConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace, Namespace}
-import org.keymaerax.hippolang.{BuiltinFunction, HippoIdentifier, HippoValue}
+import org.keymaerax.hippolang.{BuiltinFunction, HlangIdentifier, HlangValue}
 import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.parser.InterpretedSymbols
 
 import scala.collection.mutable
 
 class EnvBuilder(child: Option[Namespace] = None) {
-  private val env = mutable.Map.empty[HippoIdentifier, EnvBuilder.Variable]
+  private val env = mutable.Map.empty[HlangIdentifier, EnvBuilder.Variable]
 
-  def add(name: HippoIdentifier, value: HippoValue, mutable: Boolean = false): EnvBuilder = {
+  def add(name: HlangIdentifier, value: HlangValue, mutable: Boolean = false): EnvBuilder = {
     env.put(name, EnvBuilder.VarValue(value, mutable))
     this
   }
 
-  def addPath(path: List[HippoIdentifier], value: HippoValue, mutable: Boolean = false): EnvBuilder = {
+  def addPath(path: List[HlangIdentifier], value: HlangValue, mutable: Boolean = false): EnvBuilder = {
     path match {
       case Nil => throw new IllegalArgumentException("path must not be empty")
       case name :: Nil => add(name, value, mutable)
@@ -40,7 +40,7 @@ class EnvBuilder(child: Option[Namespace] = None) {
 
   def addBuiltins(): EnvBuilder = {
     for (builtin <- BuiltinFunction.all) {
-      addPath(List(HippoIdentifier("builtins"), builtin.name), builtin.toHValue)
+      addPath(List(HlangIdentifier("builtins"), builtin.name), builtin.toHValue)
       if (!builtin.hidden) add(builtin.name, builtin.toHValue)
     }
 
@@ -58,7 +58,7 @@ class EnvBuilder(child: Option[Namespace] = None) {
       val func = InterpretedSymbols.mathKyxDefs.asNamedSymbols.find(_.name == name).get.asInstanceOf[core.Function]
       val args = (0 until func.realDomainDim.get).map(i => core.DotTerm(idx = Some(i))).toList
       val funcOf = core.FuncOf(func = func, child = argsTerm(args))
-      addPath(List(HippoIdentifier("math"), HippoIdentifier(name)), funcOf.toHValue)
+      addPath(List(HlangIdentifier("math"), HlangIdentifier(name)), funcOf.toHValue)
     }
 
     addMathKyxDef("sqrt")
@@ -80,13 +80,13 @@ class EnvBuilder(child: Option[Namespace] = None) {
   }
 
   def addHippoLib(lib: HippoLib): EnvBuilder = {
-    val byName = mutable.Map.empty[String, HippoValue]
+    val byName = mutable.Map.empty[String, HlangValue]
     for ((name, info) <- lib.db.proofs) byName.put(name, info.toHValue)
     for ((name, info) <- lib.db.tactics) byName.put(name, info.toHValue)
     for ((from, to) <- lib.db.aliases) byName.put(from, byName(to))
 
     for ((name, value) <- byName) {
-      val path = name.split('.').map(HippoIdentifier(_)).toList
+      val path = name.split('.').map(HlangIdentifier(_)).toList
       addPath(path, value)
     }
 
@@ -107,6 +107,6 @@ class EnvBuilder(child: Option[Namespace] = None) {
 
 object EnvBuilder {
   private sealed trait Variable
-  private case class VarValue(value: HippoValue, mutable: Boolean) extends Variable
+  private case class VarValue(value: HlangValue, mutable: Boolean) extends Variable
   private case class VarBuilder(builder: EnvBuilder, mutable: Boolean) extends Variable
 }

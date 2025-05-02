@@ -6,21 +6,21 @@
 package org.keymaerax.hippolang
 
 import org.keymaerax.hippocore.tools.{Hashable, Hasher}
-import org.keymaerax.hippolang.parse.HippoParser
+import org.keymaerax.hippolang.parse.HlangParser
 
-case class HippoIdentifier(value: String) extends Hashable with Comparable[HippoIdentifier] {
-  require(HippoIdentifier.isValid(value), "invalid identifier")
+case class HlangIdentifier(value: String) extends Hashable with Comparable[HlangIdentifier] {
+  require(HlangIdentifier.isValid(value), "invalid identifier")
 
   def plain: String = value
   def quoted: String = s"'$value'"
-  def quotedIfNecessary: String = if (HippoParser.keywords.contains(value)) quoted else plain
+  def quotedIfNecessary: String = if (HlangParser.keywords.contains(value)) quoted else plain
 
   override def digestInto(hasher: Hasher): Unit = hasher.digest(value)
-  override def compareTo(o: HippoIdentifier): Int = value.compareTo(o.value)
+  override def compareTo(o: HlangIdentifier): Int = value.compareTo(o.value)
   override def toString: String = quotedIfNecessary
 }
 
-object HippoIdentifier {
+object HlangIdentifier {
   private def isAsciiLetter(c: Int): Boolean = ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z')
   private def isAsciiDigit(c: Int): Boolean = '0' <= c && c <= '9'
 

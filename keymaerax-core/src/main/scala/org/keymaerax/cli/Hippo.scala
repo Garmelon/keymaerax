@@ -10,7 +10,7 @@ import org.keymaerax.btactics.ToolProvider
 import org.keymaerax.cli.KeymaeraxCore.{combineToolConfigs, exit, initializeProver, toolConfigFromFile}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippolang.HlangException
-import org.keymaerax.hippolang.interpret.HippoInterpreterContext
+import org.keymaerax.hippolang.interpret.InterpreterContext
 import org.keymaerax.tools.ToolName
 
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
@@ -23,7 +23,7 @@ class Hippo(options: Options) {
   private val home = Path.of(FileConfiguration.KEYMAERAX_HOME_PATH)
   private val cacheDir = home.resolve("hippo").resolve("cache")
   private val ctx = HippoContext.withCacheDir(ToolProvider.provider, cacheDir)
-  private val interpreter = HippoInterpreterContext.withHippoLib(ctx)
+  private val interpreter = InterpreterContext.withHippoLib(ctx)
 
   def run(file: Path): Unit = {
     try interpreter.run(file)

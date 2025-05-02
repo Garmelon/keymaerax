@@ -5,29 +5,29 @@
 
 package org.keymaerax.hippolang.namespace
 
-import org.keymaerax.hippolang.{HippoIdentifier, HippoValue}
+import org.keymaerax.hippolang.{HlangIdentifier, HlangValue}
 
 import scala.collection.mutable
 
 final class MutableNamespace(private val child: Option[Namespace] = None) extends Namespace {
-  private val variables: mutable.Map[HippoIdentifier, MutableNamespace.Variable] = mutable.Map.empty
+  private val variables: mutable.Map[HlangIdentifier, MutableNamespace.Variable] = mutable.Map.empty
 
-  override def declare(name: HippoIdentifier, value: HippoValue, mutable: Boolean): Unit = {
+  override def declare(name: HlangIdentifier, value: HlangValue, mutable: Boolean): Unit = {
     require(!variables.contains(name), s"variable $name already declared in current scope")
     variables.put(name, new MutableNamespace.Variable(value, mutable))
   }
 
-  override def assign(name: HippoIdentifier, value: HippoValue): Unit = variables.get(name) match {
+  override def assign(name: HlangIdentifier, value: HlangValue): Unit = variables.get(name) match {
     case Some(variable) if variable.mutable => variable.value = value
     case Some(_) => throw new IllegalArgumentException(s"variable $name is immutable")
     case None =>
       child.getOrElse(throw new IllegalArgumentException(s"variable $name does not exist")).assign(name, value)
   }
 
-  override def lookup(name: HippoIdentifier): HippoValue = lookupOpt(name)
+  override def lookup(name: HlangIdentifier): HlangValue = lookupOpt(name)
     .getOrElse(throw new IllegalArgumentException(s"variable $name does not exist"))
 
-  override def lookupOpt(name: HippoIdentifier): Option[HippoValue] = variables
+  override def lookupOpt(name: HlangIdentifier): Option[HlangValue] = variables
     .get(name)
     .map(_.value)
     .orElse(child.flatMap(_.lookupOpt(name)))
@@ -37,5 +37,5 @@ final class MutableNamespace(private val child: Option[Namespace] = None) extend
 }
 
 private object MutableNamespace {
-  private class Variable(var value: HippoValue, val mutable: Boolean)
+  private class Variable(var value: HlangValue, val mutable: Boolean)
 }

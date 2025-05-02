@@ -5,12 +5,12 @@
 
 package org.keymaerax.hippolang.parse
 
-import org.keymaerax.hippolang.HippoIdentifier
+import org.keymaerax.hippolang.HlangIdentifier
 
-case class AstIdentifier(name: HippoIdentifier) {
+case class AstIdentifier(name: HlangIdentifier) {
   override def toString: String = name.quoted
 }
 
 object AstIdentifier {
-  def apply(name: String): AstIdentifier = AstIdentifier(HippoIdentifier(name))
+  def apply(name: String): AstIdentifier = AstIdentifier(HlangIdentifier(name))
 }

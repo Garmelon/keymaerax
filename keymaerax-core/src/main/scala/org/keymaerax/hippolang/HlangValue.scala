@@ -11,7 +11,7 @@ import org.keymaerax.hippocore.tools.{Hashable, Hasher, SequentPrinter}
 import org.keymaerax.hippolang.namespace.ImmutableNamespace
 import org.keymaerax.{core, hippocore}
 
-sealed trait HippoValue extends Hashable {
+sealed trait HlangValue extends Hashable {
   def isTruthy: Boolean = true
   def asInt: Int = throw new IllegalArgumentException("value is not an integer")
   def asString: String = throw new IllegalArgumentException("value is not a string")
@@ -23,54 +23,54 @@ sealed trait HippoValue extends Hashable {
   def format: String
 }
 
-object HippoValue {
-  final case object Null extends HippoValue {
+object HlangValue {
+  final case object Null extends HlangValue {
     override def isTruthy: Boolean = false
     override def format: java.lang.String = "null"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type]
   }
 
-  final case class Bool(value: scala.Boolean) extends HippoValue {
+  final case class Bool(value: scala.Boolean) extends HlangValue {
     override def isTruthy: Boolean = value
     override def format: java.lang.String = value.toString
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class Int(value: scala.Int) extends HippoValue {
+  final case class Int(value: scala.Int) extends HlangValue {
     override def asInt: scala.Int = value
     override def format: java.lang.String = value.toString
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class String(value: java.lang.String) extends HippoValue {
+  final case class String(value: java.lang.String) extends HlangValue {
     override def asString: java.lang.String = value
     override def format: java.lang.String = s"\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class List(values: IndexedSeq[HippoValue]) extends HippoValue {
+  final case class List(values: IndexedSeq[HlangValue]) extends HlangValue {
     override def format: java.lang.String = s"list(${values.map(_.format).mkString(", ")})"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digestSeq(values)
   }
 
-  final case class DlExpression(value: core.Expression) extends HippoValue {
+  final case class DlExpression(value: core.Expression) extends HlangValue {
     override def asExpression: Expression = value
     override def format: java.lang.String = s"dL{ ${value.prettyString} }"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class DlSequent(value: core.Sequent) extends HippoValue {
+  final case class DlSequent(value: core.Sequent) extends HlangValue {
     override def asSequent: core.Sequent = value
     override def format: java.lang.String = s"dLs{ ${SequentPrinter.smart(value)} }"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class Namespace(value: ImmutableNamespace) extends HippoValue {
+  final case class Namespace(value: ImmutableNamespace) extends HlangValue {
     override def format: java.lang.String = s"<namespace ${value.hash.hexString}>"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class Proof(value: HippoProof) extends HippoValue {
+  final case class Proof(value: HippoProof) extends HlangValue {
     override def asProof: HippoProof = value
     override def format: java.lang.String = {
       if (value.premises.isEmpty) return s"<proof of ${SequentPrinter.oneline(value.conclusion)}>"
@@ -86,19 +86,19 @@ object HippoValue {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class Tactic(value: hippocore.Tactic) extends HippoValue {
+  final case class Tactic(value: hippocore.Tactic) extends HlangValue {
     override def asTactic: hippocore.Tactic = value
     override def format: java.lang.String = s"<tactic ${value.getClass.getName} ${value.hash.hexString}>"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class ProofInfo(value: org.keymaerax.hippolib.meta.ProofInfo) extends HippoValue {
+  final case class ProofInfo(value: org.keymaerax.hippolib.meta.ProofInfo) extends HlangValue {
     override def asProof: HippoProof = value.proof
     override def format: java.lang.String = s"<proof info for ${Proof(value.proof).format}>"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class TacticInfo(value: org.keymaerax.hippolib.meta.TacticInfo) extends HippoValue {
+  final case class TacticInfo(value: org.keymaerax.hippolib.meta.TacticInfo) extends HlangValue {
     override def asTactic: hippocore.Tactic = value.constructor.constructPositional(IndexedSeq())
     override def format: java.lang.String = s"<tactic info for ${value.constructor.hash}>"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
@@ -106,20 +106,20 @@ object HippoValue {
 
   // Function-like
 
-  final case class BuiltinFunction(value: org.keymaerax.hippolang.BuiltinFunction) extends HippoValue {
+  final case class BuiltinFunction(value: org.keymaerax.hippolang.BuiltinFunction) extends HlangValue {
     override def format: java.lang.String = s"<builtin function ${value.name}>"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class BuiltinMemberFunction(target: HippoValue, value: org.keymaerax.hippolang.BuiltinMemberFunction)
-      extends HippoValue {
+  final case class BuiltinMemberFunction(target: HlangValue, value: org.keymaerax.hippolang.BuiltinMemberFunction)
+      extends HlangValue {
 
     override def format: java.lang.String = s"<builtin member function ${value.name}>"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class Function(env: ImmutableNamespace, args: Seq[HippoIdentifier], body: HippoExpression)
-      extends HippoValue {
+  final case class Function(env: ImmutableNamespace, args: Seq[HlangIdentifier], body: HlangExpression)
+      extends HlangValue {
 
     override def format: java.lang.String = {
       val hash = Hasher().digest(this).hash

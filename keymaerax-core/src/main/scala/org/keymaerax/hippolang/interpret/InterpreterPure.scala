@@ -31,6 +31,7 @@ import org.keymaerax.hippolang.{
   HlangExpression,
   HlangIdentifier,
   HlangValue,
+  PrettyPrinter,
 }
 import org.keymaerax.hippolib.meta.TacticInfo
 import org.keymaerax.hippolib.primitive.Cached
@@ -277,7 +278,11 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
 
     case BuiltinFunction.Print =>
       val parts = args.map {
-        case HlangValue.String(str) => str
+        case HlangValue.String(v) => v
+        case HlangValue.DlExpression(v) => PrettyPrinter.printHippoExpression(v)
+        case HlangValue.DlSequent(v) => PrettyPrinter.printHippoSequent(v)
+        case HlangValue.Proof(v) => PrettyPrinter.printHippoProof(v)
+        case HlangValue.ProofInfo(v) => PrettyPrinter.printHippoProof(v.proof)
         case value => value.format
       }
       println(parts.mkString)

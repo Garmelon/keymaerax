@@ -11,7 +11,7 @@ import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 import scala.collection.mutable
 
 sealed abstract class HippoProof extends Hashable {
-  val conclusion: core.Sequent
+  val conclusion: HippoSequent
   val premises: IndexedSeq[HippoPremise]
 
   final def proved: Boolean = premises.isEmpty
@@ -25,7 +25,7 @@ sealed abstract class HippoProof extends Hashable {
 
   final def localProvable(fromExternal: HippoProof.FromExternal): core.Provable = {
     require(locallySound)
-    computeProvable(fromExternal, premises.map(p => core.Provable.startProof(p.sequent)))
+    computeProvable(fromExternal, premises.map(p => core.Provable.startProof(p.sequent.sequentExpanded)))
   }
 
   final def globalProvable(
@@ -39,10 +39,10 @@ sealed abstract class HippoProof extends Hashable {
 
   final def assertConsistency(premises: IndexedSeq[core.Provable])(provable: => core.Provable): core.Provable = {
     assert(this.premises.length == premises.length)
-    assert(this.premises.zip(premises).forall { case (tp, p) => tp.sequent == p.conclusion })
+    assert(this.premises.zip(premises).forall { case (tp, p) => tp.sequent.sequentExpanded == p.conclusion })
 
     val computedProvable = provable
-    assert(this.conclusion == computedProvable.conclusion)
+    assert(this.conclusion.sequentExpanded == computedProvable.conclusion)
 
     computedProvable
   }
@@ -134,7 +134,7 @@ object HippoProof {
 
   private type FromExternal = (External, IndexedSeq[core.Provable]) => core.Provable
 
-  final case class External(conclusion: core.Sequent, premises: IndexedSeq[HippoPremise], source: ExternalSource)
+  final case class External(conclusion: HippoSequent, premises: IndexedSeq[HippoPremise], source: ExternalSource)
       extends HippoProof {
 
     override protected def computeProvable(
@@ -149,22 +149,22 @@ object HippoProof {
       .digest(source)
   }
 
-  final case class Sequent(conclusion: core.Sequent) extends HippoProof {
-    val provable: core.Provable = core.Provable.startProof(conclusion)
-    val premises: IndexedSeq[HippoPremise] = provable.subgoals.map(HippoPremise.locallySound)
+  final case class Sequent(conclusion: HippoSequent) extends HippoProof {
+    val provable: core.Provable = core.Provable.startProof(conclusion.sequentExpanded)
+    val premises: IndexedSeq[HippoPremise] = IndexedSeq(HippoPremise.locallySound(conclusion))
 
     override protected def computeProvable(
         fromExternal: FromExternal,
         premises: IndexedSeq[core.Provable],
-    ): core.Provable = assertConsistency(premises) { applyPremises(provable, premises) }
+    ): core.Provable = assertConsistency(premises) { applyPremises(conclusion.defs.expandAll(provable), premises) }
 
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(conclusion)
   }
 
   final case class CoreAxiom(name: String) extends HippoProof {
     val provable: core.Provable = core.Provable.axioms(name)
-    val conclusion: core.Sequent = provable.conclusion
-    val premises: IndexedSeq[HippoPremise] = provable.subgoals.map(HippoPremise.locallySound)
+    val conclusion: HippoSequent = HippoSequent(provable.conclusion)
+    val premises: IndexedSeq[HippoPremise] = provable.subgoals.map(HippoSequent(_)).map(HippoPremise.locallySound)
 
     override protected def computeProvable(
         fromExternal: FromExternal,
@@ -176,8 +176,8 @@ object HippoProof {
 
   final case class CoreAxiomaticRule(name: String) extends HippoProof {
     val provable: core.Provable = core.Provable.rules(name)
-    val conclusion: core.Sequent = provable.conclusion
-    val premises: IndexedSeq[HippoPremise] = provable.subgoals.map(HippoPremise.locallySound)
+    val conclusion: HippoSequent = HippoSequent(provable.conclusion)
+    val premises: IndexedSeq[HippoPremise] = provable.subgoals.map(HippoSequent(_)).map(HippoPremise.locallySound)
 
     override protected def computeProvable(
         fromExternal: FromExternal,
@@ -187,22 +187,27 @@ object HippoProof {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(name)
   }
 
-  final case class CoreProofRule(conclusion: core.Sequent, rule: core.Rule) extends HippoProof {
-    val provable: core.Provable = core.Provable.startProof(conclusion)(rule, 0)
-    val premises: IndexedSeq[HippoPremise] = provable.subgoals.map(HippoPremise.locallySound)
+  final case class CoreProofRule(conclusion: HippoSequent, rule: core.Rule) extends HippoProof {
+    val provable: core.Provable = core.Provable.startProof(conclusion.sequent)(rule, 0)
+
+    val premises: IndexedSeq[HippoPremise] = provable
+      .subgoals
+      .map(HippoSequent(_, conclusion.defs))
+      .map(HippoPremise.locallySound)
 
     override protected def computeProvable(
         fromExternal: FromExternal,
         premises: IndexedSeq[core.Provable],
-    ): core.Provable = assertConsistency(premises) { applyPremises(provable, premises) }
+    ): core.Provable = assertConsistency(premises) { applyPremises(conclusion.defs.expandAll(provable), premises) }
 
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(conclusion).digest(rule)
   }
 
   final case class URename(proof: HippoProof, rename: core.URename) extends HippoProof {
     require(proof.locallySound)
-    val conclusion: core.Sequent = rename(proof.conclusion)
-    val premises: IndexedSeq[HippoPremise] = proof.premises.map(p => p.copy(sequent = rename(p.sequent)))
+
+    val conclusion: HippoSequent = proof.conclusion.applyRename(rename)
+    val premises: IndexedSeq[HippoPremise] = proof.premises.map(_.mapSequent(_.applyRename(rename)))
 
     override protected def computeProvable(
         fromExternal: FromExternal,
@@ -217,12 +222,14 @@ object HippoProof {
 
   final case class USubst(proof: HippoProof, subst: core.USubst) extends HippoProof {
     require(proof.locallySound)
+
     // See Provable.apply(USubst) for justification
     private val noTaboos = proof.proved || proof.sameShapeAs(CQrule)
-    val conclusion: core.Sequent = if (noTaboos) subst(proof.conclusion) else subst.applyAllTaboo(proof.conclusion)
+    val conclusion: HippoSequent =
+      if (noTaboos) proof.conclusion.applySubst(subst) else proof.conclusion.applySubstAllTaboo(subst)
     val premises: IndexedSeq[HippoPremise] =
-      if (noTaboos) proof.premises.map(p => p.copy(sequent = subst(p.sequent)))
-      else proof.premises.map(p => p.copy(sequent = subst.applyAllTaboo(p.sequent)))
+      if (noTaboos) proof.premises.map(_.mapSequent(_.applySubst(subst)))
+      else proof.premises.map(_.mapSequent(_.applySubstAllTaboo(subst)))
 
     override protected def computeProvable(
         fromExternal: FromExternal,
@@ -235,8 +242,8 @@ object HippoProof {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(proof).digest(subst)
   }
 
-  final case class GloballySoundUSubst(premise: core.Sequent, subst: core.USubst) extends HippoProof {
-    val conclusion: core.Sequent = subst(premise)
+  final case class GloballySoundUSubst(premise: HippoSequent, subst: core.USubst) extends HippoProof {
+    val conclusion: HippoSequent = premise.applySubst(subst)
     val premises: IndexedSeq[HippoPremise] = IndexedSeq(HippoPremise.locallyUnsound(premise))
 
     override protected def computeProvable(
@@ -251,7 +258,7 @@ object HippoProof {
     require(proof.premises.indices.contains(at))
     require(proof.premises(at).sequent == subproof.conclusion)
 
-    val conclusion: core.Sequent = proof.conclusion
+    val conclusion: HippoSequent = proof.conclusion
     val premises: IndexedSeq[HippoPremise] = {
       val before = proof.premises.take(at)
       val premise = proof.premises(at)
@@ -281,7 +288,7 @@ object HippoProof {
     require(proof.premises.indices.contains(premise1))
     require(proof.premises.indices.contains(premise2))
 
-    val conclusion: core.Sequent = proof.conclusion
+    val conclusion: HippoSequent = proof.conclusion
     val premises: IndexedSeq[HippoPremise] = for (i <- proof.premises.indices)
       yield proof.premises(if (i == premise1) premise2 else if (i == premise2) premise1 else i)
 
@@ -304,7 +311,7 @@ object HippoProof {
     require(proof.premises.indices.contains(duplicate))
     require(proof.premises(premise).sequent == proof.premises(duplicate).sequent)
 
-    val conclusion: core.Sequent = proof.conclusion
+    val conclusion: HippoSequent = proof.conclusion
     val premises: IndexedSeq[HippoPremise] = {
       val actualPremise = proof.premises(premise)
       val duplicatePremise = proof.premises(premise)
@@ -327,12 +334,14 @@ object HippoProof {
       .digest(duplicate)
   }
 
-  final case class Weaken(proof: HippoProof, premise: core.Sequent) extends HippoProof {
-    val conclusion: core.Sequent = proof.conclusion
+  final case class Weaken(proof: HippoProof, premise: HippoSequent) extends HippoProof {
+    val conclusion: HippoSequent = proof.conclusion
     val premises: IndexedSeq[HippoPremise] = proof.premises :+ HippoPremise(sequent = premise, mustBeProved = false)
 
     override def computeProvable(fromExternal: FromExternal, premises: IndexedSeq[core.Provable]): core.Provable =
-      assertConsistency(premises) { proof.computeProvable(fromExternal, premises.dropRight(1)).weaken(premise) }
+      assertConsistency(premises) {
+        proof.computeProvable(fromExternal, premises.dropRight(1)).weaken(premise.sequentExpanded)
+      }
 
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(proof).digest(premise)
   }

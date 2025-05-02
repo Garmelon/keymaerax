@@ -6,6 +6,7 @@
 package org.keymaerax.hippocore.tools
 
 import org.keymaerax.core
+import org.keymaerax.hippocore.proof.HippoExpression
 
 import scala.annotation.tailrec
 
@@ -17,6 +18,9 @@ case class ExprPath(segments: List[Int]) extends Hashable {
   def select(expr: core.Program): core.Expression = ExprPath.selectAt(segments, expr)
 
   def select(expr: core.Expression): core.Expression = ExprPath.selectAt(segments, expr)
+
+  def select(expr: HippoExpression): HippoExpression =
+    HippoExpression(ExprPath.selectAt(segments, expr.expr), expr.defs)
 
   def replace(expr: core.Term, replacement: core.Expression): core.Term = ExprPath
     .replaceAt(segments, expr, replacement)

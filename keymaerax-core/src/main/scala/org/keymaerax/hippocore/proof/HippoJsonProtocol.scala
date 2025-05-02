@@ -6,10 +6,13 @@
 package org.keymaerax.hippocore.proof
 
 import org.keymaerax.core.{Formula, Program, Provable, SubstitutionPair, Term}
+import org.keymaerax.hippocore.definitions.{Definitions, Name, Replacement}
 import org.keymaerax.hippocore.tools.{Hash, SequentPrinter}
 import org.keymaerax.parser.FullPrettyPrinter
 import org.keymaerax.{core, GlobalState}
 import spray.json.*
+
+import scala.collection.SortedMap
 
 object HippoJsonProtocol extends DefaultJsonProtocol {
   val discriminant = "type"
@@ -26,9 +29,19 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
   // Core types //
   ////////////////
 
+  implicit object TermFormat extends JsonFormat[core.Term] {
+    override def write(obj: core.Term): JsValue = JsString(printer(obj))
+    override def read(json: JsValue): core.Term = parser.termParser(json.convertTo[String])
+  }
+
   implicit object FormulaFormat extends JsonFormat[core.Formula] {
     override def write(obj: core.Formula): JsValue = JsString(printer(obj))
     override def read(json: JsValue): core.Formula = parser.formulaParser(json.convertTo[String])
+  }
+
+  implicit object ProgramFormat extends JsonFormat[core.Program] {
+    override def write(obj: core.Program): JsValue = JsString(printer(obj))
+    override def read(json: JsValue): core.Program = parser.programParser(json.convertTo[String])
   }
 
   implicit object ExpressionFormat extends JsonFormat[core.Expression] {
@@ -306,7 +319,49 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
     }
   }
 
+  implicit val replacementBaseVariableFormat: RootJsonFormat[Replacement.BaseVariable] =
+    jsonFormat(Replacement.BaseVariable.apply, "expr")
+
+  implicit val replacementFuncOfFormat: RootJsonFormat[Replacement.FuncOf] =
+    jsonFormat(Replacement.FuncOf.apply, "args", "expr")
+
+  implicit val replacementPredOfFormat: RootJsonFormat[Replacement.PredOf] =
+    jsonFormat(Replacement.PredOf.apply, "args", "expr")
+
+  implicit val replacementPredicationalOfFormat: RootJsonFormat[Replacement.PredicationalOf] =
+    jsonFormat(Replacement.PredicationalOf.apply, "expr")
+
+  implicit val replacementProgramConstFormat: RootJsonFormat[Replacement.ProgramConst] =
+    jsonFormat(Replacement.ProgramConst.apply, "expr")
+
+  implicit object ReplacementFormat extends RootJsonFormat[Replacement] {
+    override def write(obj: Replacement): JsValue = obj match {
+      case o: Replacement.BaseVariable => variantO("baseVariable", o.toJson)
+      case o: Replacement.FuncOf => variantO("funcOf", o.toJson)
+      case o: Replacement.PredOf => variantO("predOf", o.toJson)
+      case o: Replacement.PredicationalOf => variantO("predicationalOf", o.toJson)
+      case o: Replacement.ProgramConst => variantO("programConst", o.toJson)
+    }
+
+    override def read(json: JsValue): Replacement = json.asJsObject.fields(discriminant).convertTo[String] match {
+      case "baseVariable" => json.convertTo[Replacement.BaseVariable]
+      case "funcOf" => json.convertTo[Replacement.FuncOf]
+      case "predOf" => json.convertTo[Replacement.PredOf]
+      case "predicationalOf" => json.convertTo[Replacement.PredicationalOf]
+      case "programConst" => json.convertTo[Replacement.ProgramConst]
+      case _ => deserializationError("Replacement expected")
+    }
+  }
+
+  implicit val nameFormat: RootJsonFormat[Name] = jsonFormat(Name.apply, "name", "index")
+
+  implicit object DefinitionsFormat extends RootJsonFormat[Definitions] {
+    override def write(obj: Definitions): JsValue = obj.byName.toSeq.toJson
+    override def read(json: JsValue): Definitions = Definitions(json.convertTo[Seq[(Name, Replacement)]].to(SortedMap))
+  }
+
+  implicit val hippoSequentFormat: RootJsonFormat[HippoSequent] = jsonFormat(HippoSequent.apply, "sequent", "defs")
+
   implicit val hippoPremiseFormat: RootJsonFormat[HippoPremise] =
     jsonFormat(HippoPremise.apply, "sequent", "mustBeProved")
-
 }

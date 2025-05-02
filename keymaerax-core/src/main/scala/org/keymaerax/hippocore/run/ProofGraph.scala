@@ -6,7 +6,7 @@
 package org.keymaerax.hippocore.run
 
 import org.keymaerax.core.Sequent
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 
 import scala.collection.mutable
 
@@ -85,7 +85,7 @@ class ProofGraph(ctx: HippoContext) {
       premises = premises.take(duplicate) ++ premises.drop(duplicate + 1),
     )
 
-    def weaken(premise: Int, sequent: Sequent): StepProof =
+    def weaken(premise: Int, sequent: HippoSequent): StepProof =
       StepProof(proof = ctx.weaken(proof, sequent), premises = premises :+ premise)
 
     /** Deduplicate all premises, favoring removing later premises if possible. */
@@ -122,15 +122,15 @@ class ProofGraph(ctx: HippoContext) {
   }
 
   /** Known premises added so far. */
-  private val premises = mutable.IndexedBuffer[Sequent]()
+  private val premises = mutable.IndexedBuffer[HippoSequent]()
 
   /** Proofs for each step added so far. They rely only on input premises. */
   private val proofs = mutable.IndexedBuffer[StepProof]()
 
-  private def conclusion(id: Int): Sequent = if (id < 0) premises(-id - 1) else proofs(id).proof.conclusion
+  private def conclusion(id: Int): HippoSequent = if (id < 0) premises(-id - 1) else proofs(id).proof.conclusion
 
   /** Add an input premise to the graph. */
-  def premise(sequent: Sequent): Var = {
+  def premise(sequent: HippoSequent): Var = {
     val premiseVar = new Var(-premises.length - 1)
     premises.append(sequent)
     premiseVar

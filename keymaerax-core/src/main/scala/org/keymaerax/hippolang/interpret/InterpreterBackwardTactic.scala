@@ -5,9 +5,8 @@
 
 package org.keymaerax.hippolang.interpret
 
-import org.keymaerax.core.Sequent
 import org.keymaerax.hippocore.BackwardTactic
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippolang.HlangExpression
@@ -20,7 +19,11 @@ case class InterpreterBackwardTactic(
 ) extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(ictx.hash).digest(namespace.hash).digest(expr).hash
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
+  override def runBackward(
+      ctx: HippoContext,
+      conclusion: HippoSequent,
+      premises: Map[Int, HippoSequent],
+  ): HippoProof = {
     val innerInterp = new InterpreterBackward(ictx, ctx, expr, conclusion)
     val innerNs = new MutableNamespace(child = Some(namespace))
     val _ = innerInterp.eval(innerNs, expr.inner)

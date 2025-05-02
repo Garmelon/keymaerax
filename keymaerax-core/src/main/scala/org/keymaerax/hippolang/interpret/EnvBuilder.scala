@@ -7,6 +7,7 @@ package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.core
 import org.keymaerax.core.DotTerm
+import org.keymaerax.hippocore.proof.HippoExpression
 import org.keymaerax.hippolang.HlangConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace, Namespace}
 import org.keymaerax.hippolang.{BuiltinFunction, HlangIdentifier, HlangValue}
@@ -57,7 +58,7 @@ class EnvBuilder(child: Option[Namespace] = None) {
     def addMathKyxDef(name: String) = {
       val func = InterpretedSymbols.mathKyxDefs.asNamedSymbols.find(_.name == name).get.asInstanceOf[core.Function]
       val args = (0 until func.realDomainDim.get).map(i => core.DotTerm(idx = Some(i))).toList
-      val funcOf = core.FuncOf(func = func, child = argsTerm(args))
+      val funcOf = HippoExpression(core.FuncOf(func = func, child = argsTerm(args)))
       addPath(List(HlangIdentifier("math"), HlangIdentifier(name)), funcOf.toHValue)
     }
 

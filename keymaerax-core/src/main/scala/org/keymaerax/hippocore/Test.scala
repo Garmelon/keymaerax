@@ -8,7 +8,7 @@ package org.keymaerax.hippocore
 import org.keymaerax.btactics.Z3ToolProvider
 import org.keymaerax.core.{Formula, PrettyPrinter, Sequent, Skolemize, SuccPos}
 import org.keymaerax.hippocore.cache.{HippoProofFsCache, LruCache, ProvableFsCache}
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.ExprPath
 import org.keymaerax.hippolib.HippoLib
@@ -84,7 +84,7 @@ object Test {
      * }}}
      */
     ctx
-      .chain(Sequent(ante = IndexedSeq(), succ = IndexedSeq("[x:=*;][?x>0;][x:=x+1;]x>1".asFormula)))
+      .chain(HippoSequent(Sequent(ante = IndexedSeq(), succ = IndexedSeq("[x:=*;][?x>0;][x:=x+1;]x>1".asFormula))))
       .forwardJoin(RewriteAt(ExprPath(1)), eq2)
       .forwardJoin(RewriteAt(ExprPath()), eq1)
       .proof
@@ -100,7 +100,7 @@ object Test {
    * }}}
    */
   def simpleComposition2(implicit ctx: HippoContext, lib: HippoLib): HippoProof = ctx
-    .chain(Sequent(ante = IndexedSeq(), succ = IndexedSeq("[x:=*;][?x>0;][x:=x+1;]x>1".asFormula)))
+    .chain(HippoSequent(Sequent(ante = IndexedSeq(), succ = IndexedSeq("[x:=*;][?x>0;][x:=x+1;]x>1".asFormula))))
     .forward(RewriteAtU(ExprPath(1), lib.core.composeb.proof))
     .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
     .proof
@@ -125,7 +125,7 @@ object Test {
    * }}}
    */
   def simpleComposition3(implicit ctx: HippoContext, lib: HippoLib): HippoProof = ctx
-    .chain("==> [x:=*;?x>0;x:=x+1;]x>1".asSequent)
+    .chain(HippoSequent("==> [x:=*;?x>0;x:=x+1;]x>1".asSequent))
     .backward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
     .backward(RewriteAtU(ExprPath(), lib.core.randomb.proof))
     .backward(CoreRule(Skolemize(SuccPos(0))))
@@ -155,14 +155,17 @@ object Test {
    * }}}
    */
   def simpleComposition4(implicit ctx: HippoContext, lib: HippoLib): HippoProof = ctx
-    .chain("==> x>0->x+1>1".asSequent)
+    .chain(HippoSequent("==> x>0->x+1>1".asSequent))
     .backward(QE())
     // .forward(Forward(RewriteAt(ExprPath(1)), "==> x>0->[x:=x+1;]x>1".asSequent))
     // .backward(Unify(CoreAxioms.assignbAxiom))
-    .forward(BidiBackward(RewriteAtU(ExprPath(1), lib.core.assignb.proof), "==> x>0->[x:=x+1;]x>1".asSequent))
+    .forward(BidiBackward(
+      RewriteAtU(ExprPath(1), lib.core.assignb.proof),
+      HippoSequent("==> x>0->[x:=x+1;]x>1".asSequent),
+    ))
     .forward(RewriteAtU(ExprPath(), lib.core.testb.proof))
     .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
-    .forward(BidiBackward(CoreRule(Skolemize(SuccPos(0))), "==> \\forall x [?x>0;x:=x+1;]x>1".asSequent))
+    .forward(BidiBackward(CoreRule(Skolemize(SuccPos(0))), HippoSequent("==> \\forall x [?x>0;x:=x+1;]x>1".asSequent)))
     .forward(RewriteAtU(ExprPath(), lib.core.randomb.proof))
     .forward(RewriteAtU(ExprPath(), lib.core.composeb.proof))
     .proof

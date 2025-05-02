@@ -5,8 +5,9 @@
 
 package org.keymaerax.hippolang.interpret
 
-import org.keymaerax.core.{Expression, Formula, Number, Program, Sequent, Term, Variable}
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.core.{Formula, Number, Program, Term, Variable}
+import org.keymaerax.hippocore.definitions.Definitions
+import org.keymaerax.hippocore.proof.{HippoExpression, HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{ExprPath, SequentPrinter}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, PureTactic}
@@ -91,10 +92,13 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
       }
 
       if (conclusion != proven.conclusion || premises != proven.premises.map(_.sequent)) {
-        val declaredConclusion = SequentPrinter.oneline(conclusion)
-        val declaredPremises = premises.map(p => s"\n  given ${SequentPrinter.oneline(p)}").mkString
-        val provenConclusion = SequentPrinter.oneline(proven.conclusion)
-        val provenPremises = proven.premises.map(p => s"\n  given ${SequentPrinter.oneline(p.sequent)}").mkString
+        val declaredConclusion = SequentPrinter.oneline(conclusion.sequent)
+        val declaredPremises = premises.map(p => s"\n  given ${SequentPrinter.oneline(p.sequent)}").mkString
+        val provenConclusion = SequentPrinter.oneline(proven.conclusion.sequent)
+        val provenPremises = proven
+          .premises
+          .map(p => s"\n  given ${SequentPrinter.oneline(p.sequent.sequent)}")
+          .mkString
         throw HlangException(
           s"""Proof does not match theorem declaration:
              |
@@ -110,8 +114,8 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
 
       for (slice <- e.verifySlice) HlangException.at(slice, "while verifying this theorem") {
         val provable = ctx.provableFromLocalProof(proven)
-        require(provable.conclusion == proven.conclusion, "Provable conclusion does not match")
-        require(provable.subgoals == proven.premises.map(_.sequent), "Provable subgoals don't match")
+        require(provable.conclusion == proven.conclusion.sequentExpanded, "Provable conclusion does not match")
+        require(provable.subgoals == proven.premises.map(_.sequent.sequentExpanded), "Provable subgoals don't match")
       }
 
       proven.toHValue
@@ -168,8 +172,10 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
       case (HlangValue.ProofInfo(value), "urename") => HlangValue.BuiltinMemberFunction(target, Urename)
       case (HlangValue.ProofInfo(value), "conclusion") => value.proof.conclusion.toHValue
       case (HlangValue.ProofInfo(value), "premises") => value.proof.premises.map(_.sequent.toHValue).toHValue
-      case (HlangValue.DlSequent(value), "ante") => value.ante.map(_.toHValue).toHValue
-      case (HlangValue.DlSequent(value), "succ") => value.succ.map(_.toHValue).toHValue
+      case (HlangValue.DlSequent(value), "ante") =>
+        value.sequent.ante.map(HippoExpression(_, value.defs).toHValue).toHValue
+      case (HlangValue.DlSequent(value), "succ") =>
+        value.sequent.succ.map(HippoExpression(_, value.defs).toHValue).toHValue
       case (HlangValue.List(value), "length") => value.length.toHValue
       case _ => throw new UnsupportedOperationException("incorrect access")
     }
@@ -341,7 +347,7 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
         )
 
         HlangException.at(slice = e.slice, label = "while performing usubst") {
-          ctx.uSubst(proof, fromV -> toV).toHValue
+          ctx.uSubst(proof, fromV.exprExpanded -> toV.exprExpanded).toHValue
         }
 
       case (HlangValue.ProofInfo(proof), Urename, _) => applyBuiltinMemberFunction(e, proof.proof.toHValue, value, args)
@@ -463,35 +469,51 @@ object InterpreterPure {
       message: String,
       slice: SourceFile#Slice,
       label: String,
-  ): Expression = value match {
+  ): HippoExpression = value match {
     case HlangValue.DlExpression(value) => value
-    case HlangValue.Int(value) => Number(value)
+    case HlangValue.Int(value) => HippoExpression(Number(value))
     case _ => throw HlangException(message, slice = slice, label = label)
   }
 
-  protected def getValueAsTerm(value: HlangValue, message: String, slice: SourceFile#Slice, label: String): Term =
-    getValueAsExpression(value, message, slice, label) match {
-      case value: Term => value
-      case _ => throw HlangException(message, slice = slice, label = label)
-    }
+  protected def getValueAsTerm(
+      value: HlangValue,
+      message: String,
+      slice: SourceFile#Slice,
+      label: String,
+  ): (Term, Definitions) = getValueAsExpression(value, message, slice, label) match {
+    case HippoExpression(expr: Term, defs) => (expr, defs)
+    case _ => throw HlangException(message, slice = slice, label = label)
+  }
 
-  protected def getValueAsFormula(value: HlangValue, message: String, slice: SourceFile#Slice, label: String): Formula =
-    getValueAsExpression(value, message, slice, label) match {
-      case value: Formula => value
-      case _ => throw HlangException(message, slice = slice, label = label)
-    }
+  protected def getValueAsFormula(
+      value: HlangValue,
+      message: String,
+      slice: SourceFile#Slice,
+      label: String,
+  ): (Formula, Definitions) = getValueAsExpression(value, message, slice, label) match {
+    case HippoExpression(expr: Formula, defs) => (expr, defs)
+    case _ => throw HlangException(message, slice = slice, label = label)
+  }
 
-  protected def getValueAsProgram(value: HlangValue, message: String, slice: SourceFile#Slice, label: String): Program =
-    getValueAsExpression(value, message, slice, label) match {
-      case value: Program => value
-      case _ => throw HlangException(message, slice = slice, label = label)
-    }
+  protected def getValueAsProgram(
+      value: HlangValue,
+      message: String,
+      slice: SourceFile#Slice,
+      label: String,
+  ): (Program, Definitions) = getValueAsExpression(value, message, slice, label) match {
+    case HippoExpression(expr: Program, defs) => (expr, defs)
+    case _ => throw HlangException(message, slice = slice, label = label)
+  }
 
-  protected def getValueAsSequent(value: HlangValue, message: String, slice: SourceFile#Slice, label: String): Sequent =
-    value match {
-      case HlangValue.DlSequent(value) => value
-      case _ => throw HlangException(message, slice = slice, label = label)
-    }
+  protected def getValueAsSequent(
+      value: HlangValue,
+      message: String,
+      slice: SourceFile#Slice,
+      label: String,
+  ): HippoSequent = value match {
+    case HlangValue.DlSequent(value) => value
+    case _ => throw HlangException(message, slice = slice, label = label)
+  }
 
   protected def getValueAsProof(
       value: HlangValue,
@@ -514,7 +536,7 @@ object InterpreterPure {
     case _ => throw HlangException(message, slice = slice, label = label)
   }
 
-  protected def interpolateExpression(namespace: MutableNamespace, e: HlangExpression.DlExpression): Expression = {
+  protected def interpolateExpression(namespace: MutableNamespace, e: HlangExpression.DlExpression): HippoExpression = {
     val slice = e.slice
     val label = "while evaluating dL expression"
     def errorMsg(name: String, msg: String): String = s"failed to interpolate $name: $msg"
@@ -533,7 +555,7 @@ object InterpreterPure {
     ).interpolate(e.value)
   }
 
-  protected def interpolateSequent(namespace: MutableNamespace, e: HlangExpression.DlSequent): Sequent = {
+  protected def interpolateSequent(namespace: MutableNamespace, e: HlangExpression.DlSequent): HippoSequent = {
     val slice = e.slice
     val label = "while evaluating dL sequent"
 

@@ -27,8 +27,12 @@ import org.keymaerax.core.{
   Term,
   USubst,
 }
+import org.keymaerax.hippocore.definitions.{Definitions, Name, Replacement}
+import org.keymaerax.hippocore.proof.{HippoExpression, HippoSequent}
 import org.keymaerax.hippocore.tools.ExprTransform
 import org.keymaerax.infrastruct.Augmentors.ExpressionAugmentor
+
+import scala.collection.{mutable, SortedMap}
 
 /**
  * Insert dL expressions into other dL expressions, similar to string interpolation.
@@ -51,19 +55,19 @@ import org.keymaerax.infrastruct.Augmentors.ExpressionAugmentor
  *   Throw an appropriate exception. The first argument is the placeholder name at which interpolation failed. The
  *   second argument is a short description of the error.
  */
-class Interpolator(val lookup: String => Expression, val onError: (String, String) => Nothing) {
-  private def lookupTerm(name: String): Term = lookup(name) match {
-    case value: Term => value
+class Interpolator(val lookup: String => HippoExpression, val onError: (String, String) => Nothing) {
+  private def lookupTerm(name: String): (Term, Definitions) = lookup(name) match {
+    case HippoExpression(expr: Term, defs) => (expr, defs)
     case _ => onError(name, "replacement value must be a dL term")
   }
 
-  private def lookupFormula(name: String): Formula = lookup(name) match {
-    case value: Formula => value
+  private def lookupFormula(name: String): (Formula, Definitions) = lookup(name) match {
+    case HippoExpression(expr: Formula, defs) => (expr, defs)
     case _ => onError(name, "replacement value must be a dL formula")
   }
 
-  private def lookupProgram(name: String): Program = lookup(name) match {
-    case value: Program => value
+  private def lookupProgram(name: String): (Program, Definitions) = lookup(name) match {
+    case HippoExpression(expr: Program, defs) => (expr, defs)
     case _ => onError(name, "replacement value must be a dL program")
   }
 
@@ -128,10 +132,25 @@ class Interpolator(val lookup: String => Expression, val onError: (String, Strin
     USubst(substPairs).apply(definition)
   }
 
-  private val exprTransform = new ExprTransform {
+  private class Transform extends ExprTransform {
+    private val defs: mutable.Map[Name, Replacement] = mutable.Map.empty
+
+    private def addDef(name: Name, repl: Replacement): Unit = {
+      for (existingRepl <- defs.get(name)) require(repl == existingRepl)
+      defs.put(name, repl)
+    }
+
+    private def addDefs(defs: Definitions): Unit = for ((name, repl) <- defs.byName) addDef(name, repl)
+
+    def definitions: Definitions = Definitions(defs.to(SortedMap))
+
     override def ttBaseVariable(it: BaseVariable): Term = interpolatedName(it) match {
       case None => super.ttBaseVariable(it)
-      case Some(name) => lookupTerm(name)
+      case Some(name) =>
+        val (term, defs) = lookupTerm(name)
+        addDefs(defs)
+        addDef(Name(it), Replacement.BaseVariable(term))
+        it
     }
 
     override def ttDifferentialSymbol(it: DifferentialSymbol): Term = interpolatedName(it) match {
@@ -143,26 +162,42 @@ class Interpolator(val lookup: String => Expression, val onError: (String, Strin
       case None => super.ttFuncOf(it)
       case Some(name) if it.func.interp.isDefined =>
         onError(name, "placeholder functions must not have an interpretation")
-      case Some(name) => applyFunc(name, lookupTerm(name), transformTerm(it.child))
+      case Some(name) =>
+        val (term, defs) = lookupTerm(name)
+        addDefs(defs)
+        addDef(Name(it.func), Replacement.FuncOf(it.func.realDomainDim.get, term))
+        it
     }
 
     override def tfPredOf(it: PredOf): Formula = interpolatedName(it.func) match {
       case None => super.tfPredOf(it)
       case Some(name) if it.func.interp.isDefined =>
         onError(name, "placeholder functions must not have an interpretation")
-      case Some(name) => applyPred(name, lookupFormula(name), transformTerm(it.child))
+      case Some(name) =>
+        val (fml, defs) = lookupFormula(name)
+        addDefs(defs)
+        addDef(Name(it.func), Replacement.PredOf(it.func.realDomainDim.get, fml))
+        it
     }
 
     override def tfPredicationalOf(it: PredicationalOf): Formula = interpolatedName(it.func) match {
       case None => super.tfPredicationalOf(it)
       case Some(name) if it.func.interp.isDefined =>
         onError(name, "placeholder functions must not have an interpretation")
-      case Some(name) => applyPredicational(name, lookupFormula(name), transformFormula(it.child))
+      case Some(name) =>
+        val (fml, defs) = lookupFormula(name)
+        addDefs(defs)
+        addDef(Name(it.func), Replacement.PredicationalOf(fml))
+        it
     }
 
     override def tpProgramConst(it: ProgramConst): Program = interpolatedName(it) match {
       case None => super.tpProgramConst(it)
-      case Some(name) => lookupProgram(name)
+      case Some(name) =>
+        val (prog, defs) = lookupProgram(name)
+        addDefs(defs)
+        addDef(Name(it), Replacement.ProgramConst(prog))
+        it
     }
   }
 
@@ -174,7 +209,11 @@ class Interpolator(val lookup: String => Expression, val onError: (String, Strin
    * @return
    *   Interpolated expression.
    */
-  def interpolate(expression: Expression): Expression = exprTransform.transformExpression(expression)
+  def interpolate(expression: Expression): HippoExpression = {
+    val tf = new Transform
+    val newExpr = tf.transformExpression(expression)
+    HippoExpression(newExpr, tf.definitions)
+  }
 
   /**
    * Interpolate a sequent, similar to string interpolation. See [[Interpolator]] for more details.
@@ -184,11 +223,10 @@ class Interpolator(val lookup: String => Expression, val onError: (String, Strin
    * @return
    *   Interpolated sequent.
    */
-  def interpolate(sequent: Sequent): Sequent = {
-    Sequent(
-      ante = sequent.ante.map(exprTransform.transformFormula),
-      succ = sequent.succ.map(exprTransform.transformFormula),
-    )
+  def interpolate(sequent: Sequent): HippoSequent = {
+    val tf = new Transform
+    val newSequent = Sequent(ante = sequent.ante.map(tf.transformFormula), succ = sequent.succ.map(tf.transformFormula))
+    HippoSequent(newSequent, tf.definitions)
   }
 }
 

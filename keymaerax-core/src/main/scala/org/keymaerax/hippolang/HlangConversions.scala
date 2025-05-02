@@ -5,9 +5,8 @@
 
 package org.keymaerax.hippolang
 
-import org.keymaerax.core.{Expression, Sequent}
 import org.keymaerax.hippocore
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoExpression, HippoProof, HippoSequent}
 import org.keymaerax.hippolang.interpret.Interpolator
 import org.keymaerax.hippolang.namespace.ImmutableNamespace
 import org.keymaerax.hippolang.parse.{AstExpression, AstIdentifier, SourceFile}
@@ -38,11 +37,11 @@ object HlangConversions {
     def toHValue: HlangValue.List = HlangValue.List(it)
   }
 
-  implicit class ExpressionConversion(val it: Expression) {
+  implicit class HippoExpressionConversion(val it: HippoExpression) {
     def toHValue: HlangValue.DlExpression = HlangValue.DlExpression(it)
   }
 
-  implicit class SequentConversion(val it: Sequent) {
+  implicit class HippoSequentConversion(val it: HippoSequent) {
     def toHValue: HlangValue.DlSequent = HlangValue.DlSequent(it)
   }
 

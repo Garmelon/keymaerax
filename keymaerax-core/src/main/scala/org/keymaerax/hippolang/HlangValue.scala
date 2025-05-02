@@ -5,18 +5,17 @@
 
 package org.keymaerax.hippolang
 
-import org.keymaerax.core.Expression
-import org.keymaerax.hippocore.proof.{HippoPremise, HippoProof}
+import org.keymaerax.hippocore
+import org.keymaerax.hippocore.proof.{HippoExpression, HippoPremise, HippoProof, HippoSequent}
 import org.keymaerax.hippocore.tools.{Hashable, Hasher, SequentPrinter}
 import org.keymaerax.hippolang.namespace.ImmutableNamespace
-import org.keymaerax.{core, hippocore}
 
 sealed trait HlangValue extends Hashable {
   def isTruthy: Boolean = true
   def asInt: Int = throw new IllegalArgumentException("value is not an integer")
   def asString: String = throw new IllegalArgumentException("value is not a string")
-  def asExpression: core.Expression = throw new IllegalArgumentException("value is not a dL expression")
-  def asSequent: core.Sequent = throw new IllegalArgumentException("value is not a dL sequent")
+  def asExpression: HippoExpression = throw new IllegalArgumentException("value is not a dL expression")
+  def asSequent: HippoSequent = throw new IllegalArgumentException("value is not a dL sequent")
   def asProof: HippoProof = throw new IllegalArgumentException("value is not a proof")
   def asTactic: hippocore.Tactic = throw new IllegalArgumentException("value is not a tactic")
 
@@ -53,15 +52,15 @@ object HlangValue {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digestSeq(values)
   }
 
-  final case class DlExpression(value: core.Expression) extends HlangValue {
-    override def asExpression: Expression = value
-    override def format: java.lang.String = s"dL{ ${value.prettyString} }"
+  final case class DlExpression(value: HippoExpression) extends HlangValue {
+    override def asExpression: HippoExpression = value
+    override def format: java.lang.String = s"dL{ ${value.expr.prettyString} }"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  final case class DlSequent(value: core.Sequent) extends HlangValue {
-    override def asSequent: core.Sequent = value
-    override def format: java.lang.String = s"dLs{ ${SequentPrinter.smart(value)} }"
+  final case class DlSequent(value: HippoSequent) extends HlangValue {
+    override def asSequent: HippoSequent = value
+    override def format: java.lang.String = s"dLs{ ${SequentPrinter.smart(value.sequent)} }"
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
@@ -73,14 +72,14 @@ object HlangValue {
   final case class Proof(value: HippoProof) extends HlangValue {
     override def asProof: HippoProof = value
     override def format: java.lang.String = {
-      if (value.premises.isEmpty) return s"<proof of ${SequentPrinter.oneline(value.conclusion)}>"
+      if (value.premises.isEmpty) return s"<proof of\n${SequentPrinter.oneline(value.conclusion.sequent)}>"
       val premises = value
         .premises
         .map {
-          case HippoPremise(sequent, false) => s"\n  given  ${SequentPrinter.oneline(sequent)}"
-          case HippoPremise(sequent, true) => s"\n  given  ${SequentPrinter.oneline(sequent)} (must be proved)"
+          case HippoPremise(sequent, false) => s"\n  given  ${SequentPrinter.oneline(sequent.sequent)}"
+          case HippoPremise(sequent, true) => s"\n  given  ${SequentPrinter.oneline(sequent.sequent)} (must be proved)"
         }
-      s"<proof\n  of     ${SequentPrinter.oneline(value.conclusion)}${premises.mkString}\n>"
+      s"<proof\n  of     ${SequentPrinter.oneline(value.conclusion.sequent)}${premises.mkString}\n>"
     }
 
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)

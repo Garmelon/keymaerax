@@ -5,9 +5,8 @@
 
 package org.keymaerax.hippolang.interpret
 
-import org.keymaerax.core.Sequent
 import org.keymaerax.hippocore.BackwardTactic
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.{HippoContext, ProofChain}
 import org.keymaerax.hippocore.tools.HumanFormat.pluralizeN
 import org.keymaerax.hippocore.tools.PremisePermuter
@@ -22,7 +21,7 @@ class InterpreterBackward(
     ictx: InterpreterContext,
     ctx: HippoContext,
     expr: HlangExpression.BackwardBlock,
-    conclusion: Sequent,
+    conclusion: HippoSequent,
 ) extends InterpreterPure(ictx, ctx) {
 
   override def during: String = "during backwards evaluation"
@@ -68,7 +67,7 @@ class InterpreterBackward(
   private def evalInAssignGoal(
       namespace: MutableNamespace,
       expr: HlangExpression,
-      conclusion: Sequent,
+      conclusion: HippoSequent,
   ): (HippoProof, IndexedSeq[HlangIdentifier]) = expr match {
     case e: HlangExpression.LookupGoal => (ctx.sequent(conclusion), IndexedSeq(e.name))
 
@@ -129,7 +128,7 @@ class InterpreterBackward(
         .sorted
         .map { goal =>
           val goalIdx = this.goals.indexOf(goal)
-          val sequent = this.chain.proof.premises(goalIdx).sequent.prettyString
+          val sequent = this.chain.proof.premises(goalIdx).sequent.sequent.prettyString // TODO Print properly
           s"\n$$$goal:\n$sequent"
         }
         .mkString("\n")

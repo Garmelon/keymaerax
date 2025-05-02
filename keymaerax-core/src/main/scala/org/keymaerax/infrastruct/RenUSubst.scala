@@ -6,13 +6,13 @@
 package org.keymaerax.infrastruct
 
 import org.keymaerax.bellerophon.BelleExpr
-import org.keymaerax.btactics.{Idioms, TactixLibrary, UnifyUSCalculus}
-import org.keymaerax.core._
+import org.keymaerax.btactics.{Idioms, UnifyUSCalculus}
+import org.keymaerax.core.*
 import org.keymaerax.hippocore.proof.HippoProof
 import org.keymaerax.pt.ProvableSig
 
 import scala.collection.immutable
-import scala.collection.immutable._
+import scala.collection.immutable.*
 
 object RenUSubst {
   // @note semanticRenaming=false: to disallow renaming within semantic constructs as in the core.
@@ -328,7 +328,7 @@ final class FastUSubstAboveURen(private[infrastruct] val subsDefsInput: immutabl
         HippoProof.URename(proof, URename(what, repl, semantic = true))
       }
       else rens.foldLeft[HippoProof](replaced) { case (proof, (what, repl)) =>
-        val newConclusion = URename(what, repl, semantic = false)(proof.conclusion)
+        val newConclusion = proof.conclusion.applyRename(URename(what, repl, semantic = false))
         val step = HippoProof.CoreProofRule(newConclusion, UniformRenaming(what, repl))
         HippoProof.Join(step, proof, 0)
       }
@@ -537,7 +537,7 @@ final class USubstAboveURen(private[infrastruct] override val subsDefsInput: imm
       HippoProof.URename(proof, URename(what, repl, semantic = true))
     }
     else rens.foldLeft[HippoProof](replaced) { case (proof, (what, repl)) =>
-      val newConclusion = URename(what, repl, semantic = false)(proof.conclusion)
+      val newConclusion = proof.conclusion.applyRename(URename(what, repl, semantic = false))
       val step = HippoProof.CoreProofRule(newConclusion, UniformRenaming(what, repl))
       HippoProof.Join(step, proof, 0)
     }
@@ -654,7 +654,7 @@ final class DirectUSubstAboveURen(
       HippoProof.URename(proof, URename(what, repl, semantic = true))
     }
     else rens.foldLeft[HippoProof](replaced) { case (proof, (what, repl)) =>
-      val newConclusion = URename(what, repl, semantic = false)(proof.conclusion)
+      val newConclusion = proof.conclusion.applyRename(URename(what, repl, semantic = false))
       val step = HippoProof.CoreProofRule(newConclusion, UniformRenaming(what, repl))
       HippoProof.Join(step, proof, 0)
     }
@@ -768,7 +768,7 @@ private final class URenAboveUSubst(
         HippoProof.URename(proof, URename(what, repl, semantic = true))
       }
       else rens.foldLeft[HippoProof](fact) { case (proof, (what, repl)) =>
-        val newConclusion = URename(what, repl, semantic = false)(proof.conclusion)
+        val newConclusion = proof.conclusion.applyRename(URename(what, repl, semantic = false))
         val step = HippoProof.CoreProofRule(newConclusion, UniformRenaming(what, repl))
         HippoProof.Join(step, proof, 0)
       }
@@ -901,7 +901,7 @@ final class FastURenAboveUSubst(private[infrastruct] val subsDefsInput: immutabl
           HippoProof.URename(proof, URename(what, repl, semantic = true))
         }
         else rens.foldLeft(fact) { case (proof, (what, repl)) =>
-          val newConclusion = URename(what, repl, semantic = false)(proof.conclusion)
+          val newConclusion = proof.conclusion.applyRename(URename(what, repl, semantic = false))
           val step = HippoProof.CoreProofRule(newConclusion, UniformRenaming(what, repl))
           HippoProof.Join(step, proof, 0)
         }

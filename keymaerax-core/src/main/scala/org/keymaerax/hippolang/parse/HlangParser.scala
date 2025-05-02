@@ -7,11 +7,11 @@ package org.keymaerax.hippolang.parse
 
 import fastparse.*
 import fastparse.ScalaWhitespace.*
-import org.keymaerax.hippolang.parse.HippoParser.*
-import org.keymaerax.hippolang.{BuiltinFunction, BuiltinMemberFunction, HippoIdentifier, HlangException}
+import org.keymaerax.hippolang.parse.HlangParser.*
+import org.keymaerax.hippolang.{BuiltinFunction, BuiltinMemberFunction, HlangException, HlangIdentifier}
 import org.keymaerax.parser.DLParser
 
-class HippoParser(source: SourceFile) {
+class HlangParser(source: SourceFile) {
   // This dlParser instance does not depend on global state.
   private val dlParser = new DLParser
 
@@ -37,12 +37,12 @@ class HippoParser(source: SourceFile) {
    * digit, to prevent confusion with integer literals.
    *
    * @see
-   *   [[HippoIdentifier]], [[intExpression]]
+   *   [[HlangIdentifier]], [[intExpression]]
    */
   private def identifier[$: P]: P[AstIdentifier] = P {
-    def startChar = CharPred(HippoIdentifier.isValidStartChar(_))
-    def restChars = CharsWhile(HippoIdentifier.isValidChar(_)).?
-    def identifier = (startChar ~~ restChars).!.map(HippoIdentifier.apply)
+    def startChar = CharPred(HlangIdentifier.isValidStartChar(_))
+    def restChars = CharsWhile(HlangIdentifier.isValidChar(_)).?
+    def identifier = (startChar ~~ restChars).!.map(HlangIdentifier.apply)
     def quotedIdentifier = "'" ~~ identifier ~~ "'"
     (quotedIdentifier | identifier).map(AstIdentifier.apply)
   }.opaque("identifier")
@@ -392,7 +392,7 @@ class HippoParser(source: SourceFile) {
   }
 }
 
-object HippoParser {
+object HlangParser {
   // When the parser is changed, this alphabetically sorted list of keywords must be kept up-to-date.
   // To parse a keyword, always use the corresponding constant instead of a magic string value.
   // This helps ensure the list does not become outdated.

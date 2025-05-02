@@ -10,13 +10,13 @@ import org.keymaerax.hippocore.BackwardTactic
 import org.keymaerax.hippocore.proof.HippoProof
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
-import org.keymaerax.hippolang.HippoExpression
+import org.keymaerax.hippolang.HlangExpression
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
 
 case class InterpreterBackwardTactic(
-    ictx: HippoInterpreterContext,
+    ictx: InterpreterContext,
     namespace: ImmutableNamespace,
-    expr: HippoExpression.BackwardBlock,
+    expr: HlangExpression.BackwardBlock,
 ) extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(ictx.hash).digest(namespace.hash).digest(expr).hash
 

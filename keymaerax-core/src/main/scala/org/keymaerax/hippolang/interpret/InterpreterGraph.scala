@@ -7,12 +7,12 @@ package org.keymaerax.hippolang.interpret
 
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
-import org.keymaerax.hippolang.{BuiltinFunction, HippoExpression, HippoValue, HlangException}
+import org.keymaerax.hippolang.{BuiltinFunction, HlangException, HlangExpression, HlangValue}
 import org.keymaerax.hippolib.primitive.Graph
 
 import scala.collection.mutable
 
-class InterpreterGraph(ictx: HippoInterpreterContext, ctx: HippoContext) extends InterpreterPure(ictx, ctx) {
+class InterpreterGraph(ictx: InterpreterContext, ctx: HippoContext) extends InterpreterPure(ictx, ctx) {
   override def during: String = "during graph evaluation"
 
   val graph: Graph.Builder = Graph.newBuilder
@@ -29,10 +29,10 @@ class InterpreterGraph(ictx: HippoInterpreterContext, ctx: HippoContext) extends
     nodes(id)
   }
 
-  override def eval(namespace: MutableNamespace, expr: HippoExpression): HippoValue = expr match {
-    case e: HippoExpression.ApplyTactic =>
+  override def eval(namespace: MutableNamespace, expr: HlangExpression): HlangValue = expr match {
+    case e: HlangExpression.ApplyTactic =>
       val target = eval(namespace, e.target) match {
-        case HippoValue.Tactic(t) => t
+        case HlangValue.Tactic(t) => t
         case _ => throw HlangException(
             "only tactics can be tactic-applied in this context",
             slice = e.target.slice,
@@ -44,22 +44,22 @@ class InterpreterGraph(ictx: HippoInterpreterContext, ctx: HippoContext) extends
         .args
         .map(arg => (arg.slice, eval(namespace, arg)))
         .map {
-          case (_, HippoValue.Int(i)) => getNode(i)
+          case (_, HlangValue.Int(i)) => getNode(i)
           case (slice, _) => throw HlangException("argument must be an integer (i.e. a node id)", slice = slice)
         }
 
       val node = this.graph.stepAny(target, Args)
-      HippoValue.Int(registerNode(node))
+      HlangValue.Int(registerNode(node))
 
     case _ => super.eval(namespace, expr)
   }
 
-  override def applyValue(e: HippoExpression.Apply, target: HippoValue, args: IndexedSeq[HippoValue]): HippoValue =
+  override def applyValue(e: HlangExpression.Apply, target: HlangValue, args: IndexedSeq[HlangValue]): HlangValue =
     target match {
-      case HippoValue.BuiltinFunction(BuiltinFunction.Premise) => args match {
-          case Seq(HippoValue.Int(i)) if i >= 0 =>
-            HippoValue.Int(premises.getOrElseUpdate(i, registerNode(graph.premise(i))))
-          case Seq(HippoValue.Int(_)) => throw new IllegalArgumentException("premise id must not be negative")
+      case HlangValue.BuiltinFunction(BuiltinFunction.Premise) => args match {
+          case Seq(HlangValue.Int(i)) if i >= 0 =>
+            HlangValue.Int(premises.getOrElseUpdate(i, registerNode(graph.premise(i))))
+          case Seq(HlangValue.Int(_)) => throw new IllegalArgumentException("premise id must not be negative")
           case Seq(_) => throw new IllegalArgumentException("premise id must be a nonnegative integer")
           case _ => throw new IllegalArgumentException("exactly one argument required")
         }
@@ -70,16 +70,16 @@ class InterpreterGraph(ictx: HippoInterpreterContext, ctx: HippoContext) extends
 
 object InterpreterGraph {
   def tactic(
-      ictx: HippoInterpreterContext,
+      ictx: InterpreterContext,
       ctx: HippoContext,
       namespace: ImmutableNamespace,
-      expr: HippoExpression,
+      expr: HlangExpression,
   ): Graph = {
     val innerInterp = new InterpreterGraph(ictx, ctx)
     val innerNs = new MutableNamespace(child = Some(namespace))
     val conclusion = innerInterp.eval(innerNs, expr)
     conclusion match {
-      case HippoValue.Int(node) => innerInterp.graph.build(innerInterp.getNode(node))
+      case HlangValue.Int(node) => innerInterp.graph.build(innerInterp.getNode(node))
       case _ => throw new Exception("graph block must return graph node")
     }
   }

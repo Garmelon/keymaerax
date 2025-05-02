@@ -17,7 +17,7 @@ import org.keymaerax.core.{
   Sequent,
   SuccPos,
 }
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{ExprPath, Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
@@ -76,7 +76,7 @@ case class RewriteAt(at: ExprPath, dir: Option[RewriteAt.Dir] = None)(implicit l
       beforeF: Formula,
       afterF: Formula,
   ): HippoProof = ctx
-    .chain(Sequent(ante = g, succ = IndexedSeq(afterF)))
+    .chain(HippoSequent(Sequent(ante = g, succ = IndexedSeq(afterF))))
     .backward(CoreRule(CutRight(beforeF, SuccPos(0))))
     .backwardAt(1)(CoreRule(EquivifyRight(SuccPos(0))))
     .backwardAt(1)(CoreRule(CoHideRight(SuccPos(0))))
@@ -87,27 +87,27 @@ case class RewriteAt(at: ExprPath, dir: Option[RewriteAt.Dir] = None)(implicit l
     .backwardAt(1)(CEqAt(at))
     .proof
 
-  private def fromBeforeAndAfter(ctx: HippoContext, before: Sequent, after: Sequent): HippoProof = {
-    require(before.succ.length == 1)
-    require(after.succ.length == 1)
-    require(before.ante == after.ante)
+  private def fromBeforeAndAfter(ctx: HippoContext, before: HippoSequent, after: HippoSequent): HippoProof = {
+    require(before.sequent.succ.length == 1)
+    require(after.sequent.succ.length == 1)
+    require(before.sequent.ante == after.sequent.ante)
 
-    val g = before.ante
-    val Seq(beforeF) = before.succ
-    val Seq(afterF) = after.succ
+    val g = before.sequent.ante
+    val Seq(beforeF) = before.sequent.succ
+    val Seq(afterF) = after.sequent.succ
     val actualDir = dir.getOrElse(Dir.Rtl)
 
     buildProof(ctx, actualDir, g, beforeF, afterF)
   }
 
-  private def fromBeforeAndEq(ctx: HippoContext, before: Sequent, eq: Sequent): HippoProof = {
-    require(before.succ.length == 1)
-    require(eq.ante.isEmpty)
-    require(eq.succ.length == 1)
+  private def fromBeforeAndEq(ctx: HippoContext, before: HippoSequent, eq: HippoSequent): HippoProof = {
+    require(before.sequent.succ.length == 1)
+    require(eq.sequent.ante.isEmpty)
+    require(eq.sequent.succ.length == 1)
 
-    val g = before.ante
-    val Seq(beforeF) = before.succ
-    val Seq(eqF) = eq.succ
+    val g = before.sequent.ante
+    val Seq(beforeF) = before.sequent.succ
+    val Seq(eqF) = eq.sequent.succ
 
     val (leftE: Expression, rightE: Expression) = eqF match {
       case f: Equal => (f.left, f.right)
@@ -130,14 +130,14 @@ case class RewriteAt(at: ExprPath, dir: Option[RewriteAt.Dir] = None)(implicit l
     buildProof(ctx, actualDir, g, beforeF, afterF)
   }
 
-  private def fromAfterAndEq(ctx: HippoContext, after: Sequent, eq: Sequent): HippoProof = {
-    require(after.succ.length == 1)
-    require(eq.ante.isEmpty)
-    require(eq.succ.length == 1)
+  private def fromAfterAndEq(ctx: HippoContext, after: HippoSequent, eq: HippoSequent): HippoProof = {
+    require(after.sequent.succ.length == 1)
+    require(eq.sequent.ante.isEmpty)
+    require(eq.sequent.succ.length == 1)
 
-    val g = after.ante
-    val Seq(afterF) = after.succ
-    val Seq(eqF) = eq.succ
+    val g = after.sequent.ante
+    val Seq(afterF) = after.sequent.succ
+    val Seq(eqF) = eq.sequent.succ
 
     val (leftE: Expression, rightE: Expression) = eqF match {
       case f: Equal => (f.left, f.right)
@@ -160,13 +160,17 @@ case class RewriteAt(at: ExprPath, dir: Option[RewriteAt.Dir] = None)(implicit l
     buildProof(ctx, actualDir, g, beforeF, afterF)
   }
 
-  override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof = {
+  override def runForward(ctx: HippoContext, premises: IndexedSeq[HippoSequent]): HippoProof = {
     require(premises.length == 2, "exactly two premises required")
     val Seq(before, eq) = premises
     fromBeforeAndEq(ctx, before, eq)
   }
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
+  override def runBackward(
+      ctx: HippoContext,
+      conclusion: HippoSequent,
+      premises: Map[Int, HippoSequent],
+  ): HippoProof = {
     require(premises.contains(0) || premises.contains(1), "premise 0 or 1 required")
     if (premises.contains(0)) {
       val before = premises(0)

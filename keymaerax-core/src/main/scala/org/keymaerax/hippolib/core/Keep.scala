@@ -5,21 +5,24 @@
 
 package org.keymaerax.hippolib.core
 
-import org.keymaerax.core.{AntePos, SeqPos, Sequent, SuccPos}
+import org.keymaerax.core.{AntePos, SeqPos, SuccPos}
 import org.keymaerax.hippocore.BackwardTactic
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
-import org.keymaerax.hippolib.HippoLib
 
-case class Keep(parts: SeqPos*)(implicit lib: HippoLib) extends BackwardTactic {
+case class Keep(parts: SeqPos*) extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digestSeqWith(parts)(_.digest(_)).hash
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
+  override def runBackward(
+      ctx: HippoContext,
+      conclusion: HippoSequent,
+      premises: Map[Int, HippoSequent],
+  ): HippoProof = {
     val anteParts = parts.collect { case pos: AntePos => pos.getIndex }.distinct
     val succParts = parts.collect { case pos: SuccPos => pos.getIndex }.distinct
-    val anteHide = conclusion.ante.indices.reverse.filter(!anteParts.contains(_)).map(AntePos(_))
-    val succHide = conclusion.succ.indices.reverse.filter(!succParts.contains(_)).map(SuccPos(_))
+    val anteHide = conclusion.sequent.ante.indices.reverse.filter(!anteParts.contains(_)).map(AntePos(_))
+    val succHide = conclusion.sequent.succ.indices.reverse.filter(!succParts.contains(_)).map(SuccPos(_))
     val hide: IndexedSeq[SeqPos] = anteHide ++ succHide
     ctx.backward(Hide(hide*), conclusion, premises)
   }

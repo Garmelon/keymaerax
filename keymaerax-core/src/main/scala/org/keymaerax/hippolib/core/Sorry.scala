@@ -6,14 +6,14 @@
 package org.keymaerax.hippolib.core
 
 import org.keymaerax.core.{Sequent, True}
-import org.keymaerax.hippocore.proof.{HippoPremise, HippoProof}
+import org.keymaerax.hippocore.proof.{HippoPremise, HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
 
 import scala.collection.SortedMap
 
-case class Sorry(conclusion: Option[Sequent] = None, premises: SortedMap[Int, Sequent] = SortedMap.empty)
+case class Sorry(conclusion: Option[HippoSequent] = None, premises: SortedMap[Int, HippoSequent] = SortedMap.empty)
     extends ForwardTactic with BackwardTactic {
 
   override lazy val hash: Hash = Hasher()
@@ -22,7 +22,7 @@ case class Sorry(conclusion: Option[Sequent] = None, premises: SortedMap[Int, Se
     .digestMapWith(premises)(_.digest(_).digest(_))
     .hash
 
-  override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof = {
+  override def runForward(ctx: HippoContext, premises: IndexedSeq[HippoSequent]): HippoProof = {
     // TODO Nicer error handling
     require(this.conclusion.isDefined)
     val conclusion = this.conclusion.get
@@ -30,13 +30,17 @@ case class Sorry(conclusion: Option[Sequent] = None, premises: SortedMap[Int, Se
     ctx.sorry(conclusion, premises.map(HippoPremise.locallySound))
   }
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof = {
+  override def runBackward(
+      ctx: HippoContext,
+      conclusion: HippoSequent,
+      premises: Map[Int, HippoSequent],
+  ): HippoProof = {
     // TODO Nicer error handling
     for (conc <- this.conclusion) require(conclusion == conc)
     for ((i, premise) <- this.premises) require(premises(i) == premise)
     val allPremises = this.premises ++ premises
     val maxI = allPremises.keys.maxOption.getOrElse(-1)
-    val trueSequent = Sequent(IndexedSeq(), IndexedSeq(True)) // "==> true"
+    val trueSequent = HippoSequent(Sequent(IndexedSeq(), IndexedSeq(True))) // "==> true"
     val premisesList = (0 to maxI).map(allPremises.getOrElse(_, trueSequent))
     ctx.sorry(conclusion, premisesList.map(HippoPremise.locallySound))
   }

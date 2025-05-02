@@ -5,8 +5,7 @@
 
 package org.keymaerax.hippolib.primitive
 
-import org.keymaerax.core.Sequent
-import org.keymaerax.hippocore.proof.HippoProof
+import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.{HippoContext, ProofGraph}
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, PureTactic, Tactic}
@@ -22,12 +21,12 @@ class Graph private (private val steps: IndexedSeq[Graph.Step], private val conc
 
   def runAmbivalent(
       ctx: HippoContext,
-      conclusion: Option[Sequent] = None,
-      premises: Map[Int, Sequent] = Map(),
+      conclusion: Option[HippoSequent] = None,
+      premises: Map[Int, HippoSequent] = Map(),
   ): HippoProof = {
     // Here, the sequents corresponding to the Builder's Vars are stored by their index.
     // They are used as input to the tactics during evaluation.
-    val vars = mutable.Map[Int, Sequent]()
+    val vars = mutable.Map[Int, HippoSequent]()
     for ((i, premise) <- premises) vars.put(-i - 1, premise)
     for (conclusion <- conclusion) vars.put(this.conclusion, conclusion)
 
@@ -91,10 +90,10 @@ class Graph private (private val steps: IndexedSeq[Graph.Step], private val conc
 
   override def runPure(ctx: HippoContext): HippoProof = runAmbivalent(ctx)
 
-  override def runForward(ctx: HippoContext, premises: IndexedSeq[Sequent]): HippoProof =
+  override def runForward(ctx: HippoContext, premises: IndexedSeq[HippoSequent]): HippoProof =
     runAmbivalent(ctx, premises = premises.zipWithIndex.map(_.swap).toMap)
 
-  override def runBackward(ctx: HippoContext, conclusion: Sequent, premises: Map[Int, Sequent]): HippoProof =
+  override def runBackward(ctx: HippoContext, conclusion: HippoSequent, premises: Map[Int, HippoSequent]): HippoProof =
     runAmbivalent(ctx, conclusion = Some(conclusion), premises = premises)
 }
 

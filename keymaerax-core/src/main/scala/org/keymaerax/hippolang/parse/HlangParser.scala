@@ -8,7 +8,7 @@ package org.keymaerax.hippolang.parse
 import fastparse.*
 import fastparse.ScalaWhitespace.*
 import org.keymaerax.hippolang.parse.HlangParser.*
-import org.keymaerax.hippolang.{BuiltinFunction, BuiltinMemberFunction, HlangException, HlangIdentifier}
+import org.keymaerax.hippolang.{HlangException, HlangIdentifier}
 import org.keymaerax.parser.DLParser
 
 class HlangParser(source: SourceFile) {
@@ -124,12 +124,6 @@ class HlangParser(source: SourceFile) {
     }
   }
 
-  private def builtinFunctionExpression[$: P]: P[AstExpression.BuiltinFunction] = P {
-    def builtinFunction = ("#" ~~/ identifier)
-      .flatMapX(name => BuiltinFunction.byName.get(name.name).map(Pass(_)).getOrElse(Fail))
-    sliced(builtinFunction).map { case (value, slice) => AstExpression.BuiltinFunction(slice = slice, value = value) }
-  }.opaque("builtin function")
-
   private def importExpression[$: P]: P[AstExpression.Import] = P {
     sliced(keywordImport ~/ expression).map { case (path, slice) => AstExpression.Import(path = path, slice = slice) }
   }
@@ -237,9 +231,8 @@ class HlangParser(source: SourceFile) {
 
   private def primitiveExpression[$: P]: P[AstExpression] = P {
     nullExpression | boolExpression | intExpression | stringExpression | dlSequentExpression | dlExpressionExpression |
-      builtinFunctionExpression | importExpression | declareExpression | ifExpression | whileExpression |
-      functionExpression | theoremExpression | parensExpression | blockExpression | backwardExpression |
-      graphBlockExpression |
+      importExpression | declareExpression | ifExpression | whileExpression | functionExpression | theoremExpression |
+      parensExpression | blockExpression | backwardExpression | graphBlockExpression |
       // Assignment must come before lookup because lookup is a prefix of assignment.
       assignGoalExpression | lookupGoalExpression |
       // Because these two start with a literal, they have to come last so they don't shadow literals like "while".
@@ -255,15 +248,6 @@ class HlangParser(source: SourceFile) {
   // An atomic expression is a primitive expression with suffixes and prefixes, for example negation.
 
   private type SuffixOpConstructor = (SourceFile#Slice, AstExpression) => AstExpression
-
-  private def builtinAccessExpression[$: P]: P[SuffixOpConstructor] = P {
-    (".#" ~/ identifier)
-      .flatMapX(name => BuiltinMemberFunction.byName.get(name.name).map(Pass(_)).getOrElse(Fail))
-      .map(member =>
-        (slice: SourceFile#Slice, inner: AstExpression) =>
-          AstExpression.BuiltinAccess(slice = slice, target = inner, member = member)
-      )
-  }.opaque("builtin member function")
 
   private def accessExpression[$: P]: P[SuffixOpConstructor] = P {
     ("." ~/ sliced(identifier)).map { case (name, nameSlice) =>
@@ -292,7 +276,7 @@ class HlangParser(source: SourceFile) {
   }
 
   private def suffixExpression[$: P]: P[SuffixOpConstructor] =
-    P { builtinAccessExpression | accessExpression | applyExpression | applyTacticExpression | pipeTacticExpression }
+    P { accessExpression | applyExpression | applyTacticExpression | pipeTacticExpression }
 
   private type PrefixOpConstructor = (SourceFile#Slice, AstExpression) => AstExpression
 

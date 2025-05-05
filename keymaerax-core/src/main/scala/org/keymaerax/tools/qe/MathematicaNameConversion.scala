@@ -134,7 +134,6 @@ private[tools] object MathematicaNameConversion {
       case DifferentialSymbol(_) =>
         throw ConversionException("Name conversion of differential symbols not allowed: " + ns.toString)
       case _ =>
-        assert(ns.name.count(c => c == '_') <= 1, "At most one _ in names")
         val identifier = ns.name.replace("_", UNDERSCORE_REPL)
         NAMESPACE_PREFIX +
           (ns.index match {

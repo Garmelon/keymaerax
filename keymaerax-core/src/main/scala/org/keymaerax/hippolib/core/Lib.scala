@@ -391,15 +391,19 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
 
   @publish
   val Hide: TacticInfo = TacticInfo
-    .arg1("core.Hide", TacticArgInfo(name = "at", arg = TacticArg.Seq(TacticArg.SeqPos))) { at => self.Hide(at*) }
+    .arg1("core.Hide", TacticArgInfo(name = "at", arg = TacticArg.Seq(TacticArg.SeqPos)), vararg = true) { at =>
+      self.Hide(at*)
+    }
 
   @publish
   val Keep: TacticInfo = TacticInfo
-    .arg1("core.Keep", TacticArgInfo(name = "at", arg = TacticArg.Seq(TacticArg.SeqPos))) { at => self.Keep(at*) }
+    .arg1("core.Keep", TacticArgInfo(name = "at", arg = TacticArg.Seq(TacticArg.SeqPos)), vararg = true) { at =>
+      self.Keep(at*)
+    }
 
   @publish
   val Expand: TacticInfo = TacticInfo
-    .arg1("core.Expand", TacticArgInfo(name = "names", arg = TacticArg.Seq(TacticArg.Name))) { names =>
+    .arg1("core.Expand", TacticArgInfo(name = "names", arg = TacticArg.Seq(TacticArg.Name)), vararg = true) { names =>
       self.Expand(names*)
     }
 
@@ -438,5 +442,6 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
   val US: TacticInfo = TacticInfo.arg1(
     "core.US",
     TacticArgInfo(name = "subst", arg = TacticArg.Seq(TacticArg.Tuple2(TacticArg.Expression, TacticArg.Expression))),
+    vararg = true,
   ) { substs => self.US(substs: _*) }
 }

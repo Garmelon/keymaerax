@@ -8,7 +8,7 @@ package org.keymaerax.hippolib.core
 import org.keymaerax.core
 import org.keymaerax.core.hippolib.publish
 import org.keymaerax.hippocore.run.HippoContext
-import org.keymaerax.hippolib.meta.{ProofInfo, TacticArg, TacticArgInfo, TacticInfo, UniqueNameRegistry}
+import org.keymaerax.hippolib.meta.{ProofInfo, TacticArg, TacticArgInfo, TacticInfo}
 import org.keymaerax.hippolib.{core as self, HippoLib}
 
 /**
@@ -396,6 +396,15 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
   @publish
   val Keep: TacticInfo = TacticInfo
     .arg1("core.Keep", TacticArgInfo(name = "at", arg = TacticArg.Seq(TacticArg.SeqPos))) { at => self.Keep(at*) }
+
+  @publish
+  val Expand: TacticInfo = TacticInfo
+    .arg1("core.Expand", TacticArgInfo(name = "names", arg = TacticArg.Seq(TacticArg.Name))) { names =>
+      self.Expand(names*)
+    }
+
+  @publish
+  val ExpandAll: TacticInfo = TacticInfo.arg0("core.ExpandAll") { self.ExpandAll }
 
   @publish
   val QE: TacticInfo = TacticInfo.arg0("core.QE") { self.QE() }

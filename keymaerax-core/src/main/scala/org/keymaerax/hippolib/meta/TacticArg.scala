@@ -130,6 +130,14 @@ object TacticArg {
     }
   }
 
+  case object Name extends TacticArg{
+    override type Type = org.keymaerax.hippocore.definitions.Name
+    override def validate(any: Any): Type = any match {
+      case v: Type => v
+      case v: String => org.keymaerax.hippocore.definitions.Name.parse(v)
+    }
+  }
+
   ////////////////////
   // Hippolib types //
   ////////////////////

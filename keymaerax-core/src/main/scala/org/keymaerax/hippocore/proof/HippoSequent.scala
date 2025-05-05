@@ -5,13 +5,15 @@
 
 package org.keymaerax.hippocore.proof
 
-import org.keymaerax.core.{Formula, Sequent, URename, USubst}
-import org.keymaerax.hippocore.definitions.Definitions
+import org.keymaerax.core.{Sequent, URename, USubst}
+import org.keymaerax.hippocore.definitions.{Definitions, Name}
 import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 
 case class HippoSequent private (sequent: Sequent, defs: Definitions) extends Hashable {
   def sequentExpanded: Sequent = defs.expandAll(sequent)
 
+  def expand(name: Name): HippoSequent = HippoSequent(defs.expand(name, sequent), defs)
+  def expandAll: HippoSequent = HippoSequent(defs.expandAll(sequent), defs)
   def applyRename(rename: URename): HippoSequent = HippoSequent(rename(sequent), defs.applyRename(rename))
   def applySubst(subst: USubst): HippoSequent = HippoSequent(subst(sequent), defs.applySubst(subst))
   def applySubstAllTaboo(subst: USubst): HippoSequent = HippoSequent(subst(sequent), defs.applySubstAllTaboo(subst))

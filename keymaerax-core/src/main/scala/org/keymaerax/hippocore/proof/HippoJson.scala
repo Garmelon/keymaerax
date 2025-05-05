@@ -5,7 +5,8 @@
 
 package org.keymaerax.hippocore.proof
 
-import org.keymaerax.core.{Rule, Sequent, URename, USubst}
+import org.keymaerax.core.{Rule, URename, USubst}
+import org.keymaerax.hippocore.definitions.Name
 import org.keymaerax.hippocore.proof.HippoJsonProtocol.*
 import spray.json.*
 
@@ -34,6 +35,9 @@ object HippoJson {
         variant("uSubst", "proof" -> addProof(jsProofs, indexByProof, proof).toJson, "subst" -> subst.toJson)
       case HippoProof.GloballySoundUSubst(premise, subst) =>
         variant("globallySoundUSubst", "premise" -> premise.toJson, "subst" -> subst.toJson)
+      case HippoProof.Expand(conclusion, name) =>
+        variant("expand", "conclusion" -> conclusion.toJson, "name" -> name.toJson)
+      case HippoProof.ExpandAll(conclusion) => variant("expandAll", "conclusion" -> conclusion.toJson)
       case HippoProof.Join(proof, subproof, at) => variant(
           "join",
           "proof" -> addProof(jsProofs, indexByProof, proof).toJson,
@@ -54,7 +58,6 @@ object HippoJson {
         )
       case HippoProof.Weaken(proof, premise) =>
         variant("weaken", "proof" -> addProof(jsProofs, indexByProof, proof).toJson, "premise" -> premise.toJson)
-
     }
 
     val index = jsProofs.length
@@ -86,6 +89,9 @@ object HippoJson {
           premise = fields("premise").convertTo[HippoSequent],
           subst = fields("subst").convertTo[USubst],
         )
+      case "expand" => HippoProof
+          .Expand(conclusion = fields("conclusion").convertTo[HippoSequent], name = fields("name").convertTo[Name])
+      case "expandAll" => HippoProof.ExpandAll(conclusion = fields("conclusion").convertTo[HippoSequent])
       case "join" => HippoProof.Join(
           proof = proofs(fields("proof").convertTo[Int]),
           subproof = proofs(fields("subproof").convertTo[Int]),

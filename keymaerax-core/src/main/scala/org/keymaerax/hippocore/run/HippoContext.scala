@@ -6,9 +6,9 @@
 package org.keymaerax.hippocore.run
 
 import org.keymaerax.btactics.ToolProvider
-import org.keymaerax.core.{Expression, Formula, Provable, Rule, Sequent, SubstitutionPair, URename, USubst, Variable}
+import org.keymaerax.core.{Expression, Formula, Provable, Rule, SubstitutionPair, URename, USubst, Variable}
 import org.keymaerax.hippocore.cache.{Cache, HippoProofFsCache, LruCache, ProvableFsCache}
-import org.keymaerax.hippocore.definitions.Definitions
+import org.keymaerax.hippocore.definitions.{Definitions, Name}
 import org.keymaerax.hippocore.proof.{ExternalSource, HippoPremise, HippoProof, HippoSequent}
 import org.keymaerax.hippocore.tools.Hasher
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, HippoException, PureTactic, Tactic}
@@ -74,6 +74,12 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
 
   def uSubstGlobal(premise: HippoSequent, substs: (Expression, Expression)*): HippoProof =
     uSubstGlobal(premise, USubst(substs.map { case (from, to) => SubstitutionPair(from, to) }))
+
+  def expand(conclusion: HippoSequent, name: Name): HippoProof = HippoProof.Expand(conclusion, name)
+  def expand(conclusion: HippoSequent, name: String, index: Option[Int] = None): HippoProof =
+    expand(conclusion, Name(name, index))
+
+  def expandAll(conclusion: HippoSequent): HippoProof = HippoProof.ExpandAll(conclusion)
 
   def swap(proof: HippoProof, premise1: Int, premise2: Int): HippoProof = {
     // Even if we're not returning the result, we still construct it to run the correctness checks.

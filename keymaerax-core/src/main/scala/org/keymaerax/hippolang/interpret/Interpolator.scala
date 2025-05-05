@@ -28,6 +28,7 @@ import org.keymaerax.hippocore.definitions.{Definitions, Name, Replacement}
 import org.keymaerax.hippocore.proof.{HippoExpression, HippoSequent}
 import org.keymaerax.hippocore.tools.ExprTransform
 import org.keymaerax.infrastruct.Augmentors.ExpressionAugmentor
+import org.keymaerax.infrastruct.FormulaTools
 
 import scala.collection.{mutable, SortedMap}
 
@@ -140,11 +141,13 @@ class Interpolator(val lookup: String => HippoExpression, val onError: (String, 
     override def tpProgramConst(it: ProgramConst): Program = interpolatedName(it) match {
       case None => super.tpProgramConst(it)
       case Some(name) =>
-        // TODO Maybe convert to SystemConst if dual-free?
         val (prog, defs) = lookupProgram(name)
+        val repl =
+          if (FormulaTools.dualFree(prog)) { Replacement.SystemConst(prog, it.space) }
+          else { Replacement.ProgramConst(prog, it.space) }
         addDefs(defs)
-        addDef(Name(it), Replacement.ProgramConst(prog, it.space))
-        it
+        addDef(Name(it), repl)
+        repl.placeholder(Name(it)).asInstanceOf[Program]
     }
 
     override def tpSystemConst(it: SystemConst): Program = interpolatedName(it) match {

@@ -16,16 +16,12 @@ import org.keymaerax.core.{
   FuncOf,
   NamedSymbol,
   Nothing,
-  Pair,
   PredOf,
   PredicationalOf,
   Program,
   ProgramConst,
   Sequent,
-  StaticSemantics,
-  SubstitutionPair,
   Term,
-  USubst,
 }
 import org.keymaerax.hippocore.definitions.{Definitions, Name, Replacement}
 import org.keymaerax.hippocore.proof.{HippoExpression, HippoSequent}
@@ -79,59 +75,6 @@ class Interpolator(val lookup: String => HippoExpression, val onError: (String, 
     Some(name)
   }
 
-  private def argsFromPairs(term: Term): List[Term] = term match {
-    case Nothing => Nil
-    case term: Pair => term.left :: argsFromPairs(term.right)
-    case term => term :: Nil
-  }
-
-  /** Find the indexes of all dot symbols used in an expression. */
-  private def allDotIndexes(expression: Expression): Set[Option[Int]] = StaticSemantics
-    .symbols(expression)
-    .filter(_.isInstanceOf[DotTerm])
-    .map(_.index)
-
-  /**
-   * Verify that the dot indexes are valid for this interpolation.
-   *
-   * There must be no dots without index, and all indexes must refer to existing arguments.
-   */
-  private def verifyDotsMatchArgs(name: String, dots: Set[Option[Int]], args: List[Term]): Unit = dots.foreach {
-    case None => onError(name, "dots in function definition must have an index")
-    case Some(index) if !args.indices.contains(index) => onError(name, "dot index out of range")
-    case Some(_) =>
-  }
-
-  /**
-   * Verify that the dot indexes are valid for this interpolation.
-   *
-   * There must only dots without indexes.
-   */
-  private def verifyDotMatchesArg(name: String, dots: Set[Option[Int]]): Unit = dots.foreach {
-    case None =>
-    case Some(_) => onError(name, "dots in function definition must have no index")
-  }
-
-  private def applyFunc(name: String, definition: Term, child: Term): Term = {
-    val args = argsFromPairs(child)
-    verifyDotsMatchArgs(name, allDotIndexes(definition), args)
-    val substPairs = args.zipWithIndex.map { case (arg, i) => SubstitutionPair(DotTerm(idx = Some(i)), arg) }
-    USubst(substPairs).apply(definition)
-  }
-
-  private def applyPred(name: String, definition: Formula, child: Term): Formula = {
-    val args = argsFromPairs(child)
-    verifyDotsMatchArgs(name, allDotIndexes(definition), args)
-    val substPairs = args.zipWithIndex.map { case (arg, i) => SubstitutionPair(DotTerm(idx = Some(i)), arg) }
-    USubst(substPairs).apply(definition)
-  }
-
-  private def applyPredicational(name: String, definition: Formula, child: Formula): Formula = {
-    verifyDotMatchesArg(name, allDotIndexes(definition))
-    val substPairs = Seq(SubstitutionPair(DotFormula, child))
-    USubst(substPairs).apply(definition)
-  }
-
   private class Transform extends ExprTransform {
     private val defs: mutable.Map[Name, Replacement] = mutable.Map.empty
 
@@ -146,11 +89,7 @@ class Interpolator(val lookup: String => HippoExpression, val onError: (String, 
 
     override def ttBaseVariable(it: BaseVariable): Term = interpolatedName(it) match {
       case None => super.ttBaseVariable(it)
-      case Some(name) =>
-        val (term, defs) = lookupTerm(name)
-        addDefs(defs)
-        addDef(Name(it), Replacement.BaseVariable(term))
-        it
+      case Some(name) => onError(name, "variables can't be placeholders, use zero-argument functions instead")
     }
 
     override def ttDifferentialSymbol(it: DifferentialSymbol): Term = interpolatedName(it) match {

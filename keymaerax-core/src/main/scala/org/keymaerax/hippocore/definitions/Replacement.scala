@@ -19,15 +19,6 @@ sealed trait Replacement extends Hashable {
 }
 
 object Replacement {
-  case class BaseVariable(expr: core.Term) extends Replacement {
-    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(expr)
-    override def placeholder(name: Name): core.Expression = core.BaseVariable(name.name, name.index)
-
-    override def applyRename(rename: URename): Replacement = copy(expr = rename(expr))
-    override def applySubst(subst: USubst): Replacement = copy(expr = subst.apply(expr))
-    override def applySubstAllTaboo(subst: USubst): Replacement = copy(expr = subst.applyAllTaboo(expr))
-  }
-
   case class FuncOf(args: Int, expr: core.Term) extends Replacement {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(args).digest(expr)
     override def placeholder(name: Name): core.Expression = core.FuncOf(

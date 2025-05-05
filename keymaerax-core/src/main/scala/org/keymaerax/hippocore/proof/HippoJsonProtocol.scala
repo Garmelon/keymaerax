@@ -133,6 +133,24 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
     }
   }
 
+  // Space
+
+  implicit object SpaceFormat extends RootJsonFormat[core.Space] {
+    override def write(obj: core.Space): JsValue = obj match {
+      case core.AnyArg => variant("anyArg")
+      case core.Except(taboos) => variant("except", "taboos" -> taboos.toJson)
+    }
+
+    override def read(json: JsValue): core.Space = {
+      val obj = json.asJsObject
+      obj.fields(discriminant).convertTo[String] match {
+        case "anyArg" => core.AnyArg
+        case "except" => core.Except(taboos = obj.fields("taboos").convertTo[Seq[core.Variable]])
+        case _ => deserializationError("Space expected")
+      }
+    }
+  }
+
   // URename and USubst
 
   implicit val uRenameFormat: RootJsonFormat[core.URename] = jsonFormat(core.URename.apply, "what", "repl", "semantic")
@@ -329,7 +347,10 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
     jsonFormat(Replacement.PredicationalOf.apply, "expr")
 
   implicit val replacementProgramConstFormat: RootJsonFormat[Replacement.ProgramConst] =
-    jsonFormat(Replacement.ProgramConst.apply, "expr")
+    jsonFormat(Replacement.ProgramConst.apply, "expr", "space")
+
+  implicit val replacementSystemConstFormat: RootJsonFormat[Replacement.SystemConst] =
+    jsonFormat(Replacement.SystemConst.apply, "expr", "space")
 
   implicit object ReplacementFormat extends RootJsonFormat[Replacement] {
     override def write(obj: Replacement): JsValue = obj match {
@@ -337,6 +358,7 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
       case o: Replacement.PredOf => variantO("predOf", o.toJson)
       case o: Replacement.PredicationalOf => variantO("predicationalOf", o.toJson)
       case o: Replacement.ProgramConst => variantO("programConst", o.toJson)
+      case o: Replacement.SystemConst => variantO("systemConst", o.toJson)
     }
 
     override def read(json: JsValue): Replacement = json.asJsObject.fields(discriminant).convertTo[String] match {
@@ -344,6 +366,7 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
       case "predOf" => json.convertTo[Replacement.PredOf]
       case "predicationalOf" => json.convertTo[Replacement.PredicationalOf]
       case "programConst" => json.convertTo[Replacement.ProgramConst]
+      case "systemConst" => json.convertTo[Replacement.SystemConst]
       case _ => deserializationError("Replacement expected")
     }
   }

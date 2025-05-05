@@ -6,7 +6,7 @@
 package org.keymaerax.hippocore.definitions
 
 import org.keymaerax.core
-import org.keymaerax.core.{Formula, URename, USubst}
+import org.keymaerax.core.{Space, URename, USubst}
 import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 
 sealed trait Replacement extends Hashable {
@@ -55,11 +55,23 @@ object Replacement {
     override def applySubstAllTaboo(subst: USubst): Replacement = copy(expr = subst.applyAllTaboo(expr))
   }
 
-  case class ProgramConst(expr: core.Program) extends Replacement {
-    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(expr)
+  case class ProgramConst(expr: core.Program, space: Space) extends Replacement {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(expr).digest(space)
     override def placeholder(name: Name): core.Expression = {
       require(name.index.isEmpty)
-      core.ProgramConst(name.name)
+      core.ProgramConst(name.name, space)
+    }
+
+    override def applyRename(rename: URename): Replacement = copy(expr = rename(expr))
+    override def applySubst(subst: USubst): Replacement = copy(expr = subst.apply(expr))
+    override def applySubstAllTaboo(subst: USubst): Replacement = copy(expr = subst.applyAllTaboo(expr))
+  }
+
+  case class SystemConst(expr: core.Program, space: Space) extends Replacement {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(expr).digest(space)
+    override def placeholder(name: Name): core.Expression = {
+      require(name.index.isEmpty)
+      core.SystemConst(name.name, space)
     }
 
     override def applyRename(rename: URename): Replacement = copy(expr = rename(expr))

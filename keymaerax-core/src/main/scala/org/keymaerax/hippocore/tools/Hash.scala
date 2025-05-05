@@ -8,6 +8,7 @@ package org.keymaerax.hippocore.tools
 import org.keymaerax.core.{
   AndLeft,
   AndRight,
+  AnyArg,
   BoundRenaming,
   Close,
   CloseFalse,
@@ -23,6 +24,7 @@ import org.keymaerax.core.{
   EquivLeft,
   EquivRight,
   EquivifyRight,
+  Except,
   ExchangeLeftRule,
   ExchangeRightRule,
   Expression,
@@ -38,6 +40,7 @@ import org.keymaerax.core.{
   SeqPos,
   Sequent,
   Skolemize,
+  Space,
   SubstitutionPair,
   URename,
   USubst,
@@ -139,6 +142,11 @@ class Hasher {
   //////////////////
   // Kernel types //
   //////////////////
+
+  def digest(space: Space): Hasher = space match {
+    case AnyArg => digest("AnyArg")
+    case Except(taboos) => digest("Except").digestSeqWith(taboos)(_.digest(_))
+  }
 
   def digest(expr: Expression): Hasher = digest(Hasher.printer(expr))
 

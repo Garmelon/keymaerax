@@ -6,11 +6,14 @@
 package org.keymaerax.hippocore.proof
 
 import org.keymaerax.core.Expression
-import org.keymaerax.hippocore.definitions.Definitions
+import org.keymaerax.hippocore.definitions.{Definitions, Name}
 import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 
 case class HippoExpression private (expr: Expression, defs: Definitions) extends Hashable {
   def exprExpanded: Expression = defs.expandAll(expr)
+
+  def expand(name: Name): HippoExpression = HippoExpression(defs.expand(name, expr), defs)
+  def expandAll: HippoExpression = HippoExpression(defs.expandAll(expr), defs)
 
   override def digestInto(hasher: Hasher): Unit = hasher.digest(expr).digest(defs)
 }

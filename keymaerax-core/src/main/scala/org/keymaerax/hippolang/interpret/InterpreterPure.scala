@@ -173,6 +173,10 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
         case (Usubst.name, _: HlangValue.Proof) => HlangValue.BuiltinMemberFunction(target, Usubst)
         case (Urename.name, _: HlangValue.Proof) => HlangValue.BuiltinMemberFunction(target, Urename)
         case (Select.name, _: HlangValue.DlExpression) => HlangValue.BuiltinMemberFunction(target, Select)
+        case (Expand.name, _: HlangValue.DlExpression) => HlangValue.BuiltinMemberFunction(target, Expand)
+        case (Expand.name, _: HlangValue.DlSequent) => HlangValue.BuiltinMemberFunction(target, Expand)
+        case (ExpandAll.name, _: HlangValue.DlExpression) => HlangValue.BuiltinMemberFunction(target, ExpandAll)
+        case (ExpandAll.name, _: HlangValue.DlSequent) => HlangValue.BuiltinMemberFunction(target, ExpandAll)
 
         case _ => throw HlangException("invalid member access")
       }
@@ -361,6 +365,24 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
         val path = getOneArg(args)
         val pathV = getArgValueAsTacticArg(e.args(0), path, TacticArg.Seq(TacticArg.Int))
         ExprPath(pathV.toList).select(value).toHValue
+
+      case (Expand, HlangValue.DlExpression(value)) =>
+        val name = getOneArg(args)
+        val nameV = getArgValueAsTacticArg(e.args(0), name, TacticArg.Name)
+        value.expand(nameV).toHValue
+
+      case (Expand, HlangValue.DlSequent(value)) =>
+        val name = getOneArg(args)
+        val nameV = getArgValueAsTacticArg(e.args(0), name, TacticArg.Name)
+        value.expand(nameV).toHValue
+
+      case (ExpandAll, HlangValue.DlExpression(value)) =>
+        getZeroArgs(args)
+        value.expandAll.toHValue
+
+      case (ExpandAll, HlangValue.DlSequent(value)) =>
+        getZeroArgs(args)
+        value.expandAll.toHValue
 
       case _ => throw new UnsupportedOperationException("incorrect builtin member function application")
     }

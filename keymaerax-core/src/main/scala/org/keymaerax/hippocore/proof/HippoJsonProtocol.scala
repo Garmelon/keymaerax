@@ -319,9 +319,6 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
     }
   }
 
-  implicit val replacementBaseVariableFormat: RootJsonFormat[Replacement.BaseVariable] =
-    jsonFormat(Replacement.BaseVariable.apply, "expr")
-
   implicit val replacementFuncOfFormat: RootJsonFormat[Replacement.FuncOf] =
     jsonFormat(Replacement.FuncOf.apply, "args", "expr")
 
@@ -336,7 +333,6 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
 
   implicit object ReplacementFormat extends RootJsonFormat[Replacement] {
     override def write(obj: Replacement): JsValue = obj match {
-      case o: Replacement.BaseVariable => variantO("baseVariable", o.toJson)
       case o: Replacement.FuncOf => variantO("funcOf", o.toJson)
       case o: Replacement.PredOf => variantO("predOf", o.toJson)
       case o: Replacement.PredicationalOf => variantO("predicationalOf", o.toJson)
@@ -344,7 +340,6 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
     }
 
     override def read(json: JsValue): Replacement = json.asJsObject.fields(discriminant).convertTo[String] match {
-      case "baseVariable" => json.convertTo[Replacement.BaseVariable]
       case "funcOf" => json.convertTo[Replacement.FuncOf]
       case "predOf" => json.convertTo[Replacement.PredOf]
       case "predicationalOf" => json.convertTo[Replacement.PredicationalOf]

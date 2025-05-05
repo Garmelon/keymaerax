@@ -90,7 +90,13 @@ class Interpolator(val lookup: String => HippoExpression, val onError: (String, 
 
     override def ttBaseVariable(it: BaseVariable): Term = interpolatedName(it) match {
       case None => super.ttBaseVariable(it)
-      case Some(name) => onError(name, "variables can't be placeholders, use zero-argument functions instead")
+      case Some(name) =>
+        // Automatically expand the BaseVariable to a FuncOf with no arguments
+        val (term, defs) = lookupTerm(name)
+        val repl = Replacement.FuncOf(0, term)
+        addDefs(defs)
+        addDef(Name(it), repl)
+        repl.placeholder(Name(it)).asInstanceOf[Term]
     }
 
     override def ttDifferentialSymbol(it: DifferentialSymbol): Term = interpolatedName(it) match {
@@ -134,6 +140,7 @@ class Interpolator(val lookup: String => HippoExpression, val onError: (String, 
     override def tpProgramConst(it: ProgramConst): Program = interpolatedName(it) match {
       case None => super.tpProgramConst(it)
       case Some(name) =>
+        // TODO Maybe convert to SystemConst if dual-free?
         val (prog, defs) = lookupProgram(name)
         addDefs(defs)
         addDef(Name(it), Replacement.ProgramConst(prog, it.space))

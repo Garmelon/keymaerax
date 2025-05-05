@@ -5,25 +5,22 @@
 
 package org.keymaerax.hippolang.interpret
 
-import org.keymaerax.core.{Formula, Number, Program, Term, Variable}
-import org.keymaerax.hippocore.definitions.Definitions
-import org.keymaerax.hippocore.proof.{HippoExpression, HippoProof, HippoSequent}
+import org.keymaerax.core.Variable
+import org.keymaerax.hippocore.proof.{HippoExpression, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{ExprPath, SequentPrinter}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, PureTactic}
 import org.keymaerax.hippolang.HlangConversions.*
 import org.keymaerax.hippolang.interpret.InterpreterPure.{
-  getSingleArg,
-  getValueAsExpression,
-  getValueAsInt,
-  getValueAsList,
-  getValueAsProof,
-  getValueAsSequent,
+  getArgValueAsTacticArg,
+  getArgValuesAsTacticArgs,
+  getOneArg,
+  getTwoArgs,
+  getZeroArgs,
   interpolateExpression,
   interpolateSequent,
 }
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
-import org.keymaerax.hippolang.parse.SourceFile
 import org.keymaerax.hippolang.{
   BuiltinFunction,
   BuiltinMemberFunction,
@@ -33,7 +30,7 @@ import org.keymaerax.hippolang.{
   HlangValue,
   PrettyPrinter,
 }
-import org.keymaerax.hippolib.meta.TacticInfo
+import org.keymaerax.hippolib.meta.{TacticArg, TacticInfo}
 import org.keymaerax.hippolib.primitive.Cached
 
 class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
@@ -153,51 +150,58 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
   }
 
   // Protected because otherwise the value would have to be computed twice.
-  protected def accessValue(e: HlangExpression.Access, target: HlangValue): HlangValue = {
-    import org.keymaerax.hippolang.BuiltinMemberFunction.*
+  protected def accessValue(e: HlangExpression.Access, target: HlangValue): HlangValue = HlangException
+    .at(e.slice, "while accessing value") {
+      import org.keymaerax.hippolang.BuiltinMemberFunction.*
 
-    (target, e.name.value) match {
-      case (HlangValue.Namespace(ns), _) => HlangException.at(e.nameSlice) { ns.lookup(e.name) }
-      case (HlangValue.Tactic(_), "forward") => HlangValue.BuiltinMemberFunction(target, Forward)
-      case (HlangValue.Tactic(_), "backward") => HlangValue.BuiltinMemberFunction(target, Backward)
-      case (HlangValue.Tactic(_), "pure") => HlangValue.BuiltinMemberFunction(target, Pure)
-      case (HlangValue.DlExpression(_), "select") => HlangValue.BuiltinMemberFunction(target, Select)
-      case (HlangValue.Proof(value), "join") => HlangValue.BuiltinMemberFunction(target, Join)
-      case (HlangValue.Proof(value), "usubst") => HlangValue.BuiltinMemberFunction(target, Usubst)
-      case (HlangValue.Proof(value), "urename") => HlangValue.BuiltinMemberFunction(target, Urename)
-      case (HlangValue.Proof(value), "conclusion") => value.conclusion.toHValue
-      case (HlangValue.Proof(value), "premises") => value.premises.map(_.sequent.toHValue).toHValue
-      // TODO Better solution for proof/proofinfo duality
-      case (HlangValue.ProofInfo(value), "join") => HlangValue.BuiltinMemberFunction(target, Join)
-      case (HlangValue.ProofInfo(value), "usubst") => HlangValue.BuiltinMemberFunction(target, Usubst)
-      case (HlangValue.ProofInfo(value), "urename") => HlangValue.BuiltinMemberFunction(target, Urename)
-      case (HlangValue.ProofInfo(value), "conclusion") => value.proof.conclusion.toHValue
-      case (HlangValue.ProofInfo(value), "premises") => value.proof.premises.map(_.sequent.toHValue).toHValue
-      case (HlangValue.DlSequent(value), "ante") =>
-        value.sequent.ante.map(HippoExpression(_, value.defs).toHValue).toHValue
-      case (HlangValue.DlSequent(value), "succ") =>
-        value.sequent.succ.map(HippoExpression(_, value.defs).toHValue).toHValue
-      case (HlangValue.List(value), "length") => value.length.toHValue
-      case _ => throw new UnsupportedOperationException("incorrect access")
+      (e.name, target) match {
+        case (name, HlangValue.Namespace(v)) => HlangException.at(e.nameSlice) { v.lookup(name) }
+        case (_, HlangValue.ProofInfo(v)) => accessValue(e, HlangValue.Proof(v.proof))
+
+        // Member values
+        case (HlangIdentifier("conclusion"), HlangValue.Proof(v)) => v.conclusion.toHValue
+        case (HlangIdentifier("premises"), HlangValue.Proof(v)) => v.premises.map(_.sequent.toHValue).toHValue
+        case (HlangIdentifier("ante"), HlangValue.DlSequent(v)) => v.antes.map(_.toHValue).toHValue
+        case (HlangIdentifier("succ"), HlangValue.DlSequent(v)) => v.succs.map(_.toHValue).toHValue
+        case (HlangIdentifier("length"), HlangValue.List(v)) => v.length.toHValue
+
+        // Builtin member functions
+        case (Forward.name, _: HlangValue.Tactic) => HlangValue.BuiltinMemberFunction(target, Forward)
+        case (Backward.name, _: HlangValue.Tactic) => HlangValue.BuiltinMemberFunction(target, Backward)
+        case (Pure.name, _: HlangValue.Tactic) => HlangValue.BuiltinMemberFunction(target, Pure)
+        case (Join.name, _: HlangValue.Proof) => HlangValue.BuiltinMemberFunction(target, Join)
+        case (Usubst.name, _: HlangValue.Proof) => HlangValue.BuiltinMemberFunction(target, Usubst)
+        case (Urename.name, _: HlangValue.Proof) => HlangValue.BuiltinMemberFunction(target, Urename)
+        case (Select.name, _: HlangValue.DlExpression) => HlangValue.BuiltinMemberFunction(target, Select)
+
+        case _ => throw HlangException("invalid member access")
+      }
     }
-  }
 
   // Protected because otherwise the values would have to be computed twice.
   protected def applyValue(e: HlangExpression.Apply, target: HlangValue, args: IndexedSeq[HlangValue]): HlangValue =
     target match {
-      case HlangValue.TacticInfo(value) => applyTacticInfo(e, value, args)
-      case HlangValue.BuiltinFunction(value) => applyBuiltinFunction(e, value, args)
-      case HlangValue.BuiltinMemberFunction(target, value) => applyBuiltinMemberFunction(e, target, value, args)
-      case HlangValue.Function(env, argNames, body) => applyFunction(e, env, argNames, body, args)
-      case HlangValue.List(value) => applyList(e, value, args)
-      case _ => throw new IllegalArgumentException("can only apply builtin")
+      case HlangValue.TacticInfo(value) =>
+        HlangException.at(e.slice, "while constructing tactic") { applyTacticInfo(e, value, args) }
+
+      case HlangValue.BuiltinFunction(value) =>
+        HlangException.at(e.slice, "while calling builtin function") { applyBuiltinFunction(e, value, args) }
+
+      case HlangValue.BuiltinMemberFunction(target, value) => HlangException
+          .at(e.slice, "while calling builtin member function") { applyBuiltinMemberFunction(e, target, value, args) }
+
+      case HlangValue.Function(env, argNames, body) =>
+        HlangException.at(e.slice, "while calling function") { applyFunction(e, env, argNames, body, args) }
+
+      case HlangValue.List(value) => HlangException.at(e.slice, "while accessing list") { applyList(e, value, args) }
+
+      case v =>
+        throw HlangException(s"${v.getClass.getSimpleName} can't be called", e.slice, "while applying arguments")
     }
 
   private def applyTacticInfo(e: HlangExpression.Apply, info: TacticInfo, args: IndexedSeq[HlangValue]): HlangValue = {
     val tacticArgs = args.map(InterpreterPure.hippoValToTacticArg)
-    HlangException.at(e.argsSlice, "while constructing the tactic") {
-      info.constructor.constructPositional(tacticArgs).toHValue
-    }
+    info.constructor.constructPositional(tacticArgs).toHValue
   }
 
   private def applyBuiltinFunction(
@@ -206,75 +210,88 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
       args: IndexedSeq[HlangValue],
   ): HlangValue = target match {
     case BuiltinFunction.Not =>
-      val Seq(arg) = args
+      val arg = getOneArg(args)
       (!arg.isTruthy).toHValue
 
     case BuiltinFunction.Neg =>
-      val Seq(arg) = args
+      val arg = getOneArg(args)
       (-arg.asInt).toHValue
 
     case BuiltinFunction.Mul =>
-      val Seq(left, right) = args
-      (left.asInt * right.asInt).toHValue
+      val (left, right) = getTwoArgs(args)
+      val leftV = getArgValueAsTacticArg(e.args(0), left, TacticArg.Int)
+      val rightV = getArgValueAsTacticArg(e.args(1), right, TacticArg.Int)
+      (leftV * rightV).toHValue
 
     case BuiltinFunction.Div =>
-      val Seq(left, right) = args
-      val leftI = left.asInt
-      val rightI = right.asInt
-      if (rightI == 0) throw HlangException("division by zero", e.args(1).slice, "this divisor is zero")
-      (leftI / rightI).toHValue
+      val (left, right) = getTwoArgs(args)
+      val leftV = getArgValueAsTacticArg(e.args(0), left, TacticArg.Int)
+      val rightV = getArgValueAsTacticArg(e.args(1), right, TacticArg.Int)
+      if (rightV == 0) throw HlangException("division by zero", e.args(1).slice, "this divisor is zero")
+      (leftV / rightV).toHValue
 
     case BuiltinFunction.Add =>
-      val Seq(left, right) = args
-      (left.asInt + right.asInt).toHValue
+      val (left, right) = getTwoArgs(args)
+      val leftV = getArgValueAsTacticArg(e.args(0), left, TacticArg.Int)
+      val rightV = getArgValueAsTacticArg(e.args(1), right, TacticArg.Int)
+      (leftV + rightV).toHValue
 
     case BuiltinFunction.Sub =>
-      val Seq(left, right) = args
-      (left.asInt - right.asInt).toHValue
+      val (left, right) = getTwoArgs(args)
+      val leftV = getArgValueAsTacticArg(e.args(0), left, TacticArg.Int)
+      val rightV = getArgValueAsTacticArg(e.args(1), right, TacticArg.Int)
+      (leftV - rightV).toHValue
 
     case BuiltinFunction.Gt =>
-      val Seq(left, right) = args
-      (left.asInt > right.asInt).toHValue
+      val (left, right) = getTwoArgs(args)
+      val leftV = getArgValueAsTacticArg(e.args(0), left, TacticArg.Int)
+      val rightV = getArgValueAsTacticArg(e.args(1), right, TacticArg.Int)
+      (leftV > rightV).toHValue
 
     case BuiltinFunction.Gte =>
-      val Seq(left, right) = args
-      (left.asInt >= right.asInt).toHValue
+      val (left, right) = getTwoArgs(args)
+      val leftV = getArgValueAsTacticArg(e.args(0), left, TacticArg.Int)
+      val rightV = getArgValueAsTacticArg(e.args(1), right, TacticArg.Int)
+      (leftV >= rightV).toHValue
 
     case BuiltinFunction.Lt =>
-      val Seq(left, right) = args
-      (left.asInt < right.asInt).toHValue
+      val (left, right) = getTwoArgs(args)
+      val leftV = getArgValueAsTacticArg(e.args(0), left, TacticArg.Int)
+      val rightV = getArgValueAsTacticArg(e.args(1), right, TacticArg.Int)
+      (leftV < rightV).toHValue
 
     case BuiltinFunction.Lte =>
-      val Seq(left, right) = args
-      (left.asInt <= right.asInt).toHValue
+      val (left, right) = getTwoArgs(args)
+      val leftV = getArgValueAsTacticArg(e.args(0), left, TacticArg.Int)
+      val rightV = getArgValueAsTacticArg(e.args(1), right, TacticArg.Int)
+      (leftV <= rightV).toHValue
 
     case BuiltinFunction.Eq =>
-      val Seq(left, right) = args
-      (left == right).toHValue
+      val (left, right) = getTwoArgs(args)
+      val leftV = getArgValueAsTacticArg(e.args(0), left, TacticArg.Int)
+      val rightV = getArgValueAsTacticArg(e.args(1), right, TacticArg.Int)
+      (leftV == rightV).toHValue
 
     case BuiltinFunction.Neq =>
-      val Seq(left, right) = args
-      (left != right).toHValue
+      val (left, right) = getTwoArgs(args)
+      val leftV = getArgValueAsTacticArg(e.args(0), left, TacticArg.Int)
+      val rightV = getArgValueAsTacticArg(e.args(1), right, TacticArg.Int)
+      (leftV != rightV).toHValue
 
     case BuiltinFunction.And =>
-      val Seq(left, right) = args
+      val (left, right) = getTwoArgs(args)
       if (left.isTruthy) right else left
 
     case BuiltinFunction.Or =>
-      val Seq(left, right) = args
+      val (left, right) = getTwoArgs(args)
       if (left.isTruthy) left else right
 
     case BuiltinFunction.List => HlangValue.List(args)
 
     case BuiltinFunction.Proof =>
-      val arg = getSingleArg(e, args, label = "while constructing proof")
-      val sequent = getValueAsSequent(
-        arg,
-        "argument must be a sequent",
-        slice = e.args(0).slice,
-        label = "while constructing proof",
-      )
-      HlangValue.Proof(ctx.sequent(sequent))
+      val sequent = getOneArg(args)
+      val sequentV = getArgValueAsTacticArg(e.args(0), sequent, TacticArg.HippoSequent)
+      HlangValue.Proof(ctx.sequent(sequentV))
 
     case BuiltinFunction.Print =>
       val parts = args.map {
@@ -289,7 +306,7 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
       HlangValue.Null
 
     case f @ BuiltinFunction.Premise =>
-      throw new UnsupportedOperationException(s"#${f.name} can only be called in the context of a graph block")
+      throw HlangException(s"#${f.name} can only be called in the context of a graph block")
   }
 
   private def applyBuiltinMemberFunction(
@@ -300,104 +317,50 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
   ): HlangValue = {
     import org.keymaerax.hippolang.BuiltinMemberFunction.*
 
-    (target, value, args) match {
-      case (HlangValue.Tactic(tactic: ForwardTactic), Forward, args) =>
-        val premises = args.map(_.asSequent)
-        ctx.forward(tactic, premises).toHValue
+    (value, target) match {
+      case (Forward, HlangValue.Tactic(tactic: ForwardTactic)) =>
+        val premises = getArgValuesAsTacticArgs(e.args, args, TacticArg.HippoSequent)
+        ctx.forward(tactic, premises.toIndexedSeq).toHValue
 
       // TODO Support premise hints
-      case (HlangValue.Tactic(tactic: BackwardTactic), Backward, Seq(arg)) =>
-        val conclusion = arg.asSequent
-        ctx.backward(tactic, conclusion).toHValue
+      case (Backward, HlangValue.Tactic(tactic: BackwardTactic)) =>
+        val conclusion = getOneArg(args)
+        val conclusionV = getArgValueAsTacticArg(e.args(0), conclusion, TacticArg.HippoSequent)
+        ctx.backward(tactic, conclusionV).toHValue
 
-      case (HlangValue.Tactic(tactic: PureTactic), Pure, Seq()) => ctx.pure(tactic).toHValue
+      case (Pure, HlangValue.Tactic(tactic: PureTactic)) =>
+        getZeroArgs(args)
+        ctx.pure(tactic).toHValue
 
-      case (HlangValue.ProofInfo(proof), Join, _) => applyBuiltinMemberFunction(e, proof.proof.toHValue, value, args)
+      case (Join, HlangValue.ProofInfo(proof)) => applyBuiltinMemberFunction(e, proof.proof.toHValue, value, args)
 
-      case (HlangValue.Proof(proof), Join, Seq(at, subproof)) =>
-        val atV = getValueAsInt(
-          at,
-          message = "argument must be an integer",
-          slice = e.args(0).slice,
-          label = "while joining proofs",
-        )
+      case (Join, HlangValue.Proof(proof)) =>
+        val (at, subproof) = getTwoArgs(args)
+        val atV = getArgValueAsTacticArg(e.args(0), at, TacticArg.Int)
+        val subproofV = getArgValueAsTacticArg(e.args(0), subproof, TacticArg.HippoProof)
+        ctx.joinAt(atV)(proof, subproofV).toHValue
 
-        val subproofV = getValueAsProof(
-          subproof,
-          message = "argument must be a proof",
-          slice = e.args(1).slice,
-          label = "while joining proofs",
-        )
-
-        HlangException.at(slice = e.slice, label = "while joining proofs") {
-          ctx.joinAt(atV)(proof, subproofV).toHValue
-        }
-
-      case (HlangValue.ProofInfo(proof), Usubst, _) => applyBuiltinMemberFunction(e, proof.proof.toHValue, value, args)
+      case (Usubst, HlangValue.ProofInfo(proof)) => applyBuiltinMemberFunction(e, proof.proof.toHValue, value, args)
 
       // TODO Support multiple substitution pairs
-      case (HlangValue.Proof(proof), Usubst, Seq(from, to)) =>
-        val fromV = getValueAsExpression(
-          from,
-          message = "argument must be a dL expression",
-          slice = e.args(0).slice,
-          label = "while performing usubst",
-        )
+      case (Usubst, HlangValue.Proof(proof)) =>
+        val (from, to) = getTwoArgs(args)
+        val fromV = getArgValueAsTacticArg(e.args(0), from, TacticArg.HippoExpression)
+        val toV = getArgValueAsTacticArg(e.args(0), to, TacticArg.HippoExpression)
+        ctx.uSubst(proof, fromV.exprExpanded -> toV.exprExpanded).toHValue
 
-        val toV = getValueAsExpression(
-          to,
-          message = "argument must be a dL expression",
-          slice = e.args(0).slice,
-          label = "while performing usubst",
-        )
+      case (Urename, HlangValue.ProofInfo(proof)) => applyBuiltinMemberFunction(e, proof.proof.toHValue, value, args)
 
-        HlangException.at(slice = e.slice, label = "while performing usubst") {
-          ctx.uSubst(proof, fromV.exprExpanded -> toV.exprExpanded).toHValue
-        }
+      case (Urename, HlangValue.Proof(proof)) =>
+        val (from, to) = getTwoArgs(args)
+        val fromV = getArgValueAsTacticArg(e.args(0), from, TacticArg.HippoExpression)
+        val toV = getArgValueAsTacticArg(e.args(0), to, TacticArg.HippoExpression)
+        ctx.uRename(proof, fromV.asInstanceOf[Variable], toV.asInstanceOf[Variable]).toHValue
 
-      case (HlangValue.ProofInfo(proof), Urename, _) => applyBuiltinMemberFunction(e, proof.proof.toHValue, value, args)
-
-      case (HlangValue.Proof(proof), Urename, Seq(from, to)) =>
-        val fromV = getValueAsExpression(
-          from,
-          message = "argument must be a dL expression",
-          slice = e.args(0).slice,
-          label = "while performing urename",
-        )
-
-        val toV = getValueAsExpression(
-          to,
-          message = "argument must be a dL expression",
-          slice = e.args(0).slice,
-          label = "while performing urename",
-        )
-
-        HlangException.at(slice = e.slice, label = "while performing urename") {
-          ctx.uRename(proof, fromV.asInstanceOf[Variable], toV.asInstanceOf[Variable]).toHValue
-        }
-
-      case (HlangValue.DlExpression(value), Select, args) =>
-        val arg = getSingleArg(e, args, label = "while selecting subexpression")
-
-        val path = getValueAsList(
-          arg,
-          message = "path must be a list",
-          slice = e.args(0).slice,
-          label = "while selecting subexpression",
-        )
-
-        val segments = path
-          .zipWithIndex
-          .map { case (segment, i) =>
-            getValueAsInt(
-              segment,
-              message = s"path segment at index $i must be an int",
-              slice = e.args(0).slice,
-              label = "while selecting subexpression",
-            )
-          }
-
-        ExprPath(segments.toList).select(value).toHValue
+      case (Select, HlangValue.DlExpression(value)) =>
+        val path = getOneArg(args)
+        val pathV = getArgValueAsTacticArg(e.args(0), path, TacticArg.Seq(TacticArg.Int))
+        ExprPath(pathV.toList).select(value).toHValue
 
       case _ => throw new UnsupportedOperationException("incorrect builtin member function application")
     }
@@ -421,23 +384,11 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
       list: IndexedSeq[HlangValue],
       args: IndexedSeq[HlangValue],
   ): HlangValue = {
-    val arg = getSingleArg(e, args, label = "while indexing list")
-    val index = getValueAsInt(
-      arg,
-      message = "list index must be an integer",
-      slice = e.args(0).slice,
-      label = "while indexing list",
-    )
-
-    if (list.isEmpty)
-      throw HlangException("can't index empty list", slice = e.args(0).slice, label = "while indexing list")
-
-    if (index < 0 || index >= list.length) throw HlangException(
-      s"index ($index) must be within bounds (0 <= index < ${list.length})",
-      slice = e.args(0).slice,
-      label = "while indexing list",
-    )
-
+    val arg = getOneArg(args)
+    val index = getArgValueAsTacticArg(e.args(0), arg, TacticArg.Int)
+    if (list.isEmpty) throw HlangException("can't index empty list")
+    if (index < 0 || index >= list.length)
+      throw HlangException(s"index $index must be within bounds (0 <= index < ${list.length})")
     list(index)
   }
 }
@@ -458,87 +409,33 @@ object InterpreterPure {
     case _ => throw new UnsupportedOperationException("can't convert value to tactic argument")
   }
 
-  protected def getSingleArg(e: HlangExpression.Apply, args: Seq[HlangValue], label: String): HlangValue = args match {
+  protected def getValueAsTacticArg(value: HlangValue, arg: TacticArg): arg.Type = arg
+    .validate(hippoValToTacticArg(value))
+
+  protected def getArgValueAsTacticArg(e: HlangExpression, value: HlangValue, arg: TacticArg): arg.Type = HlangException
+    .at(e.slice) { getValueAsTacticArg(value, arg) }
+
+  protected def getArgValuesAsTacticArgs(
+      exprs: Seq[HlangExpression],
+      values: Seq[HlangValue],
+      arg: TacticArg,
+  ): Seq[arg.Type] = values
+    .zip(exprs)
+    .map { case (value, e) => HlangException.at(e.slice) { getValueAsTacticArg(value, arg) } }
+
+  protected def getZeroArgs(args: Seq[HlangValue]): Unit = args match {
+    case Seq() => ()
+    case _ => throw HlangException("exactly zero arguments required")
+  }
+
+  protected def getOneArg(args: Seq[HlangValue]): HlangValue = args match {
     case Seq(arg) => arg
-    case _ => throw HlangException("exactly one argument required", slice = e.argsSlice, label = label)
+    case _ => throw HlangException("exactly one argument required")
   }
 
-  protected def getValueAsInt(value: HlangValue, message: String, slice: SourceFile#Slice, label: String): Int =
-    value match {
-      case HlangValue.Int(value) => value
-      case _ => throw HlangException(message, slice = slice, label = label)
-    }
-
-  protected def getValueAsExpression(
-      value: HlangValue,
-      message: String,
-      slice: SourceFile#Slice,
-      label: String,
-  ): HippoExpression = value match {
-    case HlangValue.DlExpression(value) => value
-    case HlangValue.Int(value) => HippoExpression(Number(value))
-    case _ => throw HlangException(message, slice = slice, label = label)
-  }
-
-  protected def getValueAsTerm(
-      value: HlangValue,
-      message: String,
-      slice: SourceFile#Slice,
-      label: String,
-  ): (Term, Definitions) = getValueAsExpression(value, message, slice, label) match {
-    case HippoExpression(expr: Term, defs) => (expr, defs)
-    case _ => throw HlangException(message, slice = slice, label = label)
-  }
-
-  protected def getValueAsFormula(
-      value: HlangValue,
-      message: String,
-      slice: SourceFile#Slice,
-      label: String,
-  ): (Formula, Definitions) = getValueAsExpression(value, message, slice, label) match {
-    case HippoExpression(expr: Formula, defs) => (expr, defs)
-    case _ => throw HlangException(message, slice = slice, label = label)
-  }
-
-  protected def getValueAsProgram(
-      value: HlangValue,
-      message: String,
-      slice: SourceFile#Slice,
-      label: String,
-  ): (Program, Definitions) = getValueAsExpression(value, message, slice, label) match {
-    case HippoExpression(expr: Program, defs) => (expr, defs)
-    case _ => throw HlangException(message, slice = slice, label = label)
-  }
-
-  protected def getValueAsSequent(
-      value: HlangValue,
-      message: String,
-      slice: SourceFile#Slice,
-      label: String,
-  ): HippoSequent = value match {
-    case HlangValue.DlSequent(value) => value
-    case _ => throw HlangException(message, slice = slice, label = label)
-  }
-
-  protected def getValueAsProof(
-      value: HlangValue,
-      message: String,
-      slice: SourceFile#Slice,
-      label: String,
-  ): HippoProof = value match {
-    case HlangValue.Proof(value) => value
-    case HlangValue.ProofInfo(value) => value.proof
-    case _ => throw HlangException(message, slice = slice, label = label)
-  }
-
-  protected def getValueAsList(
-      value: HlangValue,
-      message: String,
-      slice: SourceFile#Slice,
-      label: String,
-  ): IndexedSeq[HlangValue] = value match {
-    case HlangValue.List(values) => values
-    case _ => throw HlangException(message, slice = slice, label = label)
+  protected def getTwoArgs(args: Seq[HlangValue]): (HlangValue, HlangValue) = args match {
+    case Seq(arg1, arg2) => (arg1, arg2)
+    case _ => throw HlangException("exactly two arguments required")
   }
 
   protected def interpolateExpression(namespace: MutableNamespace, e: HlangExpression.DlExpression): HippoExpression = {
@@ -548,13 +445,10 @@ object InterpreterPure {
 
     new Interpolator(
       lookup = { name =>
-        val value = HlangException.at(slice, label) { namespace.lookup(HlangIdentifier(name)) }
-        getValueAsExpression(
-          value,
-          errorMsg(name, "replacement value can't be converted to a dL expression"),
-          slice,
-          label,
-        )
+        HlangException.at(slice, label) {
+          val value = namespace.lookup(HlangIdentifier(name))
+          getValueAsTacticArg(value, TacticArg.HippoExpression)
+        }
       },
       onError = (name, msg) => throw HlangException(errorMsg(name, msg), slice, label),
     ).interpolate(e.value)
@@ -568,13 +462,10 @@ object InterpreterPure {
 
     new Interpolator(
       lookup = { name =>
-        val value = HlangException.at(slice, label) { namespace.lookup(HlangIdentifier(name)) }
-        getValueAsExpression(
-          value,
-          errorMsg(name, "replacement value can't be converted to a dL sequent"),
-          slice,
-          label,
-        )
+        HlangException.at(slice, label) {
+          val value = namespace.lookup(HlangIdentifier(name))
+          getValueAsTacticArg(value, TacticArg.HippoExpression)
+        }
       },
       onError = (name, msg) => throw HlangException(errorMsg(name, msg), slice, label),
     ).interpolate(e.value)

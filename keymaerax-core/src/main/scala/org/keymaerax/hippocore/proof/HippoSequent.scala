@@ -12,8 +12,14 @@ import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 case class HippoSequent private (sequent: Sequent, defs: Definitions) extends Hashable {
   def sequentExpanded: Sequent = defs.expandAll(sequent)
 
+  def antes: IndexedSeq[HippoExpression] = sequent.ante.map(HippoExpression(_, defs))
+  def succs: IndexedSeq[HippoExpression] = sequent.succ.map(HippoExpression(_, defs))
+  def anteAt(i: Int): HippoExpression = HippoExpression(sequent.ante(i), defs)
+  def succAt(i: Int): HippoExpression = HippoExpression(sequent.succ(i), defs)
+
   def expand(name: Name): HippoSequent = HippoSequent(defs.expand(name, sequent), defs)
   def expandAll: HippoSequent = HippoSequent(defs.expandAll(sequent), defs)
+
   def applyRename(rename: URename): HippoSequent = HippoSequent(rename(sequent), defs.applyRename(rename))
   def applySubst(subst: USubst): HippoSequent = HippoSequent(subst(sequent), defs.applySubst(subst))
   def applySubstAllTaboo(subst: USubst): HippoSequent = HippoSequent(subst(sequent), defs.applySubstAllTaboo(subst))

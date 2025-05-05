@@ -12,7 +12,7 @@ import org.keymaerax.hippocore.tools.HumanFormat.pluralizeN
 import org.keymaerax.hippocore.tools.PremisePermuter
 import org.keymaerax.hippolang.HlangConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
-import org.keymaerax.hippolang.{HlangException, HlangExpression, HlangIdentifier, HlangValue}
+import org.keymaerax.hippolang.{HlangException, HlangExpression, HlangIdentifier, HlangValue, PrettyPrinter}
 import org.keymaerax.hippolib.primitive.Cached
 
 import scala.collection.mutable
@@ -128,8 +128,9 @@ class InterpreterBackward(
         .sorted
         .map { goal =>
           val goalIdx = this.goals.indexOf(goal)
-          val sequent = this.chain.proof.premises(goalIdx).sequent.sequent.prettyString // TODO Print properly
-          s"\n$$$goal:\n$sequent"
+          val sequent = this.chain.proof.premises(goalIdx).sequent
+          val sequentStr = PrettyPrinter.printHippoSequent(sequent)
+          s"\n$$$goal:\n$sequentStr"
         }
         .mkString("\n")
       discrepancies.append(s"The following goals should be closed:\n$goals")

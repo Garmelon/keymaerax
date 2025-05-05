@@ -21,6 +21,7 @@ import org.keymaerax.core.{
   Program,
   ProgramConst,
   Sequent,
+  SystemConst,
   Term,
 }
 import org.keymaerax.hippocore.definitions.{Definitions, Name, Replacement}
@@ -135,7 +136,16 @@ class Interpolator(val lookup: String => HippoExpression, val onError: (String, 
       case Some(name) =>
         val (prog, defs) = lookupProgram(name)
         addDefs(defs)
-        addDef(Name(it), Replacement.ProgramConst(prog))
+        addDef(Name(it), Replacement.ProgramConst(prog, it.space))
+        it
+    }
+
+    override def tpSystemConst(it: SystemConst): Program = interpolatedName(it) match {
+      case None => super.tpSystemConst(it)
+      case Some(name) =>
+        val (prog, defs) = lookupProgram(name)
+        addDefs(defs)
+        addDef(Name(it), Replacement.SystemConst(prog, it.space))
         it
     }
   }

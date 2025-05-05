@@ -110,19 +110,23 @@ case class Definitions(byName: SortedMap[Name, Replacement]) extends Hashable {
     Definitions(byName.map { case (name, repl) => (name, repl.applySubstAllTaboo(subst)) })
   }
 
-  def expandingSubst(name: Name): USubst = {
+  private def expandingSubstPair(name: Name): SubstitutionPair = {
     val repl = byName(name)
-    USubst(Seq(SubstitutionPair(repl.placeholder(name), repl.expr)))
+    SubstitutionPair(repl.placeholder(name), repl.expr)
   }
+
+  private def expandingSubst(names: Name*): USubst = USubst(names.map(expandingSubstPair))
 
   def expand(name: Name, expr: Expression): Expression = expandingSubst(name)(expr)
   def expand(name: Name, sequent: Sequent): Sequent = expandingSubst(name)(sequent)
   def expand(name: Name, provable: Provable): Provable = provable(expandingSubst(name))
 
-  // Expand starting from topmost definitions so that their replacements are also expanded afterward.
-  def expandAll(expr: Expression): Expression = { topologically.foldRight(expr)(expand) }
-  def expandAll(sequent: Sequent): Sequent = { topologically.foldRight(sequent)(expand) }
-  def expandAll(provable: Provable): Provable = { topologically.foldRight(provable)(expand) }
+  // I don't think the topological order is necessary since USubst substitutes "all at once",
+  // but Declaration seems to do the same, and we already have it computed,
+  // and it is more deterministic than using a random key order.
+  def expandAll(expr: Expression): Expression = expandingSubst(topologically*)(expr)
+  def expandAll(sequent: Sequent): Sequent = expandingSubst(topologically*)(sequent)
+  def expandAll(provable: Provable): Provable = provable(expandingSubst(topologically*))
 
   override def digestInto(hasher: Hasher): Unit = hasher.digestMap(byName)
 }

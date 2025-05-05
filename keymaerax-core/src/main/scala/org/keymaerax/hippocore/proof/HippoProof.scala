@@ -6,6 +6,8 @@
 package org.keymaerax.hippocore.proof
 
 import org.keymaerax.core
+import org.keymaerax.core.Provable
+import org.keymaerax.hippocore.definitions.Name
 import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 
 import scala.collection.mutable
@@ -252,6 +254,24 @@ object HippoProof {
     ): core.Provable = assertConsistency(premises) { premises.head(subst) }
 
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(premise).digest(subst)
+  }
+
+  final case class Expand(conclusion: HippoSequent, name: Name) extends HippoProof {
+    override val premises: IndexedSeq[HippoPremise] = IndexedSeq(HippoPremise.locallySound(conclusion.expand(name)))
+
+    override protected def computeProvable(fromExternal: FromExternal, premises: IndexedSeq[Provable]): Provable =
+      assertConsistency(premises) { applyPremises(Provable.startProof(conclusion.sequentExpanded), premises) }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(conclusion).digest(name)
+  }
+
+  final case class ExpandAll(conclusion: HippoSequent) extends HippoProof {
+    override val premises: IndexedSeq[HippoPremise] = IndexedSeq(HippoPremise.locallySound(conclusion.expandAll))
+
+    override protected def computeProvable(fromExternal: FromExternal, premises: IndexedSeq[Provable]): Provable =
+      assertConsistency(premises) { applyPremises(Provable.startProof(conclusion.sequentExpanded), premises) }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(conclusion)
   }
 
   final case class Join(proof: HippoProof, subproof: HippoProof, at: Int) extends HippoProof {

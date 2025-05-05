@@ -19,8 +19,10 @@ object BuiltinMemberFunction {
   case object Usubst extends BuiltinMemberFunction(HlangIdentifier("usubst"))
   case object Urename extends BuiltinMemberFunction(HlangIdentifier("urename"))
   case object Select extends BuiltinMemberFunction(HlangIdentifier("select"))
+  case object Expand extends BuiltinMemberFunction(HlangIdentifier("expand"))
+  case object ExpandAll extends BuiltinMemberFunction(HlangIdentifier("expandAll"))
 
-  val all: Seq[BuiltinMemberFunction] = Seq(Forward, Backward, Pure, Join, Usubst, Urename, Select)
+  val all: Seq[BuiltinMemberFunction] = Seq(Forward, Backward, Pure, Join, Usubst, Urename, Select, Expand, ExpandAll)
 
   val byName: Map[HlangIdentifier, BuiltinMemberFunction] = all.map(b => b.name -> b).toMap
 }

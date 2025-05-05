@@ -407,6 +407,9 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
   val ExpandAll: TacticInfo = TacticInfo.arg0("core.ExpandAll") { self.ExpandAll }
 
   @publish
+  val Noop: TacticInfo = TacticInfo.arg0("core.Noop") { self.Noop }
+
+  @publish
   val QE: TacticInfo = TacticInfo.arg0("core.QE") { self.QE() }
 
   @publish

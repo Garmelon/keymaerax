@@ -22,7 +22,6 @@ import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{ExprPath, Hash, Hasher}
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic}
 import org.keymaerax.hippolib.HippoLib
-import org.keymaerax.hippolib.primitive.Noop
 
 /**
  * Rewrite a formula at a single location using an equivalence (`<->`) or equals (`=`) relation.

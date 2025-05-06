@@ -311,31 +311,7 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
     override def read(json: JsValue): Hash = Hash(json.convertTo[String])
   }
 
-  implicit val externalSourceQeToolFormat: RootJsonFormat[ExternalSource.QeTool] =
-    jsonFormat(ExternalSource.QeTool.apply, "formula")
-
-  implicit val externalSourceBellerophonFormat: RootJsonFormat[ExternalSource.Bellerophon] =
-    jsonFormat(ExternalSource.Bellerophon.apply, "proof")
-
-  implicit val externalSourceCacheFormat: RootJsonFormat[ExternalSource.Cache] =
-    jsonFormat(ExternalSource.Cache.apply, "hash")
-
-  implicit object ExternalSourceFormat extends RootJsonFormat[ExternalSource] {
-    override def write(obj: ExternalSource): JsValue = obj match {
-      case ExternalSource.Sorry => variant("sorry")
-      case o: ExternalSource.QeTool => variantO("qeTool", o.toJson)
-      case o: ExternalSource.Bellerophon => variantO("bellerophon", o.toJson)
-      case o: ExternalSource.Cache => variantO("cache", o.toJson)
-    }
-
-    override def read(json: JsValue): ExternalSource = json.asJsObject.fields(discriminant).convertTo[String] match {
-      case "sorry" => ExternalSource.Sorry
-      case "qeTool" => json.convertTo[ExternalSource.QeTool]
-      case "bellerophon" => json.convertTo[ExternalSource.Bellerophon]
-      case "cache" => json.convertTo[ExternalSource.Cache]
-      case _ => deserializationError("ExternalSource expected")
-    }
-  }
+  implicit val nameFormat: RootJsonFormat[Name] = jsonFormat(Name.apply, "name", "index")
 
   implicit val replacementFuncOfFormat: RootJsonFormat[Replacement.FuncOf] =
     jsonFormat(Replacement.FuncOf.apply, "args", "expr")
@@ -371,11 +347,35 @@ object HippoJsonProtocol extends DefaultJsonProtocol {
     }
   }
 
-  implicit val nameFormat: RootJsonFormat[Name] = jsonFormat(Name.apply, "name", "index")
-
   implicit object DefinitionsFormat extends RootJsonFormat[Definitions] {
     override def write(obj: Definitions): JsValue = obj.byName.toSeq.toJson
     override def read(json: JsValue): Definitions = Definitions(json.convertTo[Seq[(Name, Replacement)]].to(SortedMap))
+  }
+
+  implicit val externalSourceQeToolFormat: RootJsonFormat[ExternalSource.QeTool] =
+    jsonFormat(ExternalSource.QeTool.apply, "formula", "defs")
+
+  implicit val externalSourceBellerophonFormat: RootJsonFormat[ExternalSource.Bellerophon] =
+    jsonFormat(ExternalSource.Bellerophon.apply, "proof", "defs")
+
+  implicit val externalSourceCacheFormat: RootJsonFormat[ExternalSource.Cache] =
+    jsonFormat(ExternalSource.Cache.apply, "hash")
+
+  implicit object ExternalSourceFormat extends RootJsonFormat[ExternalSource] {
+    override def write(obj: ExternalSource): JsValue = obj match {
+      case ExternalSource.Sorry => variant("sorry")
+      case o: ExternalSource.QeTool => variantO("qeTool", o.toJson)
+      case o: ExternalSource.Bellerophon => variantO("bellerophon", o.toJson)
+      case o: ExternalSource.Cache => variantO("cache", o.toJson)
+    }
+
+    override def read(json: JsValue): ExternalSource = json.asJsObject.fields(discriminant).convertTo[String] match {
+      case "sorry" => ExternalSource.Sorry
+      case "qeTool" => json.convertTo[ExternalSource.QeTool]
+      case "bellerophon" => json.convertTo[ExternalSource.Bellerophon]
+      case "cache" => json.convertTo[ExternalSource.Cache]
+      case _ => deserializationError("ExternalSource expected")
+    }
   }
 
   implicit val hippoSequentFormat: RootJsonFormat[HippoSequent] = jsonFormat(HippoSequent.apply, "sequent", "defs")

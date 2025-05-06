@@ -42,14 +42,14 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
     HippoProof.External(
       conclusion = HippoSequent(provable.conclusion, defs),
       premises = provable.subgoals.map(HippoSequent(_, defs)).map(HippoPremise.locallySound),
-      source = ExternalSource.QeTool(formula),
+      source = ExternalSource.QeTool(formula, defs),
     )
   }
 
   def belle(provable: Provable, defs: Definitions = Definitions.empty): HippoProof = HippoProof.External(
     conclusion = HippoSequent(provable.conclusion, defs),
     premises = provable.subgoals.map(HippoSequent(_, defs)).map(HippoPremise.locallySound),
-    source = ExternalSource.Bellerophon(provable),
+    source = ExternalSource.Bellerophon(provable, defs),
   )
 
   def sequent(conclusion: HippoSequent): HippoProof = HippoProof.Sequent(conclusion)
@@ -192,8 +192,9 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
   private def fromExternal(external: HippoProof.External, premises: IndexedSeq[Provable]): Provable =
     external.source match {
       case ExternalSource.Sorry => HippoException.fail("Proof uses sorry")
-      case ExternalSource.QeTool(formula) => HippoProof.applyPremises(computeQe(formula), premises)
-      case ExternalSource.Bellerophon(provable) => HippoProof.applyPremises(provable, premises)
+      case ExternalSource.QeTool(formula, defs) =>
+        HippoProof.applyPremises(defs.expandAll(computeQe(formula)), premises)
+      case ExternalSource.Bellerophon(provable, defs) => HippoProof.applyPremises(defs.expandAll(provable), premises)
       case ExternalSource.Cache(hash) =>
         val proof = tacticCache.get(hash).get // TODO Throw some more appropriate exception?
         provableFromGlobalProof(proof, premises)

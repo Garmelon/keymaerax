@@ -56,7 +56,7 @@ val motion = dLp{ { r'=-rv, h'=-v, v'=a & w*v>=w*vlo | w*a>=alo() } };
 //
 // w: Velocity direction
 
-val safeUseCaseLowerBound = theorem
+val safeUseCaseLowerBound = verified theorem
   dLs{
   ==>
       loopInv__(r, h, v, w, vlo, rv)
@@ -112,8 +112,7 @@ print("safeUseCaseLowerBound proved");
 //
 // a
 
-/*
-val safeLowerBound = theorem
+val safeLowerBound = verified theorem
   dLs{
   ==>
       (w*v >= w*vlo | w*a >= alo())
@@ -132,6 +131,7 @@ val safeLowerBound = theorem
       core.Expand("motion__") :<
       belle.GV(1) :<
       belle.propClose[],
+
       // [motion]Limpl
       _,
     ] :<
@@ -149,95 +149,110 @@ val safeLowerBound = theorem
     belle.andL(-1) :<
     belle.andL(-4) :<
     belle.andL(-5) :<
-    belle.allL(-5, dLt{ t_+1 }) :<
+    belle.allL(-5, dLt{ t_+t }) :<
     belle.allL(-5, dLt{ rv*(t_+t) }) :<
     belle.cut(dLf{
-      0<=t+t_ & t+t_<maxI__(v,w,vlo)/alo() | t+t_>=maxI__(v,w,vlo)/alo()
+      0 <= t+t_ & t+t_ < maxI__(v,w,vlo) / alo() | t+t_ >= maxI__(v,w,vlo) / alo()
     })[$use, $show];
 
-    /*
-    $show
-    := belle.implyR(1)
-    :< core.Keep(list(-1, -4, -6, -7, 1))
-    :< belle.QE[];
+    $show :=
+    belle.implyR(1) :<
+    core.Keep(-1, -4, -6, -7, 1) :<
+    core.ExpandAll :<
+    belle.QE[];
 
-    $use
-    := belle.implyR(1)
-    :< belle.orL(-7)[$orL, $orR];
+    $use :=
+    belle.implyR(1) :<
+    belle.orL(-7)[
+      // 0<=t+t_&t+t_ < maxI__(v,w,vlo)/alo()
+      belle.allL(-5, dLt{ w*alo()/2*(t+t_)^2+v*(t+t_) }) :<
+      belle.implyL(-5)[
+        belle.orR(2) :<
+        core.Keep(-1, -2, -3, -4, -6, -7, 2) :<
+        core.ExpandAll :<
+        belle.QE[],
 
-    $orL
-    := belle.allL(-5, dLt{ w*alo()/2*(t+t_)^2+v*(t+t_) })
-    :< belle.implyL(-5)[
-      belle.orR(2)
-      :< core.Keep(list(-1, -2, -3, -4, -6, -7, 2))
-      // :< belle.QE[],
-      :< core.Sorry[],
+        belle.prop[
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+        ],
+      ],
 
-      belle.prop[
-        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-        core.Sorry[], belle.QE[], belle.QE[], core.Sorry[], belle.QE[],
-        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-        belle.QE[], belle.QE[],
+      // t+t_>=maxI__(v,w,vlo)/alo()
+      belle.orR(1) :<
+      belle.allL(-5, dLt{ vlo*(t+t_)-w*maxI__(v,w,vlo)^2/(2*alo()) }) :<
+      belle.implyL(-5)[
+        belle.orR(3) :<
+        core.Keep(-1, -6, -7, 4) :<
+        core.ExpandAll :<
+        belle.QE[],
+
+        belle.prop[
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+            core.ExpandAll :< belle.QE[],
+        ],
       ],
     ];
-
-    $orR
-    := belle.orR(1)
-    :< belle.allL(-5, dLt{ vlo*(t+t_)-w*maxI__(v,w,vlo)^2/(2*alo()) })
-    :< belle.implyL(-5)[
-      belle.orR(3)
-      :< core.Keep(list(-1, -6, -7, 4))
-      // :< belle.QE[],
-      :< core.Sorry[],
-
-      belle.prop[
-        belle.QE[],
-        belle.QE[],
-        belle.QE[],
-        belle.QE[],
-        belle.QE[],
-        belle.QE[],
-        belle.QE[],
-        belle.QE[],
-        belle.QE[],
-        belle.QE[],
-        core.Sorry[], // Counterexample
-        belle.QE[],
-        belle.QE[],
-        core.Sorry[], // Counterexample
-        belle.QE[],
-        belle.QE[],
-        core.Sorry[], // Takes forever
-        core.Sorry[], // Takes forever
-        core.Sorry[], // Counterexample
-        core.Sorry[],
-        core.Sorry[],
-        core.Sorry[],
-        core.Sorry[],
-        core.Sorry[],
-        core.Sorry[],
-        core.Sorry[],
-        core.Sorry[],
-        core.Sorry[],
-        core.Sorry[],
-        core.Sorry[],
-        core.Sorry[],
-        core.Sorry[],
-//        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-//        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-//        core.Sorry[], belle.QE[], belle.QE[], core.Sorry[], belle.QE[],
-//        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-//        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-//        belle.QE[], belle.QE[], belle.QE[], belle.QE[], belle.QE[],
-//        belle.QE[], belle.QE[],
-      ],
-    ];
-    */
   };
 
 print("safeLowerBound proved");
-
-*/

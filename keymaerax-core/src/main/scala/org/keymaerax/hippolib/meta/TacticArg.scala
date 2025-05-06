@@ -5,6 +5,7 @@
 
 package org.keymaerax.hippolib.meta
 
+import org.keymaerax.hippocore.definitions.Definitions
 import org.keymaerax.hippocore.proof.HippoExpression
 
 sealed trait TacticArg {
@@ -192,8 +193,8 @@ object TacticArg {
     override type Type = HlBelleValue
     override def name: String = s"BelleValue"
     override def validateImpl(any: Any): Type = any match {
-      case v: HippoExpression => HlBelleValue.Expression(v.expr)
-      case v: org.keymaerax.core.Expression => HlBelleValue.Expression(v)
+      case v: HippoExpression => HlBelleValue.Expression(v.expr, v.defs)
+      case v: org.keymaerax.core.Expression => HlBelleValue.Expression(v, Definitions.empty)
       case v: org.keymaerax.core.SubstitutionPair => HlBelleValue.Substitution(v)
       case v: org.keymaerax.infrastruct.PosInExpr => HlBelleValue.PosInExpr(v)
       case v: scala.Int => HlBelleValue.Int(v)

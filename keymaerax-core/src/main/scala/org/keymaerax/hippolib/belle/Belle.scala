@@ -29,6 +29,7 @@ import org.keymaerax.btactics.macros.{
   VariableArg,
 }
 import org.keymaerax.core.*
+import org.keymaerax.hippocore.definitions.Definitions
 import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
@@ -55,7 +56,8 @@ case class Belle(name: String, args: Seq[BelleValue]) extends BackwardTactic {
       defs = Declaration(Map.empty),
     )
 
-    Belle.runBelleExpr(ctx, conclusion, belleExpr)
+    val extraDefs = args.map(Belle.collectDefs).fold(Definitions.empty)(_.merge(_))
+    Belle.runBelleExpr(ctx, conclusion, belleExpr, extraDefs)
   }
 }
 
@@ -89,18 +91,18 @@ object Belle {
    */
   private def asArg(value: BelleValue, info: ArgInfo): Seq[Any] = info match {
     case _: FormulaArg => List(value match {
-        case BelleValue.Expression(v: Formula) => v
+        case BelleValue.Expression(v: Formula, _) => v
         case _ => HippoException.fail("Argument must be a Formula")
       })
 
     case _: NumberArg => List(value match {
-        case BelleValue.Expression(v: Number) => v
+        case BelleValue.Expression(v: Number, _) => v
         case BelleValue.Int(v) => Number(v)
         case _ => HippoException.fail("Argument must be a Number or an integer")
       })
 
     case _: VariableArg => List(value match {
-        case BelleValue.Expression(v: Variable) => v
+        case BelleValue.Expression(v: Variable, _) => v
         case BelleValue.String(v) =>
           // See DLParser.variable
           val regex = "^(?<name>[a-zA-Z][a-zA-Z0-9]*_*)(?:_(?<index>0|[1-9][0-9]*))?(?<diff>')?$".r
@@ -117,18 +119,18 @@ object Belle {
       })
 
     case _: TermArg => List(value match {
-        case BelleValue.Expression(v: Term) => v
+        case BelleValue.Expression(v: Term, _) => v
         case _ => HippoException.fail("Argument must be a Term")
       })
 
     case _: ExpressionArg => List(value match {
-        case BelleValue.Expression(v) => v
+        case BelleValue.Expression(v, _) => v
         case _ => HippoException.fail("Argument must be an Expression")
       })
 
     case _: SubstitutionArg => List(value match {
         case BelleValue.Substitution(v) => v
-        case BelleValue.Seq(Seq(BelleValue.Expression(what), BelleValue.Expression(repl))) =>
+        case BelleValue.Seq(Seq(BelleValue.Expression(what, _), BelleValue.Expression(repl, _))) =>
           SubstitutionPair(what, repl)
         case _ => HippoException.fail("Argument must be a SubstitutionPair or an Expression list of length 2")
       })
@@ -188,7 +190,18 @@ object Belle {
     (positionArgs.map(Right.apply) ++ nonPositionArgs.map(Left.apply)).toList
   }
 
-  def runBelleExpr(ctx: HippoContext, conclusion: HippoSequent, belleExpr: BelleExpr): HippoProof = {
+  def collectDefs(value: BelleValue): Definitions = value match {
+    case BelleValue.Expression(_, defs) => defs
+    case BelleValue.Seq(value) => value.map(collectDefs).fold(Definitions.empty)(_.merge(_))
+    case _ => Definitions.empty
+  }
+
+  def runBelleExpr(
+      ctx: HippoContext,
+      conclusion: HippoSequent,
+      belleExpr: BelleExpr,
+      extraDefs: Definitions = Definitions.empty,
+  ): HippoProof = {
     val startProvable = Provable.startProof(conclusion.sequent)
     val startProvableSig = ElidingProvable(startProvable, Declaration(Map.empty))
 
@@ -198,6 +211,6 @@ object Belle {
       case _ => HippoException.fail("Bellerophon interpreter did not return a Provable")
     }
 
-    ctx.belle(resultProvable, conclusion.defs)
+    ctx.belle(resultProvable, conclusion.defs.merge(extraDefs))
   }
 }

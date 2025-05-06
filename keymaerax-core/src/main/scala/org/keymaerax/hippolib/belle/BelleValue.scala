@@ -5,6 +5,7 @@
 
 package org.keymaerax.hippolib.belle
 
+import org.keymaerax.hippocore.definitions.Definitions
 import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 
 /**
@@ -22,8 +23,8 @@ object BelleValue {
   // KeYmaera X values //
   ///////////////////////
 
-  case class Expression(value: org.keymaerax.core.Expression) extends BelleValue {
-    override def digestInto(hasher: Hasher): Unit = hasher.digest("Expression").digest(value)
+  case class Expression(value: org.keymaerax.core.Expression, defs: Definitions) extends BelleValue {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest("Expression").digest(value).digest(defs)
   }
 
   case class Substitution(value: org.keymaerax.core.SubstitutionPair) extends BelleValue {

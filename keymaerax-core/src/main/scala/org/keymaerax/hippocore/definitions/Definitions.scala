@@ -52,10 +52,16 @@ case class Definitions(byName: SortedMap[Name, Replacement]) extends Hashable {
   }
 
   /** List all definitions used by an [[Expression]], also called the expression's subdefinitions. */
-  def subdefinitions(expr: Expression): Set[Name] = StaticSemantics.signature(expr).map(Name(_)).filter(byName.contains)
+  def subdefinitions(of: Expression): Set[Name] = StaticSemantics.signature(of).map(Name(_)).filter(byName.contains)
 
   /** List all definitions used by a [[Sequent]], also called the sequent's subdefinitions. */
-  def subdefinitions(seq: Sequent): Set[Name] = StaticSemantics.signature(seq).map(Name(_)).filter(byName.contains)
+  def subdefinitions(of: Sequent): Set[Name] = StaticSemantics.signature(of).map(Name(_)).filter(byName.contains)
+
+  /** List all definitions used by a [[Provable]], also called the provable's subdefinitions. */
+  def subdefinitions(of: Provable): Set[Name] = of
+    .subgoals
+    .map(subdefinitions)
+    .fold(subdefinitions(of.conclusion))(_ ++ _)
 
   /** The set of definitions that are transitively reachable from a starting set of definitions. */
   def reachable(from: Set[Name]): Set[Name] = {
@@ -73,6 +79,7 @@ case class Definitions(byName: SortedMap[Name, Replacement]) extends Hashable {
 
   def reachable(from: Expression): Set[Name] = reachable(subdefinitions(from))
   def reachable(from: Sequent): Set[Name] = reachable(subdefinitions(from))
+  def reachable(from: Provable): Set[Name] = reachable(subdefinitions(from))
 
   def retainReachable(from: Set[Name]): Definitions = {
     val reachableNames = reachable(from)
@@ -82,6 +89,7 @@ case class Definitions(byName: SortedMap[Name, Replacement]) extends Hashable {
 
   def retainReachable(from: Expression): Definitions = retainReachable(subdefinitions(from))
   def retainReachable(from: Sequent): Definitions = retainReachable(subdefinitions(from))
+  def retainReachable(from: Provable): Definitions = retainReachable(subdefinitions(from))
 
   def merge(other: Definitions): Definitions = {
     for {
@@ -124,9 +132,27 @@ case class Definitions(byName: SortedMap[Name, Replacement]) extends Hashable {
   // I don't think the topological order is necessary since USubst substitutes "all at once",
   // but Declaration seems to do the same, and we already have it computed,
   // and it is more deterministic than using a random key order.
-  def expandAll(expr: Expression): Expression = expandingSubst(topologically*)(expr)
-  def expandAll(sequent: Sequent): Sequent = expandingSubst(topologically*)(sequent)
-  def expandAll(provable: Provable): Provable = provable(expandingSubst(topologically*))
+  private def expandAllOnce(expr: Expression): Expression = expandingSubst(topologically*)(expr)
+  private def expandAllOnce(sequent: Sequent): Sequent = expandingSubst(topologically*)(sequent)
+  private def expandAllOnce(provable: Provable): Provable = provable(expandingSubst(topologically*))
+
+  def expandAll(expr: Expression): Expression = {
+    if (byName.isEmpty) return expr
+    val newExpr = expandAllOnce(expr)
+    retainReachable(newExpr).expandAll(newExpr)
+  }
+
+  def expandAll(sequent: Sequent): Sequent = {
+    if (byName.isEmpty) return sequent
+    val newSequent = expandAllOnce(sequent)
+    retainReachable(newSequent).expandAll(newSequent)
+  }
+
+  def expandAll(provable: Provable): Provable = {
+    if (byName.isEmpty) return provable
+    val newProvable = expandAllOnce(provable)
+    retainReachable(newProvable).expandAll(newProvable)
+  }
 
   override def digestInto(hasher: Hasher): Unit = hasher.digestMap(byName)
 }

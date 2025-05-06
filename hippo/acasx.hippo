@@ -58,16 +58,13 @@ val motion = dLp{ { r'=-rv, h'=-v, v'=a & w*v>=w*vlo | w*a>=alo() } };
 
 val safeUseCaseLowerBound = verified theorem
   dLs{
+    loopInv__(r, h, v, w, vlo, rv),
+    init__(rv)
   ==>
-      loopInv__(r, h, v, w, vlo, rv)
-    & init__(rv)
-    ->
     abs__(r)>rp() | abs__(h)>hp()
   }
   by backward :=
   core.Expand("init__", "loopInv__") :<
-  belle.implyR(1) :<
-  belle.andL(-1) :<
   belle.andL(-2) :<
   belle.andL(-3) :<
   belle.andL(-4) :<
@@ -83,6 +80,8 @@ val safeUseCaseLowerBound = verified theorem
   ];
 
 print("safeUseCaseLowerBound proved");
+print(safeUseCaseLowerBound);
+print();
 
 /////////////////////////////
 // Lemma: Safe lower bound //

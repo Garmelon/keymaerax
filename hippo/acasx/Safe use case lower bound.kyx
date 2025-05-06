@@ -1,4 +1,4 @@
-Lemma "ACAS X/Safe use case lower bound"
+﻿Lemma "ACAS X/Safe use case lower bound"
 
 Definitions
   import kyx.math.{min,max,abs};
@@ -14,7 +14,7 @@ Definitions
   Real minI(Real v, Real w) = min(0, v*w);
   Real maxI(Real v, Real w, Real vlo) = max(0, w * (vlo - v));
 
-  Bool Limpl(Real r, Real h, Real v, Real w, Real vlo, Real rv) <->
+  Bool Limpl(Real r, Real h, Real v, Real w, Real vlo, Real rv) <-> 
     \forall t \forall ro \forall ho (
         (0 <= t & t < maxI(v,w,vlo)/alo & ro = rv * t & ho = (w * alo)/2 * t^2 + v * t)
       | (t >= maxI(v,w,vlo)/alo & ro = rv * t & ho = vlo * t - w * maxI(v,w,vlo)^2/(2*alo))
@@ -24,7 +24,7 @@ Definitions
   Bool init(Real rv) <-> rp>=0 & hp>0 & rv>=0 & alo>0;
 
   Bool loopInv(Real r, Real h, Real v, Real w, Real vlo, Real rv) <-> ( (w=wUp | w=wLo) & Limpl(r,h,v,w,vlo,rv) );
-
+  
   HP motion ::= { {r' = -rv, h' = -v, v' = a & w*v>=w*vlo|w*a>=alo } };
 End.
 
@@ -42,7 +42,7 @@ ProgramVariables
   Real v;    /* vertical velocity of ownship */
   Real vlo;  /* target minimum velocity */
   Real w;    /* velocity direction */
-
+  
   Real a;
 End.
 

@@ -1,4 +1,4 @@
-Lemma "ACAS X/Safe lower bound"
+﻿Lemma "ACAS X/Safe lower bound"
 
 Definitions
   import kyx.math.{min,max,abs};

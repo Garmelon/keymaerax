@@ -21,8 +21,8 @@ case class Keep(parts: SeqPos*) extends BackwardTactic {
   ): HippoProof = {
     val anteParts = parts.collect { case pos: AntePos => pos.getIndex }.distinct
     val succParts = parts.collect { case pos: SuccPos => pos.getIndex }.distinct
-    val anteHide = conclusion.sequent.ante.indices.reverse.filter(!anteParts.contains(_)).map(AntePos(_))
-    val succHide = conclusion.sequent.succ.indices.reverse.filter(!succParts.contains(_)).map(SuccPos(_))
+    val anteHide = conclusion.sequent.ante.indices.filter(!anteParts.contains(_)).map(AntePos(_))
+    val succHide = conclusion.sequent.succ.indices.filter(!succParts.contains(_)).map(SuccPos(_))
     val hide: IndexedSeq[SeqPos] = anteHide ++ succHide
     ctx.backward(Hide(hide*), conclusion, premises)
   }

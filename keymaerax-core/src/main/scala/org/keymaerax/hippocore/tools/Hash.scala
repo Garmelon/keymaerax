@@ -84,7 +84,7 @@ class Hasher {
   /////////////////////
 
   def digest(int: Int): Hasher = {
-    digest.update(ByteBuffer.allocate(4).putInt(int))
+    digest.update(ByteBuffer.allocate(4).putInt(int).rewind())
     this
   }
 

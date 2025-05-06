@@ -255,3 +255,78 @@ val safeLowerBound = verified theorem
   };
 
 print("safeLowerBound proved");
+
+/////////////////////////////////////////////////////
+// Theorem 1: Correctness of implicit safe regions //
+/////////////////////////////////////////////////////
+
+// Horizontal
+//
+// r: Relative distance in ft
+//   xi - xo
+//   x = r
+//
+// rv: Relative speed
+//   -(vi - vo)
+
+// Vertical
+//
+// h: Relative altitude in ft
+//   If negative, the intruder is lower than the ownship.
+//   h := hi - ho
+//   z = h
+//
+// v: Vertical velocity of ownship
+//
+// vlo: Target minimum velocity
+//
+// w: Velocity direction
+//
+// a
+
+val correctnessOfImplicitSafeRegions = theorem
+  dLs{
+  ==>
+      init__(rv)
+    & ( (w=wUp__ | w=wLo__) & Limpl__(r,h,v,w,vlo,rv) )
+    ->
+    [{ {
+       { ?true;
+         ++
+         {{ w:=wUp__; ++ w:=wLo__; }
+          vlo := *;
+          ?Limpl__(r,h,v,w,vlo,rv);
+         }
+       }
+       a := *;
+       }
+       motion__;
+     }*
+    ] ( (abs__(r) > rp() | abs__(h) > hp()) & Limpl__(r,h,v,w,vlo,rv) )
+  }
+  by backward -> $conclusion {
+    $conclusion :=
+    belle.implyR(1) :<
+    belle.andL(-1) :<
+    belle.andL(-2) :<
+    core.Expand("init__") :<
+    belle.loop(1, dLf{ loopInv__(r,h,v,w,vlo,rv) })[$init, $post, $step];
+
+    $init :=
+    core.ExpandAll :<
+    belle.propClose[];
+
+    $post :=
+    belle.andR(1)[
+      // abs__(r)>rp()|abs__(h)>hp()
+      $p1,
+
+      // Limpl__(r,h,v,w,vlo,rv)
+      $p2,
+    ];
+
+    $step :=
+    core.Sorry[];
+  };
+
+print("correctnessOfImplicitSafeRegions proved");

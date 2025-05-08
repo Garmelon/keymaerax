@@ -1,18 +1,14 @@
-val branch =
-    theorem dLs{ ==> x>0 }
-    given dLs{ ==> x=1 }
-    given dLs{ ==> x=2 }
-    given dLs{ ==> x=3 }
-    by core.Sorry();
+val seq = dLs{ a, b, c ==> d, e, f };
+print(seq);
 
-print("branch: ", branch);
+val seqPacked = core.Unpack().forward(seq).conclusion;
+print(seqPacked);
 
-val foo = backward[$p2, $p3, $p1] -> $c {
-    $c = core.Unify(branch)[$p1, $p2, $p3];
+val seqUnpacked = core.Unpack().backward(seqPacked).premises(0);
+print(seqUnpacked);
+
+if (seq == seqUnpacked){
+    print("packing and unpacking did not change seq :)");
+} else {
+    print("packing and unpacking changed seq :(");
 };
-
-print("foo: ", foo);
-
-val bar = foo.backward(dLs{ ==> x>0 });
-
-print("bar: ", bar);

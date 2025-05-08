@@ -439,6 +439,9 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
     .arg1("core.Unify", TacticArgInfo(name = "proof", arg = TacticArg.HippoProof)) { proof => self.Unify(proof) }
 
   @publish
+  val Unpack: TacticInfo = TacticInfo.arg0("core.Unpack") { self.Unpack }
+
+  @publish
   val US: TacticInfo = TacticInfo.arg1(
     "core.US",
     TacticArgInfo(name = "subst", arg = TacticArg.Seq(TacticArg.Tuple2(TacticArg.Expression, TacticArg.Expression))),

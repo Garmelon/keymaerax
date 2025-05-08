@@ -15,7 +15,12 @@ import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, HippoException, P
 
 import java.nio.file.Path
 
-class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable], val tacticCache: Cache[HippoProof]) {
+class HippoContext(
+    val toolProvider: ToolProvider,
+    val toolCache: Cache[Provable],
+    val tacticCache: Cache[HippoProof],
+    val proofCache: Cache[Provable],
+) {
 
   //////////////////////
   // External sources //
@@ -200,10 +205,15 @@ class HippoContext(val toolProvider: ToolProvider, val toolCache: Cache[Provable
         provableFromGlobalProof(proof, premises)
     }
 
-  def provableFromLocalProof(proof: HippoProof): Provable = proof.localProvable(fromExternal)
+  def provableFromLocalProof(proof: HippoProof): Provable = {
+    val hash = Hasher().digest("local").digest(proof).hash
+    proofCache.getOrCompute(hash) { proof.localProvable(fromExternal) }
+  }
 
-  def provableFromGlobalProof(proof: HippoProof, premises: IndexedSeq[Provable]): Provable = proof
-    .globalProvable(fromExternal, premises)
+  def provableFromGlobalProof(proof: HippoProof, premises: IndexedSeq[Provable]): Provable = {
+    val hash = Hasher().digest("global").digest(proof).digestSeqWith(premises)(_.digest(_)).hash
+    proofCache.getOrCompute(hash) { proof.globalProvable(fromExternal, premises) }
+  }
 
   def provableFromGlobalProof(proof: HippoProof, premises: Provable*): Provable =
     provableFromGlobalProof(proof, premises.toIndexedSeq)
@@ -214,5 +224,6 @@ object HippoContext {
     toolProvider = toolProvider,
     toolCache = new ProvableFsCache(cacheDir.resolve("tool")).behind(new LruCache(1000)),
     tacticCache = new HippoProofFsCache(cacheDir.resolve("tactic")).behind(new LruCache(1000)),
+    proofCache = new ProvableFsCache(cacheDir.resolve("proof")).behind(new LruCache(1000)),
   )
 }

@@ -272,9 +272,7 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
 
     case BuiltinFunction.Eq =>
       val (left, right) = getTwoArgs(args)
-      val leftV = getArgValueAsTacticArg(e.args(0), left, TacticArg.Int)
-      val rightV = getArgValueAsTacticArg(e.args(1), right, TacticArg.Int)
-      (leftV == rightV).toHValue
+      (left == right).toHValue
 
     case BuiltinFunction.Neq =>
       val (left, right) = getTwoArgs(args)

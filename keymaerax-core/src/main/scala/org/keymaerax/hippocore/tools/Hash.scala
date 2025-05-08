@@ -36,6 +36,7 @@ import org.keymaerax.core.{
   NotRight,
   OrLeft,
   OrRight,
+  Provable,
   Rule,
   SeqPos,
   Sequent,
@@ -152,6 +153,8 @@ class Hasher {
 
   def digest(sequent: Sequent): Hasher = digestSeqWith(sequent.ante)(_.digest(_))
     .digestSeqWith(sequent.succ)(_.digest(_))
+
+  def digest(provable: Provable): Hasher = digest(provable.conclusion).digestSeqWith(provable.subgoals)(_.digest(_))
 
   def digest(pos: SeqPos): Hasher = digest(pos.getPos)
 

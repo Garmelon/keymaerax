@@ -183,6 +183,8 @@ object Test {
         new ProvableFsCache(Path.of("/home/joscha-nixos/stud/keymaerax/cache/tool")).behind(new LruCache(1000)),
       tacticCache =
         new HippoProofFsCache(Path.of("/home/joscha-nixos/stud/keymaerax/cache/tactic")).behind(new LruCache(1000)),
+      proofCache =
+        new ProvableFsCache(Path.of("/home/joscha-nixos/stud/keymaerax/cache/proof")).behind(new LruCache(1000)),
     )
 
     implicit val lib: HippoLib = new HippoLib

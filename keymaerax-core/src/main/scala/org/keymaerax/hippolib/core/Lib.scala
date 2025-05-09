@@ -9,7 +9,7 @@ import org.keymaerax.core
 import org.keymaerax.core.hippolib.publish
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippolib.meta.{ProofInfo, TacticArg, TacticArgInfo, TacticInfo}
-import org.keymaerax.hippolib.{core as self, HippoLib}
+import org.keymaerax.hippolib.{HippoLib, core as self}
 
 /**
  * A collection of core axioms, axiomatic rules, and tactics.
@@ -402,13 +402,22 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
     }
 
   @publish
-  val Expand: TacticInfo = TacticInfo
-    .arg1("core.Expand", TacticArgInfo(name = "names", arg = TacticArg.Seq(TacticArg.Name)), vararg = true) { names =>
-      self.Expand(names*)
+  val ExpandBackward: TacticInfo = TacticInfo
+    .arg1("core.ExpandBackward", TacticArgInfo(name = "names", arg = TacticArg.Seq(TacticArg.Name)), vararg = true) {
+      names => self.ExpandBackward(names*)
     }
 
   @publish
-  val ExpandAll: TacticInfo = TacticInfo.arg0("core.ExpandAll") { self.ExpandAll }
+  val ExpandBackwardAll: TacticInfo = TacticInfo.arg0("core.ExpandBackwardAll") { self.ExpandBackwardAll }
+
+  @publish
+  val ExpandForward: TacticInfo = TacticInfo
+    .arg1("core.ExpandForward", TacticArgInfo(name = "names", arg = TacticArg.Seq(TacticArg.Name)), vararg = true) {
+      names => self.ExpandForward(names*)
+    }
+
+  @publish
+  val ExpandForwardAll: TacticInfo = TacticInfo.arg0("core.ExpandForwardAll") { self.ExpandForwardAll }
 
   @publish
   val Noop: TacticInfo = TacticInfo.arg0("core.Noop") { self.Noop }

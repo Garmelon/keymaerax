@@ -35,9 +35,12 @@ object HippoJson {
         variant("uSubst", "proof" -> addProof(jsProofs, indexByProof, proof).toJson, "subst" -> subst.toJson)
       case HippoProof.GloballySoundUSubst(premise, subst) =>
         variant("globallySoundUSubst", "premise" -> premise.toJson, "subst" -> subst.toJson)
-      case HippoProof.Expand(conclusion, name) =>
-        variant("expand", "conclusion" -> conclusion.toJson, "name" -> name.toJson)
-      case HippoProof.ExpandAll(conclusion) => variant("expandAll", "conclusion" -> conclusion.toJson)
+      case HippoProof.ExpandBackward(conclusion, name) =>
+        variant("expandBackward", "conclusion" -> conclusion.toJson, "name" -> name.toJson)
+      case HippoProof.ExpandBackwardAll(conclusion) => variant("expandBackwardAll", "conclusion" -> conclusion.toJson)
+      case HippoProof.ExpandForward(premise, name) =>
+        variant("expandForward", "premise" -> premise.toJson, "name" -> name.toJson)
+      case HippoProof.ExpandForwardAll(premise) => variant("expandForwardAll", "premise" -> premise.toJson)
       case HippoProof.Join(proof, subproof, at) => variant(
           "join",
           "proof" -> addProof(jsProofs, indexByProof, proof).toJson,
@@ -89,9 +92,15 @@ object HippoJson {
           premise = fields("premise").convertTo[HippoSequent],
           subst = fields("subst").convertTo[USubst],
         )
-      case "expand" => HippoProof
-          .Expand(conclusion = fields("conclusion").convertTo[HippoSequent], name = fields("name").convertTo[Name])
-      case "expandAll" => HippoProof.ExpandAll(conclusion = fields("conclusion").convertTo[HippoSequent])
+      case "expandBackward" => HippoProof.ExpandBackward(
+          conclusion = fields("conclusion").convertTo[HippoSequent],
+          name = fields("name").convertTo[Name],
+        )
+      case "expandBackwardAll" =>
+        HippoProof.ExpandBackwardAll(conclusion = fields("conclusion").convertTo[HippoSequent])
+      case "expandForward" => HippoProof
+          .ExpandForward(premise = fields("premise").convertTo[HippoSequent], name = fields("name").convertTo[Name])
+      case "expandForwardAll" => HippoProof.ExpandForwardAll(premise = fields("premise").convertTo[HippoSequent])
       case "join" => HippoProof.Join(
           proof = proofs(fields("proof").convertTo[Int]),
           subproof = proofs(fields("subproof").convertTo[Int]),

@@ -10,9 +10,9 @@ import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 
-case object ExpandAll extends BackwardTactic {
+case object ExpandBackwardAll extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].hash
 
   override def runBackward(ctx: HippoContext, conclusion: HippoSequent, premises: Map[Int, HippoSequent]): HippoProof =
-    ctx.expandAll(conclusion)
+    ctx.expandBackwardAll(conclusion)
 }

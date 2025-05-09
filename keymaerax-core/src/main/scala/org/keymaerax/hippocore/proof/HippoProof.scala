@@ -256,7 +256,7 @@ object HippoProof {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(premise).digest(subst)
   }
 
-  final case class Expand(conclusion: HippoSequent, name: Name) extends HippoProof {
+  final case class ExpandBackward(conclusion: HippoSequent, name: Name) extends HippoProof {
     override val premises: IndexedSeq[HippoPremise] = IndexedSeq(HippoPremise.locallySound(conclusion.expand(name)))
 
     override protected def computeProvable(fromExternal: FromExternal, premises: IndexedSeq[Provable]): Provable =
@@ -265,13 +265,33 @@ object HippoProof {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(conclusion).digest(name)
   }
 
-  final case class ExpandAll(conclusion: HippoSequent) extends HippoProof {
+  final case class ExpandBackwardAll(conclusion: HippoSequent) extends HippoProof {
     override val premises: IndexedSeq[HippoPremise] = IndexedSeq(HippoPremise.locallySound(conclusion.expandAll))
 
     override protected def computeProvable(fromExternal: FromExternal, premises: IndexedSeq[Provable]): Provable =
       assertConsistency(premises) { applyPremises(Provable.startProof(conclusion.sequentExpanded), premises) }
 
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(conclusion)
+  }
+
+  final case class ExpandForward(premise: HippoSequent, name: Name) extends HippoProof {
+    override val premises: IndexedSeq[HippoPremise] = IndexedSeq(HippoPremise.locallySound(premise))
+    override val conclusion: HippoSequent = premise.expand(name)
+
+    override protected def computeProvable(fromExternal: FromExternal, premises: IndexedSeq[Provable]): Provable =
+      assertConsistency(premises) { applyPremises(Provable.startProof(conclusion.sequentExpanded), premises) }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(premise).digest(name)
+  }
+
+  final case class ExpandForwardAll(premise: HippoSequent) extends HippoProof {
+    override val premises: IndexedSeq[HippoPremise] = IndexedSeq(HippoPremise.locallySound(premise))
+    override val conclusion: HippoSequent = premise.expandAll
+
+    override protected def computeProvable(fromExternal: FromExternal, premises: IndexedSeq[Provable]): Provable =
+      assertConsistency(premises) { applyPremises(Provable.startProof(conclusion.sequentExpanded), premises) }
+
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(premise)
   }
 
   final case class Join(proof: HippoProof, subproof: HippoProof, at: Int) extends HippoProof {

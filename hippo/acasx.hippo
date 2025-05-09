@@ -80,8 +80,6 @@ val safeUseCaseLowerBound = verified theorem
   ];
 
 print("safeUseCaseLowerBound proved");
-print(safeUseCaseLowerBound);
-print();
 
 /////////////////////////////
 // Lemma: Safe lower bound //
@@ -284,6 +282,9 @@ print("safeLowerBound proved");
 //
 // a
 
+print(safeUseCaseLowerBound);
+//print(safeUseCaseLowerBound.expand("init__"));
+
 val correctnessOfImplicitSafeRegions = theorem
   dLs{
   ==>
@@ -325,8 +326,9 @@ val correctnessOfImplicitSafeRegions = theorem
       $p2,
     ];
 
-    $step :=
-    core.Sorry[];
+    $p1 := core.Sorry[];
+    $p2 := core.Sorry[];
+    $step := core.Sorry[];
   };
 
 print("correctnessOfImplicitSafeRegions proved");

@@ -1,0 +1,16 @@
+- Cache verified theorems? (scary)
+- Expand args in () and []
+- Match against dL literals somehow, maybe dLt?{ 1 + dunno__ } somehow
+- Use dL matching to find SeqPos, maybe pos(dLt?{ 1 + dunno__ })
+- How to use existing lemmas in proofs?
+
+Matching
+
+Match/raw literal: dLt?{ ... }
+Has member function "matches" that takes an expression and returns a boolean
+
+Match statement:
+match value {
+  case dLt?{ foo__ } => { foo__ is now bound in this expression };
+  case 3 => ...; // Supports a few other literals
+};

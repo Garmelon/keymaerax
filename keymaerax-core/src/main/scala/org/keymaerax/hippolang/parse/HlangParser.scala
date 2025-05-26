@@ -299,7 +299,10 @@ class HlangParser(source: SourceFile) {
       .map(opSlice => (slice, target) => AstExpression.Neg(slice = slice, opSlice = opSlice, target = target))
   }
 
-  private def prefixExpression[$: P]: P[PrefixOpConstructor] = P { notExpression | negExpression }
+  private def spreadExpression[$: P]: P[PrefixOpConstructor] =
+    P { slice("..").map(_ => (slice, target) => AstExpression.Spread(slice = slice, target = target)) }
+
+  private def prefixExpression[$: P]: P[PrefixOpConstructor] = P { notExpression | negExpression | spreadExpression }
 
   private def atomicExpression[$: P]: P[AstExpression] = P {
     (sliced(prefixExpression).rep ~ primitiveExpression ~ sliced(suffixExpression).rep)

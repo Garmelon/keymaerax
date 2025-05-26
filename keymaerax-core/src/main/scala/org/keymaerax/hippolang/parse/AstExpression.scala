@@ -246,6 +246,17 @@ object AstExpression {
   case class GraphBlock(slice: SourceFile#Slice, inner: Block) extends AstExpression
 
   ////////////
+  // Prefix //
+  ////////////
+
+  /**
+   * {{{
+   *   ..<target>
+   * }}}
+   */
+  case class Spread(slice: SourceFile#Slice, target: AstExpression) extends AstExpression
+
+  ////////////
   // Suffix //
   ////////////
 

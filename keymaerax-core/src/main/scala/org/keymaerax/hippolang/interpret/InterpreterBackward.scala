@@ -79,14 +79,20 @@ class InterpreterBackward(
       var proof = HlangException.at(e.slice, "while executing this tactic") { ctx.backward(Cached(tactic), conclusion) }
 
       val nPremises = proof.premises.length
-      val nArguments = e.args.length
+
+      val argExprs = e.args match {
+        case Seq(arg: HlangExpression.Spread) => Seq.fill(nPremises)(arg.target)
+        case args => args
+      }
+
+      val nArguments = argExprs.length
       if (nPremises != nArguments) throw HlangException(s"number of arguments does not match number of premises")
         .addLocation(e.argsSlice, s"the tactic has $nArguments ${pluralizeN("argument")(nArguments)}")
         .addLocation(e.slice, s"the tactic returned $nPremises ${pluralizeN("premise")(nPremises)}")
 
       val args = proof
         .premises
-        .zip(e.args)
+        .zip(argExprs)
         .map { case (premise, arg) => evalInAssignGoal(namespace, arg, premise.sequent) }
 
       // Right to left so indices don't get messed up

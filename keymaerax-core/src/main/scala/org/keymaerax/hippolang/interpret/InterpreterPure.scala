@@ -132,6 +132,9 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
     case e: HlangExpression.GraphBlock =>
       HlangValue.Tactic(InterpreterGraph.tactic(ictx = ictx, ctx = ctx, namespace = namespace.freeze, expr = e.inner))
 
+    case e: HlangExpression.Spread =>
+      throw HlangException(s"spreading not allowed in this context $during", slice = e.slice)
+
     case e: HlangExpression.BuiltinAccess =>
       val target = eval(namespace, e.target)
       HlangValue.BuiltinMemberFunction(target, e.member)

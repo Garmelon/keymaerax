@@ -133,6 +133,14 @@ object HlangExpression {
   }
 
   ////////////
+  // Prefix //
+  ////////////
+
+  case class Spread(slice: SourceFile#Slice, target: HlangExpression) extends HlangExpression {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(target)
+  }
+
+  ////////////
   // Suffix //
   ////////////
 

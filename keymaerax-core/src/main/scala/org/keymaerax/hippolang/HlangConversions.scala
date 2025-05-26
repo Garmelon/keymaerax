@@ -174,6 +174,7 @@ object HlangConversions {
           ),
         )
       case e: AstExpression.GraphBlock => GraphBlock(slice = e.slice, inner = e.inner.toHExpr)
+      case e: AstExpression.Spread => Spread(slice = e.slice, target = e.target.toHExpr)
       case e: AstExpression.BuiltinAccess =>
         BuiltinAccess(slice = e.slice, target = e.target.toHExpr, member = e.member)
       case e: AstExpression.Access =>

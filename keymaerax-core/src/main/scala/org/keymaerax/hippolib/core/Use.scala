@@ -10,6 +10,7 @@ import org.keymaerax.hippocore.BackwardTactic
 import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
+import org.keymaerax.hippolang.PrettyPrinter
 import org.keymaerax.hippolib.HippoLib
 import org.keymaerax.hippolib.belle.Belle
 
@@ -24,13 +25,13 @@ import org.keymaerax.hippolib.belle.Belle
  *
  * How it works:
  * {{{
- *                                 proof
- *                                ------- Unpack
- *        *                        |- p
- *   ----------- Belle(prop)    ----------- CoHideRight
- *    G, p |- D                  G |- D, p
- *   -------------------------------------- Cut
- *                   G |- D
+ *         *                             proof
+ *   -------------- Belle(propClose)    ------- Unpack
+ *    G', p' |- D'                       |- p
+ *   -------------- ExpandAll         ----------- CoHideRight
+ *     G, p |- D                       G |- D, p
+ *    ------------------------------------------- Cut
+ *                      G |- D
  * }}}
  */
 case class Use(proof: HippoProof)(implicit lib: HippoLib) extends BackwardTactic {
@@ -46,15 +47,17 @@ case class Use(proof: HippoProof)(implicit lib: HippoLib) extends BackwardTactic
     assert(fmlProof.conclusion.sequent.ante.isEmpty)
     assert(fmlProof.conclusion.sequent.succ.length == 1)
     val fml = fmlProof.conclusion.sequent.succ(0)
-    val result = ctx
+
+    ctx
       .chain(conclusion)
-      .backward(CoreRule(Cut(fml)))
+      .backward(CoreRule(Cut(fml), defs = fmlProof.conclusion.succAt(0).defs))
+      .peek(it => assert(it.premises.length == 2))
+      .backward(ExpandAll)
       .backward(Belle("prop") /* Should eliminate first premise */ )
+      .peek(it => assert(it.premises.length == 1))
       .backward(CoreRule(CoHideRight(SuccPos(conclusion.sequent.succ.length))))
       .joinBackward(fmlProof /* Might eliminate second premise */ )
+      .peek(it => assert(it.premises.length <= 1))
       .proof
-
-    assert(result.premises.length <= 1)
-    result
   }
 }

@@ -78,4 +78,9 @@ case class ProofChain(ctx: HippoContext, proof: HippoProof) {
     val chain = backwardAt(at)(tactic, premises.map { case (i, p) => (i, p.conclusion) }*)
     premises.toMap.toSeq.sortBy(_._1).reverseIterator.foldLeft(chain) { case (c, (i, p)) => c.joinBackwardAt(i)(p) }
   }
+
+  def peek(f: HippoProof => Unit): ProofChain = {
+    f(proof)
+    this
+  }
 }

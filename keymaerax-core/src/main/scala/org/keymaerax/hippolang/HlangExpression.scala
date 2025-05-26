@@ -22,12 +22,12 @@ object HlangExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
   }
 
-  case class DlExpression(slice: SourceFile#Slice, value: core.Expression) extends HlangExpression {
-    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
+  case class DlExpression(slice: SourceFile#Slice, raw: Boolean, value: core.Expression) extends HlangExpression {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(raw).digest(value)
   }
 
-  case class DlSequent(slice: SourceFile#Slice, value: core.Sequent) extends HlangExpression {
-    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(value)
+  case class DlSequent(slice: SourceFile#Slice, raw: Boolean, value: core.Sequent) extends HlangExpression {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(raw).digest(value)
   }
 
   case class Import(slice: SourceFile#Slice, path: HlangExpression) extends HlangExpression {

@@ -462,6 +462,8 @@ object InterpreterPure {
   }
 
   protected def interpolateExpression(namespace: MutableNamespace, e: HlangExpression.DlExpression): HippoExpression = {
+    if (e.raw) return HippoExpression(e.value)
+
     val slice = e.slice
     val label = "while evaluating dL expression"
     def errorMsg(name: String, msg: String): String = s"failed to interpolate $name: $msg"
@@ -478,6 +480,8 @@ object InterpreterPure {
   }
 
   protected def interpolateSequent(namespace: MutableNamespace, e: HlangExpression.DlSequent): HippoSequent = {
+    if (e.raw) return HippoSequent(e.value)
+
     val slice = e.slice
     val label = "while evaluating dL sequent"
 

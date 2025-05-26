@@ -50,8 +50,12 @@ object AstExpression {
    *   dLt(x, y) { x+y }
    * }}}
    */
-  case class DlTerm(slice: SourceFile#Slice, args: Option[Seq[AstIdentifier]], value: org.keymaerax.core.Term)
-      extends AstExpression
+  case class DlTerm(
+      slice: SourceFile#Slice,
+      raw: Boolean,
+      args: Option[Seq[AstIdentifier]],
+      value: org.keymaerax.core.Term,
+  ) extends AstExpression
 
   /**
    * {{{
@@ -59,8 +63,12 @@ object AstExpression {
    *   dLf(x, y) { x+y=2 }
    * }}}
    */
-  case class DlFormula(slice: SourceFile#Slice, args: Option[Seq[AstIdentifier]], value: org.keymaerax.core.Formula)
-      extends AstExpression
+  case class DlFormula(
+      slice: SourceFile#Slice,
+      raw: Boolean,
+      args: Option[Seq[AstIdentifier]],
+      value: org.keymaerax.core.Formula,
+  ) extends AstExpression
 
   /**
    * {{{
@@ -70,6 +78,7 @@ object AstExpression {
    */
   case class DlFormulaPredicational(
       slice: SourceFile#Slice,
+      raw: Boolean,
       arg: Option[AstIdentifier],
       value: org.keymaerax.core.Formula,
   ) extends AstExpression
@@ -79,14 +88,14 @@ object AstExpression {
    *   dLp { x:=2; }
    * }}}
    */
-  case class DlProgram(slice: SourceFile#Slice, value: org.keymaerax.core.Program) extends AstExpression
+  case class DlProgram(slice: SourceFile#Slice, raw: Boolean, value: org.keymaerax.core.Program) extends AstExpression
 
   /**
    * {{{
    *   dLs { ==> 1+1=2 }
    * }}}
    */
-  case class DlSequent(slice: SourceFile#Slice, value: org.keymaerax.core.Sequent) extends AstExpression
+  case class DlSequent(slice: SourceFile#Slice, raw: Boolean, value: org.keymaerax.core.Sequent) extends AstExpression
 
   /**
    * {{{

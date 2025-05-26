@@ -38,7 +38,7 @@ import org.keymaerax.infrastruct.{PosInExpr, Position}
 import org.keymaerax.parser.Declaration
 import org.keymaerax.pt.ElidingProvable
 
-case class Belle(name: String, args: Seq[BelleValue]) extends BackwardTactic {
+case class Belle(name: String, args: BelleValue*) extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(name).digestSeq(args).hash
 
   override def runBackward(

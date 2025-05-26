@@ -447,4 +447,8 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
     TacticArgInfo(name = "subst", arg = TacticArg.Seq(TacticArg.Tuple2(TacticArg.Expression, TacticArg.Expression))),
     vararg = true,
   ) { substs => self.US(substs: _*) }
+
+  @publish
+  val Use: TacticInfo = TacticInfo
+    .arg1("core.Use", TacticArgInfo(name = "proof", arg = TacticArg.HippoProof)) { proof => self.Use(proof) }
 }

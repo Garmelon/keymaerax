@@ -56,7 +56,7 @@ val motion = dLp{ { r'=-rv, h'=-v, v'=a & w*v>=w*vlo | w*a>=alo() } };
 //
 // w: Velocity direction
 
-val safeUseCaseLowerBound = verified theorem
+val lem_safeUseCaseLowerBound = verified theorem
   dLs{
     loopInv__(r, h, v, w, vlo, rv),
     init__(rv)
@@ -79,9 +79,7 @@ val safeUseCaseLowerBound = verified theorem
     core.ExpandAll :< belle.QE[],
   ];
 
-print("safeUseCaseLowerBound proved");
-print(safeUseCaseLowerBound);
-print();
+print("lem_safeUseCaseLowerBound proved");
 
 /////////////////////////////
 // Lemma: Safe lower bound //
@@ -111,7 +109,7 @@ print();
 //
 // a
 
-val safeLowerBound = verified theorem
+val lem_safeLowerBound = verified theorem
   dLs{
   ==>
       (w*v >= w*vlo | w*a >= alo())
@@ -254,7 +252,7 @@ val safeLowerBound = verified theorem
     ];
   };
 
-print("safeLowerBound proved");
+print("lem_safeLowerBound proved");
 
 /////////////////////////////////////////////////////
 // Theorem 1: Correctness of implicit safe regions //
@@ -284,7 +282,7 @@ print("safeLowerBound proved");
 //
 // a
 
-val correctnessOfImplicitSafeRegions = theorem
+val thm1_correctnessOfImplicitSafeRegions = verified theorem
   dLs{
   ==>
       init__(rv)
@@ -309,7 +307,7 @@ val correctnessOfImplicitSafeRegions = theorem
     belle.implyR(1) :<
     belle.andL(-1) :<
     belle.andL(-2) :<
-    core.Expand("init__") :<
+    core.Expand("init__", "motion__") :<
     belle.loop(1, dLf{ loopInv__(r,h,v,w,vlo,rv) })[$init, $post, $step];
 
     $init :=
@@ -319,14 +317,24 @@ val correctnessOfImplicitSafeRegions = theorem
     $post :=
     belle.andR(1)[
       // abs__(r)>rp()|abs__(h)>hp()
-      $p1,
+      core.Use(lem_safeUseCaseLowerBound)[],
 
       // Limpl__(r,h,v,w,vlo,rv)
-      $p2,
+      core.ExpandAll :<
+      belle.propClose[],
     ];
 
     $step :=
-    core.Sorry[];
+    belle.composeb(1) :<
+    belle.MR(1, dLf{ loopInv__(r,h,v,w,vlo,rv) & init__(rv) })[
+      belle.chaseAt(1) :<
+      core.ExpandAll :<
+      belle.simplify(1) :<
+      belle.closeT[],
+
+      belle.diffUnpackEvolDomain(1) :<
+      core.Use(lem_safeLowerBound)[],
+    ];
   };
 
-print("correctnessOfImplicitSafeRegions proved");
+print("thm1_correctnessOfImplicitSafeRegions proved");

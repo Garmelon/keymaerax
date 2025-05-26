@@ -27,7 +27,7 @@ class HippoLib(implicit ctx: HippoContext) {
     TacticArgInfo(name = "name", arg = TacticArg.String),
     TacticArgInfo(name = "args", arg = TacticArg.Seq(TacticArg.BelleValue)),
     vararg = true,
-  ) { (name, args) => org.keymaerax.hippolib.belle.Belle(name, args) }
+  ) { (name, args) => org.keymaerax.hippolib.belle.Belle(name, args*) }
 
   val db: HippoLibDb = addBelleDerivationInfos(HippoLibDb.empty.addPublished(this))
 }
@@ -44,7 +44,7 @@ object HippoLib {
           s"belle.${info.codeName}",
           TacticArgInfo(name = "args", arg = TacticArg.Seq(TacticArg.BelleValue)),
           vararg = true,
-        ) { args => org.keymaerax.hippolib.belle.Belle(info.codeName, args) }
+        ) { args => org.keymaerax.hippolib.belle.Belle(info.codeName, args*) }
       )
     }
 }

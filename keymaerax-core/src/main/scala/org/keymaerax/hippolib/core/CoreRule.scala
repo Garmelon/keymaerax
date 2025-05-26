@@ -7,14 +7,15 @@ package org.keymaerax.hippolib.core
 
 import org.keymaerax.core.{Rule, Sequent}
 import org.keymaerax.hippocore.BackwardTactic
+import org.keymaerax.hippocore.definitions.Definitions
 import org.keymaerax.hippocore.proof.{HippoProof, HippoSequent}
 import org.keymaerax.hippocore.run.HippoContext
 import org.keymaerax.hippocore.tools.{Hash, Hasher}
 
 /** A tactic that can apply [[Rule]]s from the core. */
-case class CoreRule(rule: Rule) extends BackwardTactic {
+case class CoreRule(rule: Rule, defs: Definitions = Definitions.empty) extends BackwardTactic {
   override lazy val hash: Hash = Hasher().digest[this.type].digest(rule).hash
 
   override def runBackward(ctx: HippoContext, conclusion: HippoSequent, premises: Map[Int, HippoSequent]): HippoProof =
-    ctx.coreProofRule(rule, conclusion)
+    ctx.coreProofRule(rule, conclusion, defs)
 }

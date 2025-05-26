@@ -98,21 +98,21 @@ object HlangConversions {
           case None => e.value
           case Some(args) => Interpolator.replaceFuncArgs(args.map(_.name.value), e.value)
         }
-        HlangExpression.DlExpression(e.slice, value)
+        HlangExpression.DlExpression(slice = e.slice, raw = e.raw, value = value)
       case e: AstExpression.DlFormula =>
         val value = e.args match {
           case None => e.value
           case Some(args) => Interpolator.replacePredArgs(args.map(_.name.value), e.value)
         }
-        HlangExpression.DlExpression(e.slice, value)
+        HlangExpression.DlExpression(slice = e.slice, raw = e.raw, value = value)
       case e: AstExpression.DlFormulaPredicational =>
         val value = e.arg match {
           case None => e.value
           case Some(arg) => Interpolator.replacePredicationalArg(arg.name.value, e.value)
         }
-        HlangExpression.DlExpression(e.slice, value)
-      case e: AstExpression.DlProgram => HlangExpression.DlExpression(e.slice, e.value)
-      case e: AstExpression.DlSequent => HlangExpression.DlSequent(e.slice, e.value)
+        HlangExpression.DlExpression(slice = e.slice, raw = e.raw, value = value)
+      case e: AstExpression.DlProgram => HlangExpression.DlExpression(slice = e.slice, raw = e.raw, value = e.value)
+      case e: AstExpression.DlSequent => HlangExpression.DlSequent(slice = e.slice, raw = e.raw, value = e.value)
       case e: AstExpression.BuiltinFunction => HlangValue.BuiltinFunction(e.value).toHExpr(e.slice)
       case e: AstExpression.Import => Import(slice = e.slice, path = e.path.toHExpr)
       case e: AstExpression.Declare => Declare(

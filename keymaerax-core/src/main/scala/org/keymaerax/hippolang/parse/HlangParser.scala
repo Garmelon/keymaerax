@@ -104,23 +104,35 @@ class HlangParser(source: SourceFile) {
   }.opaque("string")
 
   private def dlExpressionExpression[$: P]: P[AstExpression] = P {
-    def dlTerm = sliced(keywordDlTerm ~/ argumentList.? ~ "{" ~ dlParser.term(true) ~ "}")
-      .map { case ((args, value), slice) => AstExpression.DlTerm(slice = slice, args = args, value = value) }
-    def dlFormula = sliced(keywordDlFormula ~/ argumentList.? ~ "{" ~ dlParser.formula ~ "}")
-      .map { case ((args, value), slice) => AstExpression.DlFormula(slice = slice, args = args, value = value) }
-    def dlFormulaPredicational =
-      sliced(keywordDlFormulaPredicational ~/ singleArgumentList.? ~ "{" ~ dlParser.formula ~ "}").map {
-        case ((arg, value), slice) => AstExpression.DlFormulaPredicational(slice = slice, arg = arg, value = value)
+    def raw = "!".!.?.map(_.isDefined)
+
+    def dlTerm = sliced(keywordDlTerm ~/ raw ~ argumentList.? ~ "{" ~ dlParser.term(true) ~ "}")
+      .map { case ((raw, args, value), slice) =>
+        AstExpression.DlTerm(slice = slice, raw = raw, args = args, value = value)
       }
-    def dlProgram = sliced(keywordDlProgram ~/ "{" ~ dlParser.program ~ "}").map { case (value, slice) =>
-      AstExpression.DlProgram(slice = slice, value = value)
+
+    def dlFormula = sliced(keywordDlFormula ~/ raw ~ argumentList.? ~ "{" ~ dlParser.formula ~ "}")
+      .map { case ((raw, args, value), slice) =>
+        AstExpression.DlFormula(slice = slice, raw = raw, args = args, value = value)
+      }
+
+    def dlFormulaPredicational = sliced(
+      keywordDlFormulaPredicational ~/ raw ~ singleArgumentList.? ~ "{" ~ dlParser.formula ~ "}"
+    ).map { case ((raw, arg, value), slice) =>
+      AstExpression.DlFormulaPredicational(slice = slice, raw = raw, arg = arg, value = value)
+    }
+
+    def dlProgram = sliced(keywordDlProgram ~/ raw ~ "{" ~ dlParser.program ~ "}").map { case ((raw, value), slice) =>
+      AstExpression.DlProgram(slice = slice, raw = raw, value = value)
     }
     dlTerm | dlFormulaPredicational | dlFormula | dlProgram
   }
 
   private def dlSequentExpression[$: P]: P[AstExpression.DlSequent] = P {
-    sliced(keywordDlSequent ~/ "{" ~ dlParser.sequent ~ "}").map { case (value, slice) =>
-      AstExpression.DlSequent(slice = slice, value = value)
+    def raw = "!".!.?.map(_.isDefined)
+
+    sliced(keywordDlSequent ~/ raw ~ "{" ~ dlParser.sequent ~ "}").map { case ((raw, value), slice) =>
+      AstExpression.DlSequent(slice = slice, raw = raw, value = value)
     }
   }
 

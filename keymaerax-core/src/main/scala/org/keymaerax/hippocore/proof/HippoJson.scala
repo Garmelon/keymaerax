@@ -6,7 +6,7 @@
 package org.keymaerax.hippocore.proof
 
 import org.keymaerax.core.{Rule, URename, USubst}
-import org.keymaerax.hippocore.definitions.Name
+import org.keymaerax.hippocore.definitions.{Definitions, Name}
 import org.keymaerax.hippocore.proof.HippoJsonProtocol.*
 import spray.json.*
 
@@ -27,8 +27,8 @@ object HippoJson {
       case HippoProof.Sequent(conclusion) => variant("sequent", "conclusion" -> conclusion.toJson)
       case HippoProof.CoreAxiom(name) => variant("coreAxiom", "name" -> name.toJson)
       case HippoProof.CoreAxiomaticRule(name) => variant("coreAxiomaticRule", "name" -> name.toJson)
-      case HippoProof.CoreProofRule(conclusion, rule) =>
-        variant("coreProofRule", "conclusion" -> conclusion.toJson, "rule" -> rule.toJson)
+      case HippoProof.CoreProofRule(conclusion, rule, defs) =>
+        variant("coreProofRule", "conclusion" -> conclusion.toJson, "rule" -> rule.toJson, "defs" -> defs.toJson)
       case HippoProof.URename(proof, rename) =>
         variant("uRename", "proof" -> addProof(jsProofs, indexByProof, proof).toJson, "rename" -> rename.toJson)
       case HippoProof.USubst(proof, subst) =>
@@ -80,6 +80,7 @@ object HippoJson {
       case "coreProofRule" => HippoProof.CoreProofRule(
           conclusion = fields("conclusion").convertTo[HippoSequent],
           rule = fields("rule").convertTo[Rule],
+          defs = fields("defs").convertTo[Definitions],
         )
       case "uRename" =>
         HippoProof.URename(proof = proofs(fields("proof").convertTo[Int]), rename = fields("rename").convertTo[URename])

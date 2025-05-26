@@ -63,7 +63,8 @@ class HippoContext(
 
   def coreAxiomaticRule(name: String): HippoProof = HippoProof.CoreAxiomaticRule(name)
 
-  def coreProofRule(rule: Rule, conclusion: HippoSequent): HippoProof = HippoProof.CoreProofRule(conclusion, rule)
+  def coreProofRule(rule: Rule, conclusion: HippoSequent, defs: Definitions = Definitions.empty): HippoProof =
+    HippoProof.CoreProofRule(conclusion, rule, defs)
 
   def uRename(proof: HippoProof, uRename: URename): HippoProof = HippoProof.URename(proof, uRename)
 

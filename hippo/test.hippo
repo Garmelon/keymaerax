@@ -1,14 +1,13 @@
-val seq = dLs{ a, b, c ==> d, e, f };
-print(seq);
+val proof = theorem
+  dLs{ a ==> b }
+  by backward :=
+  core.Sorry[];
 
-val seqPacked = core.Unpack().forward(seq).conclusion;
-print(seqPacked);
+print("proof: ", proof);
 
-val seqUnpacked = core.Unpack().backward(seqPacked).premises(0);
-print(seqUnpacked);
+val thm = theorem
+  dLs { a ==> b }
+  by backward :=
+  core.Use(proof)[];
 
-if (seq == seqUnpacked){
-    print("packing and unpacking did not change seq :)");
-} else {
-    print("packing and unpacking changed seq :(");
-};
+print("thm: ", thm);

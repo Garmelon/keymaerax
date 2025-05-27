@@ -201,6 +201,8 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
         case (Expand.name, _: HlangValue.DlSequent) => HlangValue.BuiltinMemberFunction(target, Expand)
         case (ExpandAll.name, _: HlangValue.DlExpression) => HlangValue.BuiltinMemberFunction(target, ExpandAll)
         case (ExpandAll.name, _: HlangValue.DlSequent) => HlangValue.BuiltinMemberFunction(target, ExpandAll)
+        case (Matches.name, _: HlangValue.DlExpression) => HlangValue.BuiltinMemberFunction(target, Matches)
+        case (Matches.name, _: HlangValue.DlSequent) => HlangValue.BuiltinMemberFunction(target, Matches)
 
         case _ => throw HlangException("invalid member access")
       }
@@ -406,6 +408,14 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
       case (ExpandAll, HlangValue.DlSequent(value)) =>
         getZeroArgs(args)
         value.expandAll.toHValue
+
+      case (Matches, pattern: HlangValue.DlExpression) =>
+        val target = getOneArg(args)
+        Matcher.matchValue(pattern, target).isDefined.toHValue
+
+      case (Matches, pattern: HlangValue.DlSequent) =>
+        val target = getOneArg(args)
+        Matcher.matchValue(pattern, target).isDefined.toHValue
 
       case _ => throw new UnsupportedOperationException("incorrect builtin member function application")
     }

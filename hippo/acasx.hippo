@@ -34,18 +34,63 @@ val motion = dLp{ { r'=-rv, h'=-v, v'=a & w*v>=w*vlo | w*a>=alo() } };
 // Automation //
 ////////////////
 
+// Find the index of the last expression in a list that matches a pattern.
+// Returns null if no such expression could be found.
+val findIndex = function(pattern, exprs) {
+  var found = null;
+  var i = exprs.length;
+  while (found == null && i > 0) {
+    i = i - 1;
+    if (pattern.matches(exprs(i))) {
+      found = i;
+    };
+  };
+  found
+};
+
+// Find the position of the last antecedent expression that matches a pattern.
+// Returns null if no such expression could be found.
+val findAnte = function(pattern, sequent) {
+  var found = findIndex(pattern, sequent.ante);
+  if (found != null) found = -(found + 1);
+  found
+};
+
+// Find the position of the last succedent expression that matches a pattern.
+// Returns null if no such expression could be found.
+val findSucc = function(pattern, sequent) {
+  var found = findIndex(pattern, sequent.succ);
+  if (found != null) found = found + 1;
+  found
+};
+
+// Find the position of the last antecedent or succedent expression that matches a pattern.
+// Returns null if no such expression could be found.
+val find = function(pattern, sequent) {
+  var found = findAnte(pattern, sequent);
+  if (found == null) found = findSucc(pattern, sequent);
+  found
+};
+
+// Like findAnte, but search in the current goal.
+val atAnte = function(pattern) findAnte(pattern, goal());
+
+// Like findSucc, but search in the current goal.
+val atSucc = function(pattern) findSucc(pattern, goal());
+
+// Like find, but search in the current goal.
+val at = function(pattern) find(pattern, goal());
+
+// Apply belle.andL repeatedly on all premises.
 val andLAll = backward[$premise] -> $conclusion {
   var changed = true;
   while (changed) {
     changed = false;
 
-    var i = $conclusion.ante.length;
-    while (!changed && i > 0) {
-      i = i - 1;
-      if (dLf!{ l__ & r__ }.matches($conclusion.ante(i))) {
-        $conclusion := belle.andL(-i - 1)[$conclusion];
-        changed = true;
-      };
+    val pos = findAnte(dLf!{ a__ & b__ }, $conclusion);
+    if (pos != null) {
+      $conclusion := belle.andL(pos)[$conclusion];
+      changed = true;
     }
   };
 
@@ -89,11 +134,11 @@ val lem_safeUseCaseLowerBound = verified theorem
   core.Expand("init__", "loopInv__") :<
   andLAll :<
   core.Expand("Limpl__") :<
-  belle.allL(-6, dLt{ 0 }) :<
-  belle.allL(-6, dLt{ 0 }) :<
-  belle.allL(-6, dLt{ 0 }) :<
+  belle.allL(atAnte(dLf!{ \forall t a__ }), dLt{ 0 }) :<
+  belle.allL(atAnte(dLf!{ \forall ro a__ }), dLt{ 0 }) :<
+  belle.allL(atAnte(dLf!{ \forall ho a__ }), dLt{ 0 }) :<
   belle.fullSimplify :<
-  belle.implyL(-6)[
+  belle.implyL(atAnte(dLf!{ a__ -> b__ }))[
     core.ExpandAll :< belle.QE[],
     core.ExpandAll :< belle.QE[],
   ];
@@ -156,33 +201,47 @@ val lem_safeLowerBound = verified theorem
     belle.allR(1) :<
     belle.implyR(1) :<
     belle.implyR(1) :<
-    belle.allL(-3, dLt{ t_ }) :<
-    belle.simplify(-3) :<
+    belle.allL(atAnte(dLf!{ \forall s_ a__ }), dLt{ t_ }) :<
+    belle.simplify(atAnte(dLf!{ 0<=t_ & t_<=t_ -> a__ })) :<
     core.Expand("Limpl__") :<
     belle.allR(1) :<
     belle.allR(1) :<
     belle.allR(1) :<
     andLAll :<
-    belle.allL(-5, dLt{ t_+t }) :<
-    belle.allL(-5, dLt{ rv*(t_+t) }) :<
+    belle.allL(atAnte(dLf!{ \forall t a__ }), dLt{ t_+t }) :<
+    belle.allL(atAnte(dLf!{ \forall ro a__ }), dLt{ rv*(t_+t) }) :<
     belle.cut(dLf{
       0 <= t+t_ & t+t_ < maxI__(v,w,vlo) / alo() | t+t_ >= maxI__(v,w,vlo) / alo()
     })[$use, $show];
 
     $show :=
     belle.implyR(1) :<
-    core.Keep(-1, -4, -6, -7, 1) :<
+    core.Keep(
+      atAnte(dLf!{ t_>=0 }),
+      atAnte(dLf!{ w=wUp__()|w=wLo__() }),
+      atAnte(dLf!{ init__(rv) }),
+      atAnte(dLf!{ 0<=t & t<a__ & ro=b__ & ho=c__ | t>=d__ & ro=e__ & ho=f__ }),
+      atSucc(dLf!{ 0<=t+t_ & t+t_<a__ | t+t_>=b__ }),
+    ) :<
     core.ExpandAll :<
     belle.QE[];
 
     $use :=
     belle.implyR(1) :<
-    belle.orL(-7)[
+    belle.orL(atAnte(dLf!{ 0<=t+t_ & t+t_<a__ | t+t_>=b__ }))[
       // 0<=t+t_&t+t_ < maxI__(v,w,vlo)/alo()
-      belle.allL(-5, dLt{ w*alo()/2*(t+t_)^2+v*(t+t_) }) :<
-      belle.implyL(-5)[
-        belle.orR(2) :<
-        core.Keep(-1, -2, -3, -4, -6, -7, 2) :<
+      belle.allL(at(dLf!{ \forall ho a__ }), dLt{ w*alo()/2*(t+t_)^2+v*(t+t_) }) :<
+      belle.implyL(at(dLf!{ a__ -> b__ }))[
+        belle.orR(at(dLf!{ 0<=t_+t & a__ | b__ })) :<
+        core.Keep(
+          atAnte(dLf!{ t_>=0 }),
+          atAnte(dLf!{ w*(a*t_+v) >= w*vlo | w*a >= alo() }),
+          atAnte(dLf!{ w*v        >= w*vlo | w*a >= alo() }),
+          atAnte(dLf!{ w=wUp__() | w=wLo__() }),
+          atAnte(dLf!{ 0<=t+t_ & t+t_<maxI__(v,w,vlo)/alo() }),
+          atAnte(dLf!{ 0<=t & t<a__ & ro=b__ & ho=c__ | t>=d__ & ro=e__ & ho=f__ }),
+          atSucc(dLf!{ 0<=t_+t & t_+t<a__ & b__ }),
+        ) :<
         core.ExpandAll :<
         belle.QE[],
 
@@ -191,10 +250,15 @@ val lem_safeLowerBound = verified theorem
 
       // t+t_>=maxI__(v,w,vlo)/alo()
       belle.orR(1) :<
-      belle.allL(-5, dLt{ vlo*(t+t_)-w*maxI__(v,w,vlo)^2/(2*alo()) }) :<
-      belle.implyL(-5)[
-        belle.orR(3) :<
-        core.Keep(-1, -6, -7, 4) :<
+      belle.allL(atAnte(dLf!{ \forall ho a__ }), dLt{ vlo*(t+t_)-w*maxI__(v,w,vlo)^2/(2*alo()) }) :<
+      belle.implyL(atAnte(dLf!{ a__ -> b__ }))[
+        belle.orR(atSucc(dLf!{ a__ | b__})) :<
+        core.Keep(
+          atAnte(dLf!{ t_>=0 }),
+          atAnte(dLf!{ t+t_>=maxI__(v,w,vlo)/alo() }),
+          atAnte(dLf!{ 0<=t & t<a__ & ro=b__ & ho=c__ | t>=d__ & ro=e__ & ho=f__ }),
+          atSucc(dLf!{ t_+t>=a__ & b__ }),
+        ) :<
         core.ExpandAll :<
         belle.QE[],
 

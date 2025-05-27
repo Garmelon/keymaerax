@@ -30,6 +30,28 @@ val loopInv = dLf(r, h, v, w, vlo, rv) { (w=wUp__ | w=wLo__) & Limpl__(r,h,v,w,v
 
 val motion = dLp{ { r'=-rv, h'=-v, v'=a & w*v>=w*vlo | w*a>=alo() } };
 
+////////////////
+// Automation //
+////////////////
+
+val andLAll = backward[$premise] -> $conclusion {
+  var changed = true;
+  while (changed) {
+    changed = false;
+
+    var i = $conclusion.ante.length;
+    while (!changed && i > 0) {
+      i = i - 1;
+      if (dLf!{ l__ & r__ }.matches($conclusion.ante(i))) {
+        $conclusion := belle.andL(-i - 1)[$conclusion];
+        changed = true;
+      };
+    }
+  };
+
+  $conclusion := $premise;
+};
+
 //////////////////////////////////////
 // Lemma: Safe use case lower bound //
 //////////////////////////////////////
@@ -65,10 +87,7 @@ val lem_safeUseCaseLowerBound = verified theorem
   }
   by backward :=
   core.Expand("init__", "loopInv__") :<
-  belle.andL(-2) :<
-  belle.andL(-3) :<
-  belle.andL(-4) :<
-  belle.andL(-1) :<
+  andLAll :<
   core.Expand("Limpl__") :<
   belle.allL(-6, dLt{ 0 }) :<
   belle.allL(-6, dLt{ 0 }) :<
@@ -143,9 +162,7 @@ val lem_safeLowerBound = verified theorem
     belle.allR(1) :<
     belle.allR(1) :<
     belle.allR(1) :<
-    belle.andL(-1) :<
-    belle.andL(-4) :<
-    belle.andL(-5) :<
+    andLAll :<
     belle.allL(-5, dLt{ t_+t }) :<
     belle.allL(-5, dLt{ rv*(t_+t) }) :<
     belle.cut(dLf{
@@ -239,8 +256,7 @@ val thm1_correctnessOfImplicitSafeRegions = verified theorem
   by backward -> $conclusion {
     $conclusion :=
     belle.implyR(1) :<
-    belle.andL(-1) :<
-    belle.andL(-2) :<
+    andLAll :<
     core.Expand("init__", "motion__") :<
     belle.loop(1, dLf{ loopInv__(r,h,v,w,vlo,rv) })[$init, $post, $step];
 

@@ -84,6 +84,19 @@ object HlangExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(condition).digest(body)
   }
 
+  case class Match(
+      slice: SourceFile#Slice,
+      target: HlangExpression,
+      cases: Seq[(HlangExpression, HlangExpression)],
+      otherwise: Option[HlangExpression],
+  ) extends HlangExpression {
+    override def digestInto(hasher: Hasher): Unit = hasher
+      .digest[this.type]
+      .digest(target)
+      .digestSeqWith(cases) { case (hasher, (pattern, body)) => hasher.digest(pattern).digest(body) }
+      .digestOpt(otherwise)
+  }
+
   case class Function(slice: SourceFile#Slice, args: Seq[HlangIdentifier], body: HlangExpression)
       extends HlangExpression {
 

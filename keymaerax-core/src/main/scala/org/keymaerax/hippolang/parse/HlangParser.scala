@@ -179,6 +179,16 @@ class HlangParser(source: SourceFile) {
     }
   }
 
+  private def matchExpression[$: P]: P[AstExpression.Match] = P {
+    sliced(
+      keywordMatch ~/ parensExpression ~ "{" ~
+        (keywordCase ~ (dlExpressionExpression | dlSequentExpression) ~ "=>" ~ expression ~ ",").rep ~
+        (keywordOtherwise ~ "=>" ~ expression ~ ",").? ~ "}"
+    ).map { case ((target, cases, otherwise), slice) =>
+      AstExpression.Match(slice = slice, target = target, cases = cases, otherwise = otherwise)
+    }
+  }
+
   private def functionExpression[$: P]: P[AstExpression.Function] = P {
     sliced(keywordFunction ~/ argumentList ~/ expression).map { case ((args, body), slice) =>
       AstExpression.Function(slice = slice, args = args, body = body)
@@ -243,8 +253,8 @@ class HlangParser(source: SourceFile) {
 
   private def primitiveExpression[$: P]: P[AstExpression] = P {
     nullExpression | boolExpression | intExpression | stringExpression | dlSequentExpression | dlExpressionExpression |
-      importExpression | declareExpression | ifExpression | whileExpression | functionExpression | theoremExpression |
-      parensExpression | blockExpression | backwardExpression | graphBlockExpression |
+      importExpression | declareExpression | ifExpression | whileExpression | matchExpression | functionExpression |
+      theoremExpression | parensExpression | blockExpression | backwardExpression | graphBlockExpression |
       // Assignment must come before lookup because lookup is a prefix of assignment.
       assignGoalExpression | lookupGoalExpression |
       // Because these two start with a literal, they have to come last so they don't shadow literals like "while".
@@ -397,6 +407,7 @@ object HlangParser {
   // This helps ensure the list does not become outdated.
   private val keywordBackward = "backward"
   private val keywordBy = "by"
+  private val keywordCase = "case"
   private val keywordDlFormula = "dLf"
   private val keywordDlFormulaPredicational = "dLfp"
   private val keywordDlProgram = "dLp"
@@ -410,7 +421,9 @@ object HlangParser {
   private val keywordGraph = "graph"
   private val keywordIf = "if"
   private val keywordImport = "import"
+  private val keywordMatch = "match"
   private val keywordNull = "null"
+  private val keywordOtherwise = "otherwise"
   private val keywordTheorem = "theorem"
   private val keywordTrue = "true"
   private val keywordVal = "val"
@@ -420,6 +433,7 @@ object HlangParser {
   val keywords: Set[String] = Set(
     keywordBackward,
     keywordBy,
+    keywordCase,
     keywordDlFormula,
     keywordDlFormulaPredicational,
     keywordDlProgram,
@@ -433,7 +447,9 @@ object HlangParser {
     keywordGraph,
     keywordIf,
     keywordImport,
+    keywordMatch,
     keywordNull,
+    keywordOtherwise,
     keywordTheorem,
     keywordTrue,
     keywordVal,

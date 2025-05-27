@@ -179,6 +179,22 @@ object AstExpression {
 
   /**
    * {{{
+   *   match (<target>) {
+   *     case dL{ ... } => ...,
+   *     case dL{ ... } => ...,
+   *     otherwise => ...,
+   *   }
+   * }}}
+   */
+  case class Match(
+      slice: SourceFile#Slice,
+      target: AstExpression.Parens,
+      cases: Seq[(AstExpression, AstExpression)],
+      otherwise: Option[AstExpression],
+  ) extends AstExpression
+
+  /**
+   * {{{
    *   function(a, b) a + b
    * }}}
    */

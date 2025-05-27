@@ -12,7 +12,14 @@ import org.keymaerax.hippocore.tools.HumanFormat.pluralizeN
 import org.keymaerax.hippocore.tools.PremisePermuter
 import org.keymaerax.hippolang.HlangConversions.*
 import org.keymaerax.hippolang.namespace.{ImmutableNamespace, MutableNamespace}
-import org.keymaerax.hippolang.{HlangException, HlangExpression, HlangIdentifier, HlangValue, PrettyPrinter}
+import org.keymaerax.hippolang.{
+  BuiltinFunction,
+  HlangException,
+  HlangExpression,
+  HlangIdentifier,
+  HlangValue,
+  PrettyPrinter,
+}
 import org.keymaerax.hippolib.primitive.Cached
 
 import scala.collection.mutable
@@ -32,6 +39,8 @@ class InterpreterBackward(
   private var chain: ProofChain = ctx.chain(conclusion)
   private var goals: IndexedSeq[HlangIdentifier] = IndexedSeq(expr.conclusion)
   assert(goalsAreConsistent)
+
+  private var currentConclusion: Option[HippoSequent] = None
 
   private def goalsAreConsistent: Boolean = {
     if (chain.proof.premises.length != goals.length) return false
@@ -64,6 +73,15 @@ class InterpreterBackward(
     case _ => super.eval(namespace, expr)
   }
 
+  override def applyValue(e: HlangExpression.Apply, target: HlangValue, args: IndexedSeq[HlangValue]): HlangValue =
+    target match {
+      case HlangValue.BuiltinFunction(BuiltinFunction.Goal) if currentConclusion.isDefined =>
+        InterpreterPure.getZeroArgs(args)
+        currentConclusion.get.toHValue
+
+      case _ => super.applyValue(e, target, args)
+    }
+
   private def evalInAssignGoal(
       namespace: MutableNamespace,
       expr: HlangExpression,
@@ -75,7 +93,11 @@ class InterpreterBackward(
       // TODO Better error handling
       // TODO Use arguments that return a plain HippoProof as hints for the tactic
 
+      val prevConclusion = currentConclusion
+      currentConclusion = Some(conclusion)
       val tactic = eval(namespace, e.target).asTactic.asInstanceOf[BackwardTactic]
+      currentConclusion = prevConclusion
+
       var proof = HlangException.at(e.slice, "while executing this tactic") { ctx.backward(Cached(tactic), conclusion) }
 
       val nPremises = proof.premises.length

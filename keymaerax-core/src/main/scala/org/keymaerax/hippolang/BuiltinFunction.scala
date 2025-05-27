@@ -33,9 +33,10 @@ object BuiltinFunction {
   case object Proof extends BuiltinFunction(HlangIdentifier("proof"))
   case object Print extends BuiltinFunction(HlangIdentifier("print"))
   case object Premise extends BuiltinFunction(HlangIdentifier("premise"))
+  case object Goal extends BuiltinFunction(HlangIdentifier("goal"))
 
   val all: Seq[BuiltinFunction] =
-    Seq(Not, Neg, Mul, Div, Add, Sub, Gt, Gte, Lt, Lte, Eq, Neq, And, Or, List, Proof, Print, Premise)
+    Seq(Not, Neg, Mul, Div, Add, Sub, Gt, Gte, Lt, Lte, Eq, Neq, And, Or, List, Proof, Print, Premise, Goal)
 
   val byName: Map[HlangIdentifier, BuiltinFunction] = all.map(b => b.name -> b).toMap
 }

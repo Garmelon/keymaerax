@@ -27,6 +27,7 @@ import org.keymaerax.core.{
 import org.keymaerax.hippocore.definitions.{Definitions, Name, Replacement}
 import org.keymaerax.hippocore.proof.{HippoExpression, HippoSequent}
 import org.keymaerax.hippocore.tools.ExprTransform
+import org.keymaerax.hippolang.interpret.Interpolator.interpolatedName
 import org.keymaerax.infrastruct.Augmentors.ExpressionAugmentor
 import org.keymaerax.infrastruct.FormulaTools
 
@@ -67,14 +68,6 @@ class Interpolator(val lookup: String => HippoExpression, val onError: (String, 
   private def lookupProgram(name: String): (Program, Definitions) = lookup(name) match {
     case HippoExpression(expr: Program, defs) => (expr, defs)
     case _ => onError(name, "replacement value must be a dL program")
-  }
-
-  private def interpolatedName(symbol: NamedSymbol): Option[String] = {
-    if (symbol.index.nonEmpty) return None
-    // Maybe a name like "foo___" should be ignored, but for now it resolves to "foo_".
-    if (!symbol.name.endsWith("__")) return None
-    val name = symbol.name.stripSuffix("__")
-    Some(name)
   }
 
   private class Transform extends ExprTransform {
@@ -190,6 +183,14 @@ class Interpolator(val lookup: String => HippoExpression, val onError: (String, 
 }
 
 object Interpolator {
+  def interpolatedName(symbol: NamedSymbol): Option[String] = {
+    if (symbol.index.nonEmpty) return None
+    // Maybe a name like "foo___" should be ignored, but for now it resolves to "foo_".
+    if (!symbol.name.endsWith("__")) return None
+    val name = symbol.name.stripSuffix("__")
+    Some(name)
+  }
+
   def replaceFuncArgs(args: Seq[String], term: Term): Term = {
     args
       .zipWithIndex

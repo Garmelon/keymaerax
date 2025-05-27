@@ -134,6 +134,12 @@ object HlangConversions {
           ifFalse = e.ifFalse.map(_.toHExpr),
         )
       case e: AstExpression.While => While(slice = e.slice, condition = e.condition.toHExpr, body = e.body.toHExpr)
+      case e: AstExpression.Match => Match(
+          slice = e.slice,
+          target = e.target.toHExpr,
+          cases = e.cases.map { case (pattern, body) => (pattern.toHExpr, body.toHExpr) },
+          otherwise = e.otherwise.map(_.toHExpr),
+        )
       case e: AstExpression.Function => Function(slice = e.slice, args = e.args.map(_.name), body = e.body.toHExpr)
       case e: AstExpression.Theorem => Theorem(
           slice = e.slice,

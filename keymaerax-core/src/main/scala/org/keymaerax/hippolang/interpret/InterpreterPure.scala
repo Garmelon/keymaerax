@@ -33,6 +33,8 @@ import org.keymaerax.hippolang.{
 import org.keymaerax.hippolib.meta.{TacticArg, TacticInfo}
 import org.keymaerax.hippolib.primitive.Cached
 
+import scala.annotation.tailrec
+
 class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
   def during: String = "during pure evaluation"
 
@@ -73,6 +75,25 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
         lastValue = eval(namespace, e.body)
       }
       lastValue
+
+    case e: HlangExpression.Match =>
+      val targetValue = eval(namespace, e.target)
+
+      for ((pattern, body) <- e.cases) {
+        val patternValue = eval(namespace, pattern)
+        for (names <- Matcher.matchValue(patternValue, targetValue)) {
+          val innerNamespace = new MutableNamespace(Some(namespace))
+          for ((name, value) <- names) innerNamespace.declare(HlangIdentifier(name), value, mutable = false)
+          return eval(innerNamespace, body)
+        }
+      }
+
+      for (body <- e.otherwise) {
+        val innerNamespace = new MutableNamespace(Some(namespace))
+        return eval(innerNamespace, body)
+      }
+
+      HlangValue.Null
 
     case e: HlangExpression.Function => HlangValue.Function(namespace.freeze, e.args, e.body)
 
@@ -314,6 +335,7 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
       throw HlangException(s"#${f.name} can only be called in the context of a graph block")
   }
 
+  @tailrec
   private def applyBuiltinMemberFunction(
       e: HlangExpression.Apply,
       target: HlangValue,

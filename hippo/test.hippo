@@ -1,13 +1,10 @@
-val proof = theorem
-  dLs{ a ==> b }
-  by backward :=
-  core.Sorry[];
+val two = dLt{ 2 };
+val fml = dLf{ 1 - 1 + 1 = two__ };
 
-print("proof: ", proof);
+val result = match (fml) {
+  case dLf!{ x__ - y__ = z__ } => print("sub: ", x, ", ", y, ", ", z),
+  case dLf!{ x__ + y__ = z__ } => print("add: ", x, ", ", y, ", ", z),
+  otherwise => print("idk"),
+};
 
-val thm = theorem
-  dLs { a ==> b }
-  by backward :=
-  core.Use(proof)[];
-
-print("thm: ", thm);
+print("result: ", result);

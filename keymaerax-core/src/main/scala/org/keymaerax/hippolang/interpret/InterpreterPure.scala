@@ -333,6 +333,9 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
 
     case f @ BuiltinFunction.Premise =>
       throw HlangException(s"#${f.name} can only be called in the context of a graph block")
+
+    case f @ BuiltinFunction.Goal =>
+      throw HlangException(s"#${f.name} can only be called in the context of a goal assignment")
   }
 
   @tailrec
@@ -476,17 +479,17 @@ object InterpreterPure {
     .zip(exprs)
     .map { case (value, e) => HlangException.at(e.slice) { getValueAsTacticArg(value, arg) } }
 
-  protected def getZeroArgs(args: Seq[HlangValue]): Unit = args match {
+  def getZeroArgs(args: Seq[HlangValue]): Unit = args match {
     case Seq() => ()
     case _ => throw HlangException("exactly zero arguments required")
   }
 
-  protected def getOneArg(args: Seq[HlangValue]): HlangValue = args match {
+  def getOneArg(args: Seq[HlangValue]): HlangValue = args match {
     case Seq(arg) => arg
     case _ => throw HlangException("exactly one argument required")
   }
 
-  protected def getTwoArgs(args: Seq[HlangValue]): (HlangValue, HlangValue) = args match {
+  def getTwoArgs(args: Seq[HlangValue]): (HlangValue, HlangValue) = args match {
     case Seq(arg1, arg2) => (arg1, arg2)
     case _ => throw HlangException("exactly two arguments required")
   }

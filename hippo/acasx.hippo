@@ -3,12 +3,48 @@ val max = math.max;
 val abs = math.abs;
 
 ///////////////
-// Variables //
+// Constants //
 ///////////////
 
-// Real hp: Puck height
-// Real rp: Puck radius
-// Real alo: Minimal vertical acceleration, typically g/4
+// hp: Puck height
+//
+// rp: Puck radius
+//
+// alo: Minimal vertical acceleration, typically g/4
+
+///////////////////////
+// Program Variables //
+///////////////////////
+
+// Horizontal
+//
+// r: Relative distance in ft
+//   xi - xo
+//   x = r
+//
+// rv: Relative speed
+//   -(vi - vo)
+
+// Vertical
+//
+// h: Relative altitude in ft
+//   If negative, the intruder is lower than the ownship.
+//   h := hi - ho
+//   z = h
+//
+// v: Vertical velocity of ownship
+//
+// vlo: Target minimum velocity
+//
+// w: Velocity bound
+//   lower = 1
+//   upper = -1
+//
+// a: Vertical acceleration of ownship
+
+/////////////////
+// Definitions //
+/////////////////
 
 val wLo = 1; // Lower velocity bound
 val wUp = -1; // Upper velocity bound
@@ -33,6 +69,8 @@ val motion = dLp{ { r'=-rv, h'=-v, v'=a & w*v>=w*vlo | w*a>=alo() } };
 ////////////////
 // Automation //
 ////////////////
+
+val QE = backward := core.ExpandAll :< belle.QE[];
 
 // Find the index of the last expression in a list that matches a pattern.
 // Returns null if no such expression could be found.
@@ -352,3 +390,491 @@ val thm1_correctnessOfImplicitSafeRegions = verified theorem
   };
 
 print("thm1_correctnessOfImplicitSafeRegions proved");
+
+///////////////////////////////////////////////////
+// Lemma 1: Equivalence of explicit safe regions //
+///////////////////////////////////////////////////
+
+val case1 = dLf(r, v, w, vlo, rv){
+  -rp() <= r & r < -rp() - rv * minI__(v,w)/alo()
+};
+val bound1 = dLf(r, h, v, w, vlo, rv){
+  w * rv^2 * h < alo()/2 * (r + rp())^2 + w * rv * v * (r+rp()) - rv^2 * hp()
+};
+
+val case2 = dLf(r, v, w, vlo, rv){
+  -rp() - rv * minI__(v,w)/alo() <= r & r <= rp() - rv * minI__(v,w)/alo()
+};
+val bound2 = dLf(r, h, v, w, vlo, rv){
+  w * h < (-(minI__(v,w)^2))/(2*alo()) - hp()
+};
+
+val case3 = dLf(r, v, w, vlo, rv){
+  rp() - rv * minI__(v,w)/alo() < r & r <= rp() + rv * maxI__(v,w,vlo)/alo()
+};
+val bound3 = dLf(r, h, v, w, vlo, rv){
+  w * rv^2 * h < alo()/2 * (r - rp())^2 + w * rv * v * (r - rp()) - rv^2 * hp()
+};
+
+val case4 = dLf(r, v, w, vlo, rv){
+  rp() + rv * maxI__(v,w,vlo)/alo() < r
+};
+val bound4 = dLf(r, h, v, w, vlo, rv){
+  rv = 0 | w * rv * h  <  w * vlo * (r - rp()) - rv * maxI__(v,w,vlo)^2/(2*alo()) - rv * hp()
+};
+
+val case5 = dLf(r, v, w, vlo, rv){
+  -rp() <= r & r < -rp() + rv * maxI__(v,w,vlo)/alo()
+};
+val bound5 = dLf(r, h, v, w, vlo, rv){
+  w * rv^2 * h < alo()/2 * (r + rp())^2 + w * rv * v * (r + rp()) - rv^2 * hp()
+};
+
+val case6 = dLf(r, v, w, vlo, rv){
+  -rp() + rv * maxI__(v,w,vlo)/alo() <= r
+};
+val bound6 = dLf(r, h, v, w, vlo, rv){
+  (rv = 0 & r > rp() )
+  | w * rv * h <  w * vlo * (r + rp()) - rv * maxI__(v,w,vlo)^2/(2*alo()) - rv * hp()
+};
+
+val Lexpl = dLf(r, h, v, w, vlo, rv){
+  (w * vlo >= 0 ->
+      (case1__(r,v,w,vlo,rv) -> bound1__(r,h,v,w,vlo,rv))
+    & (case2__(r,v,w,vlo,rv) -> bound2__(r,h,v,w,vlo,rv))
+    & (case3__(r,v,w,vlo,rv) -> bound3__(r,h,v,w,vlo,rv))
+    & (case4__(r,v,w,vlo,rv) -> bound4__(r,h,v,w,vlo,rv))
+  )
+  &
+  (w * vlo < 0 ->
+      (case5__(r,v,w,vlo,rv) -> bound5__(r,h,v,w,vlo,rv))
+    & (case6__(r,v,w,vlo,rv) -> bound6__(r,h,v,w,vlo,rv))
+  )
+};
+
+val lem_equivalenceOfExplicitSafeRegionsLtr = verified theorem
+  dLs{
+    init__(rv),
+    w=wUp__ | w=wLo__,
+    Lexpl__(r,h,v,w,vlo,rv)
+    ==>
+    Limpl__(r,h,v,w,vlo,rv)
+  }
+  by backward -> $conclusion {
+    $conclusion :=
+    belle.cut(dLf{ w*vlo>=0 | w*vlo<0 })[_,
+      // Show cut
+      core.Keep(atSucc(dLf!{ w*vlo>=0 | w*vlo<0 })) :<
+      belle.QE[],
+    ] :<
+    core.Expand("Lexpl__") :<
+    belle.andL(atAnte(dLf!{ x__ & y__ })) :<
+    belle.orL(atAnte(dLf!{ w*vlo>=0 | w*vlo<0 }))[$gt, $lt];
+
+    ////////////////
+    // w*vlo >= 0 //
+    ////////////////
+    $gt :=
+    core.Hide(atAnte(dLf!{ w*vlo<0 -> x__ })) :<
+    belle.simplify(atAnte(dLf!{ w*vlo>=0 -> x__ })) :<
+    core.Expand("Limpl__") :<
+    belle.allR(1) :<
+    belle.allR(1) :<
+    belle.allR(1) :<
+    belle.implyR(1) :<
+    belle.cut(dLf{
+      r < -rp()
+      | case1__(r,v,w,vlo,rv)
+      | case2__(r,v,w,vlo,rv)
+      | case3__(r,v,w,vlo,rv)
+      | case4__(r,v,w,vlo,rv)
+    })[_,
+      // Show cut
+      core.Hide(atSucc(dLf!{ abs__(r-ro) > rp() |w*h < w*ho-hp() })) :<
+      core.Hide(atAnte(dLf!{ (case1__(r,v,w,vlo,rv) -> x__) & y__ })) :<
+      core.ExpandAll :<
+      belle.QE[],
+    ] :<
+    ///////////////////////
+    // Step 1: r < -rp() //
+    ///////////////////////
+    belle.orL(atAnte(dLf!{ r < -rp() | x__ }))[
+      core.Hide(atAnte(dLf!{ (case1__(r,v,w,vlo,rv) -> x__) & y__ })) :<
+      core.ExpandAll :<
+      belle.QE[],
+    _] :<
+    ///////////////////////////////////
+    // Step 2: case1__(r,v,w,vlo,rv) //
+    ///////////////////////////////////
+    belle.andL(atAnte(dLf!{ (case1__(r,v,w,vlo,rv) -> x__) & y__ })) :<
+    belle.orL(atAnte(dLf!{ case1__(r,v,w,vlo,rv) | x__ }))[
+      core.Hide(atAnte(dLf!{ (case2__(r,v,w,vlo,rv) -> x__) & y__ })) :<
+      belle.simplify(atAnte(dLf!{ case1__(r,v,w,vlo,rv) -> x__ })) :<
+      belle.orR(1) :<
+      belle.cut(dLf{ t <= (r+rp())/rv | t > (r+rp())/rv })[
+        // Use cut
+        belle.orL(atAnte(dLf!{ t <= (r+rp())/rv | t > (r+rp())/rv }))[
+          core.Hide(atSucc(dLf!{ abs__(r-ro)>rp() })) :< core.ExpandAll :< belle.QE[],
+          core.Hide(atSucc(dLf!{ w*h < w*ho-hp() })) :< core.ExpandAll :< belle.QE[],
+        ],
+        // Show cut
+        core.Keep(
+          atAnte(dLf!{ 0<=t & x__ | y__ }),
+          atAnte(dLf!{ w*vlo>=0 }),
+          atSucc(dLf!{ t <= (r+rp())/rv | t > (r+rp())/rv }),
+        ) :<
+        core.ExpandAll :<
+        belle.QE[],
+      ],
+    _] :<
+    ///////////////////////////////////
+    // Step 2: case2__(r,v,w,vlo,rv) //
+    ///////////////////////////////////
+    core.Hide(atAnte(dLf!{ case1__(r,v,w,vlo,rv) -> x__ })) :<
+    belle.andL(atAnte(dLf!{ (case2__(r,v,w,vlo,rv) -> x__) & y__ })) :<
+    belle.orL(atAnte(dLf!{ case2__(r,v,w,vlo,rv) | x__ }))[
+      core.Hide(atAnte(dLf!{ (case3__(r,v,w,vlo,rv) -> x__) & y__ })) :<
+      belle.simplify(atAnte(dLf!{ case2__(r,v,w,vlo,rv) -> x__ })) :<
+      belle.orR(1) :<
+      core.Hide(atSucc(dLf!{ abs__(r-ro)>rp() })) :<
+      core.ExpandAll :<
+      belle.QE[],
+    _] :<
+    ///////////////////////////////////
+    // Step 3: case3__(r,v,w,vlo,rv) //
+    ///////////////////////////////////
+    core.Hide(atAnte(dLf!{ case2__(r,v,w,vlo,rv) -> x__ })) :<
+    belle.andL(atAnte(dLf!{ (case3__(r,v,w,vlo,rv) -> x__) & y__ })) :<
+    belle.orL(atAnte(dLf!{ case3__(r,v,w,vlo,rv) | x__ }))[
+      core.Hide(atAnte(dLf!{ case4__(r,v,w,vlo,rv) -> x__ })) :<
+      belle.simplify(atAnte(dLf!{ case3__(r,v,w,vlo,rv) -> x__ })) :<
+      belle.cut(dLf{ t <= (r-rp())/rv | t > (r-rp())/rv })[
+        // Use cut
+        belle.orL(atAnte(dLf!{ t <= (r-rp())/rv | t > (r-rp())/rv })) :<
+        ..belle.orL(atAnte(dLf!{ 0<=t & x__ | y__ })) :<
+        ..core.ExpandAll :< belle.QE[],
+        // Show cut
+        core.Hide(atSucc(dLf!{ abs__(r-ro) > rp() | w*h < w*ho-hp() })) :<
+        core.Hide(atAnte(dLf!{ case3__(r,v,w,vlo,rv) })) :<
+        core.Hide(atAnte(dLf!{ bound3__(r,h,v,w,vlo,rv) })) :<
+        core.ExpandAll :<
+        belle.QE[],
+      ],
+    _] :<
+    ///////////////////////////////////
+    // Step 4: case4__(r,v,w,vlo,rv) //
+    ///////////////////////////////////
+    core.Hide(atAnte(dLf!{ case3__(r,v,w,vlo,rv) -> x__ })) :<
+    belle.simplify(atAnte(dLf!{ case4__(r,v,w,vlo,rv) -> x__ })) :<
+    belle.cut(dLf{ t <= (r-rp())/rv | t > (r-rp())/rv })[
+      // Use cut
+      belle.orL(atAnte(dLf!{ t <= (r-rp())/rv | t > (r-rp())/rv })) :<
+      ..belle.orL(atAnte(dLf!{ 0<=t & x__ | y__ })) :<
+      ..core.ExpandAll :< belle.QE[],
+      // Show cut
+      core.Hide(atSucc(dLf!{ abs__(r-ro) > rp() | w*h < w*ho-hp() })) :<
+      core.Hide(atAnte(dLf!{ case4__(r,v,w,vlo,rv) })) :<
+      core.Hide(atAnte(dLf!{ bound4__(r,h,v,w,vlo,rv) })) :<
+      core.ExpandAll :<
+      belle.QE[],
+    ];
+
+    ///////////////
+    // w*vlo < 0 //
+    ///////////////
+    $lt :=
+    core.Hide(atAnte(dLf!{ w*vlo>=0 -> x__ })) :<
+    belle.simplify(atAnte(dLf!{ w*vlo<0 -> x__ })) :<
+    core.Expand("Limpl__") :<
+    belle.allR(1) :<
+    belle.allR(1) :<
+    belle.allR(1) :<
+    belle.implyR(1) :<
+    belle.cut(dLf{
+      -rp() > r
+      | case5__(r,v,w,vlo,rv)
+      | case6__(r,v,w,vlo,rv)
+    })[_,
+      // Show cut
+      core.Hide(atSucc(dLf!{ abs__(r-ro) > rp() | w*h < w*ho-hp() })) :<
+      core.Hide(atAnte(dLf!{ (case5__(r,v,w,vlo,rv) -> x__) & y__ })) :<
+      core.ExpandAll :<
+      belle.QE[],
+    ] :<
+    ///////////////////////
+    // Step 1: -rp() > r //
+    ///////////////////////
+    belle.orL(atAnte(dLf!{ -rp() > r | x__ }))[
+      core.Hide(atAnte(dLf!{ (case5__(r,v,w,vlo,rv) -> x__) & y__ })) :<
+      core.ExpandAll :<
+      belle.QE[],
+    _] :<
+    ///////////////////////////////////
+    // Step 2: case5__(r,v,w,vlo,rv) //
+    ///////////////////////////////////
+    belle.andL(atAnte(dLf!{ (case5__(r,v,w,vlo,rv) -> x__) & y__ })) :<
+    belle.orL(atAnte(dLf!{ case5__(r,v,w,vlo,rv) | x__ }))[
+      core.Hide(atAnte(dLf!{ case6__(r,v,w,vlo,rv) -> x__ })) :<
+      belle.simplify(atAnte(dLf!{ case5__(r,v,w,vlo,rv) -> x__ })) :<
+      belle.orL(atAnte(dLf!{ 0<=t & x__ | y__ })) :<
+      ..core.ExpandAll :< belle.QE[],
+    _] :<
+    ///////////////////////////////////
+    // Step 3: case6__(r,v,w,vlo,rv) //
+    ///////////////////////////////////
+    core.Hide(atAnte(dLf!{ case5__(r,v,w,vlo,rv) -> x__ })) :<
+    belle.simplify(atAnte(dLf!{ case6__(r,v,w,vlo,rv) -> x__ })) :<
+    belle.cut(dLf{ t <= (r-rp())/rv | t > (r-rp())/rv })[
+      // Use cut
+      belle.orL(atAnte(dLf!{ t <= (r-rp())/rv | t > (r-rp())/rv })) :<
+      ..belle.orL(atAnte(dLf!{ 0<=t & x__ | y__ })) :<
+      ..core.ExpandAll :< belle.QE[],
+      // Show cut
+      core.Hide(atSucc(dLf!{ t <= (r-rp())/rv | t > (r-rp())/rv })) :<
+      core.ExpandAll :<
+      belle.QE[],
+    ];
+  };
+
+print("lem_equivalenceOfExplicitSafeRegionsLtr proved");
+
+//val instantiateLimpl = function(t, ro, ho) backward[$premise] :=
+//  core.Expand("Limpl__") :<
+//  belle.allL(atAnte(dLf!{ \forall t x__ }), t) :<
+//  belle.allL(atAnte(dLf!{ \forall ro x__ }), ro) :<
+//  belle.allL(atAnte(dLf!{ \forall ho x__ }), ho) :<
+//  $premise;
+
+val lem_equivalenceOfExplicitSafeRegionsRtl = verified theorem
+  dLs{
+    init__(rv),
+    w=wUp__ | w=wLo__,
+    Limpl__(r,h,v,w,vlo,rv)
+    ==>
+    Lexpl__(r,h,v,w,vlo,rv)
+  }
+  by backward -> $conclusion {
+    $conclusion :=
+    core.Expand("Lexpl__") :<
+    belle.andR(1)[$gt, $lt];
+
+    ////////////////
+    // w*vlo >= 0 //
+    ////////////////
+    $gt :=
+    belle.implyR(1) :<
+    ///////////////////////////////////////////////////////
+    // case1__(r,v,w,vlo,rv) -> bound1__(r,h,v,w,vlo,rv) //
+    ///////////////////////////////////////////////////////
+    belle.andR(1)[
+      belle.implyR(1) :<
+      belle.cut(dLf{ rv=0 | rv>0 })[_,
+        // Show cut
+        core.Hide(atSucc(dLf!{ bound1__(r,h,v,w,vlo,rv) })) :<
+        core.Hide(atAnte(dLf!{ case1__(r,v,w,vlo,rv) })) :<
+        core.Hide(atAnte(dLf!{ Limpl__(r,h,v,w,vlo,rv) })) :<
+        core.ExpandAll :<
+        belle.QE[],
+      ] :<
+      core.Expand("Limpl__") :<
+      belle.orL(atAnte(dLf!{ rv=0 | rv>0 }))[
+        // rv = 0
+        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ 0 }) :<
+        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ 0 }) :<
+        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ 0 }) :<
+        belle.fullSimplify :<
+        belle.implyL(atAnte(dLf!{ 0 < maxI__(v,w,vlo)/alo() | x__ -> y__ })) :<
+        ..core.ExpandAll :< belle.QE[],
+        // rv > 0
+        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (r+rp())/rv }) :<
+        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*((r+rp())/rv) }) :<
+        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ w*alo()/2*((r+rp())/rv)^2+v*((r+rp())/rv) }) :<
+        belle.implyL(atAnte(dLf!{ 0 <= (r+rp())/rv & x__ | y__ -> z__ })) :<
+        ..core.ExpandAll :< belle.QE[],
+      ],
+    _] :<
+    ///////////////////////////////////////////////////////
+    // case2__(r,v,w,vlo,rv) -> bound2__(r,h,v,w,vlo,rv) //
+    ///////////////////////////////////////////////////////
+    belle.andR(1)[
+      belle.implyR(1) :<
+      core.Expand("Limpl__") :<
+      belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ -minI__(v,w)/alo() }) :<
+      belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*(-minI__(v,w)/alo()) }) :<
+      belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ w*alo()/2*(-minI__(v,w)/alo())^2+v*(-minI__(v,w)/alo()) }) :<
+      belle.implyL(atAnte(dLf!{ 0<=-minI__(v,w)/alo() & x__ | y__ -> z__ })) :<
+      ..core.ExpandAll :< belle.QE[],
+    _] :<
+    ///////////////////////////////////////////////////////
+    // case3__(r,v,w,vlo,rv) -> bound3__(r,h,v,w,vlo,rv) //
+    ///////////////////////////////////////////////////////
+    belle.andR(1)[
+      belle.implyR(1) :<
+      belle.cut(dLf{ rv=0 | rv>0 })[_,
+        // Show cut
+        core.Hide(atSucc(dLf!{ bound3__(r,h,v,w,vlo,rv) })) :<
+        core.Hide(atAnte(dLf!{ case3__(r,v,w,vlo,rv) })) :<
+        core.Hide(atAnte(dLf!{ Limpl__(r,h,v,w,vlo,rv) })) :<
+        core.ExpandAll :<
+        belle.QE[],
+      ] :<
+      core.Expand("Limpl__") :<
+      belle.orL(atAnte(dLf!{ rv=0 | rv>0 }))[
+        // rv = 0
+        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ 0 }) :<
+        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ 0 }) :<
+        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ 0 }) :<
+        belle.fullSimplify :<
+        belle.implyL(atAnte(dLf!{ 0 < maxI__(v,w,vlo)/alo() | x__ -> y__ })) :<
+        ..core.ExpandAll :< belle.QE[],
+        // rv > 0
+        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (r-rp())/rv }) :<
+        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*((r-rp())/rv) }) :<
+        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ w*alo()/2*((r-rp())/rv)^2+v*((r-rp())/rv) }) :<
+        belle.implyL(atAnte(dLf!{ 0 <= (r-rp())/rv & x__ | y__ -> z__ })) :<
+        ..core.ExpandAll :< belle.QE[],
+      ],
+    _] :<
+    ///////////////////////////////////////////////////////
+    // case4__(r,v,w,vlo,rv) -> bound4__(r,h,v,w,vlo,rv) //
+    ///////////////////////////////////////////////////////
+    belle.implyR(1) :<
+    belle.cut(dLf{ rv=0 | rv>0 })[_,
+      // Show cut
+      core.Hide(atSucc(dLf!{ bound4__(r,h,v,w,vlo,rv) })) :<
+      core.Hide(atAnte(dLf!{ case4__(r,v,w,vlo,rv) })) :<
+      core.Hide(atAnte(dLf!{ Limpl__(r,h,v,w,vlo,rv) })) :<
+      core.ExpandAll :<
+      belle.QE[],
+    ] :<
+    belle.orL(atAnte(dLf!{ rv=0 | rv>0 }))[
+      // rv = 0
+      core.Expand("bound4__") :<
+      belle.orR(1) :<
+      belle.id[],
+      // rv > 0
+      core.Expand("Limpl__") :<
+      belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (r-rp())/rv }) :<
+      belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*((r-rp())/rv) }) :<
+      belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ vlo*((r-rp())/rv)-w*maxI__(v,w,vlo)^2/(2*alo()) }) :<
+      belle.implyL(atAnte(dLf!{ 0 <= (r-rp())/rv & x__ | y__ -> z__ }))[_,
+        core.ExpandAll :< belle.QE[],
+      ] :<
+      core.Hide(atSucc(dLf!{ bound4__(r,h,v,w,vlo,rv) })) :<
+      belle.orR(1) :<
+      core.Hide(atSucc(dLf!{ 0<=(r-rp())/rv & x__ })) :<
+      core.ExpandAll :<
+      belle.QE[],
+    ];
+
+    ///////////////
+    // w*vlo < 0 //
+    ///////////////
+    $lt :=
+    belle.implyR(1) :<
+    ///////////////////////////////////////////////////////
+    // case5__(r,v,w,vlo,rv) -> bound5__(r,h,v,w,vlo,rv) //
+    ///////////////////////////////////////////////////////
+    belle.andR(1)[
+      belle.implyR(1) :<
+      belle.cut(dLf{ rv=0 | rv>0 })[_,
+        // Show cut
+        core.Hide(atSucc(dLf!{ bound5__(r,h,v,w,vlo,rv) })) :<
+        core.Hide(atAnte(dLf!{ case5__(r,v,w,vlo,rv) })) :<
+        core.Hide(atAnte(dLf!{ Limpl__(r,h,v,w,vlo,rv) })) :<
+        core.ExpandAll :<
+        belle.QE[],
+      ] :<
+      core.Expand("Limpl__") :<
+      belle.orL(atAnte(dLf!{ rv=0 | rv>0 }))[
+        // rv = 0
+        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ 0 }) :<
+        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ 0 }) :<
+        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ 0 }) :<
+        belle.fullSimplify :<
+        belle.implyL(atAnte(dLf!{ 0 < maxI__(v,w,vlo)/alo() | x__ -> y__ })) :<
+        ..core.ExpandAll :< belle.QE[],
+        // rv > 0
+        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (r+rp())/rv }) :<
+        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*((r+rp())/rv) }) :<
+        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ w*alo()/2*((r+rp())/rv)^2+v*((r+rp())/rv) }) :<
+        belle.implyL(atAnte(dLf!{ 0 <= (r+rp())/rv & x__ | y__ -> z__ })) :<
+        ..core.ExpandAll :< belle.QE[],
+      ],
+    _] :<
+    ///////////////////////////////////////////////////////
+    // case6__(r,v,w,vlo,rv) -> bound6__(r,h,v,w,vlo,rv) //
+    ///////////////////////////////////////////////////////
+    belle.implyR(1) :<
+    belle.cut(dLf{ rv=0 | rv>0 })[_,
+      // Show cut
+      core.Hide(atSucc(dLf!{ bound6__(r,h,v,w,vlo,rv) })) :<
+      core.Hide(atAnte(dLf!{ case6__(r,v,w,vlo,rv) })) :<
+      core.Hide(atAnte(dLf!{ Limpl__(r,h,v,w,vlo,rv) })) :<
+      core.ExpandAll :<
+      belle.QE[],
+    ] :<
+    core.Expand("bound6__") :<
+    belle.orR(1) :<
+    belle.orL(atAnte(dLf!{ rv=0 | rv>0 }))[_,
+      // rv > 0
+      core.Hide(atSucc(dLf!{ rv=0 & r>rp() })) :<
+      core.Expand("Limpl__") :<
+      belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (r+rp())/rv }) :<
+      belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*((r+rp())/rv) }) :<
+      belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ vlo*((r+rp())/rv)-w*maxI__(v,w,vlo)^2/(2*alo()) }) :<
+      belle.implyL(atAnte(dLf!{ 0<=(r+rp())/rv & x__ | y__ -> z__ })) :<
+      ..core.ExpandAll :< belle.QE[],
+    ] :<
+    // rv = 0
+    belle.cut(dLf{ r>rp() | r<=rp() })[_,
+      // Show cut
+      core.ExpandAll :<
+      belle.QE[],
+    ] :<
+    belle.orL(atAnte(dLf!{ r>rp() | r<=rp() }))[
+      // r > rp()
+      belle.propClose[],
+    _] :<
+    // r <= rp()
+    belle.cut(dLf{
+        (h+w*maxI__(v,w,vlo)^2/(2*alo()))/vlo >= maxI__(v,w,vlo)/alo()
+      | (h+w*maxI__(v,w,vlo)^2/(2*alo()))/vlo < maxI__(v,w,vlo)/alo()
+    })[_,
+      // Show cut
+      core.ExpandAll :<
+      belle.QE[],
+    ] :<
+    belle.orL(atAnte(dLf!{ x__ >= y__ | z__ < a__ }))[
+      // (h+w*maxI__(v,w,vlo)^2/(2*alo()))/vlo >= maxI__(v,w,vlo)/alo()
+      core.Expand("Limpl__") :<
+      belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (h+w*maxI__(v,w,vlo)^2/(2*alo()))/vlo }) :<
+      belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ 0 }) :<
+      belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ h }) :<
+      belle.implyL(atAnte(dLf!{ 0<=x__ & y__ | z__ -> a__ })) :<
+      ..core.ExpandAll :< belle.QE[],
+      // (h+w*maxI__(v,w,vlo)^2/(2*alo()))/vlo < maxI__(v,w,vlo)/alo()
+      core.Expand("Limpl__") :<
+      belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ maxI__(v,w,vlo)/alo() }) :<
+      belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ 0 }) :<
+      belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ vlo*maxI__(v,w,vlo)/alo()-w*maxI__(v,w,vlo)^2/(2*alo()) }) :<
+      belle.implyL(atAnte(dLf!{ 0<=x__ & y__ | z__ -> a__ })) :<
+      ..core.ExpandAll :< belle.QE[],
+    ];
+  };
+
+print("lem_equivalenceOfExplicitSafeRegionsRtl proved");
+
+val lem1_equivalenceOfExplicitSafeRegions = verified theorem
+  dLs{
+    init__(rv),
+    w=wUp__ | w=wLo__
+    ==>
+    Lexpl__(r,h,v,w,vlo,rv) <-> Limpl__(r,h,v,w,vlo,rv)
+  }
+  by backward := belle.equivR(1)[
+    core.Use(lem_equivalenceOfExplicitSafeRegionsLtr)[],
+    core.Use(lem_equivalenceOfExplicitSafeRegionsRtl)[],
+  ];
+
+print("lem1_equivalenceOfExplicitSafeRegions proved");

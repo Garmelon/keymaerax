@@ -14,6 +14,8 @@ import org.keymaerax.hippolang.interpret.InterpreterContext
 import org.keymaerax.tools.ToolName
 
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
+import java.util.concurrent.TimeUnit
+import scala.util.control.Breaks.breakable
 
 /** Initialize a context in which hippolang programs can be executed, and implement hippolang-related CLI programs. */
 class Hippo(options: Options) {
@@ -68,19 +70,25 @@ class Hippo(options: Options) {
 
     runOrPrintError(file)
 
-    while (true) {
-      val key = watchService.take()
-      if (key == null) return
-      val events = key.pollEvents()
-      key.reset()
+    while (true) breakable {
+      var fileChanged = false
+      var key = watchService.take()
+      while (key != null) {
+        val events = key.pollEvents()
+        key.reset()
+        key = null
 
-      val fileChanged = events
-        .asScala
-        .exists { event =>
-          // This conversion is fine because of the events we registered earlier.
-          val changedFile = event.context().asInstanceOf[Path]
-          changedFile == file.getFileName
-        }
+        fileChanged = fileChanged ||
+          events
+            .asScala
+            .exists { event =>
+              // This conversion is fine because of the events we registered earlier.
+              val changedFile = event.context().asInstanceOf[Path]
+              changedFile == file.getFileName
+            }
+
+        key = watchService.poll(50, TimeUnit.MILLISECONDS)
+      }
 
       if (fileChanged) {
         println()

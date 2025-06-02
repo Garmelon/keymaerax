@@ -1,0 +1,166 @@
+SharedDefinitions
+  Real hp;
+  Real rp;
+  Real alo;
+  Real wUp; /*= -1;*/
+  Real wLo; /*= 1;*/
+  /*Real minI(Real v, Real w) = min(0, v*w);*/
+  /*Real maxI(Real v, Real w, Real vlo) = max(0, w * (vlo - v));*/
+  Bool Limpl(Real r, Real h, Real v, Real w, Real vlo, Real rv); /* <-> 
+    \forall t \forall ro \forall ho (
+        (0 <= t & t < maxI(v,w,vlo)/alo & ro = rv * t & ho = (w * alo)/2 * t^2 + v * t)
+      | (t >= maxI(v,w,vlo)/alo & ro = rv * t & ho = vlo * t - w * maxI(v,w,vlo)^2/(2*alo))
+      -> (abs(r - ro) > rp | w * h < w * ho - hp)
+    );*/
+  Bool init(Real rv); /* <-> rp>=0 & hp>0 & rv>=0 & alo>0;*/
+  Bool loopInv(Real r, Real h, Real v, Real w, Real vlo, Real rv) <-> ( (w=wUp | w=wLo) & Limpl(r,h,v,w,vlo,rv) );
+  HP motion ::= { {r' = -rv, h' = -v, v' = a & w*v>=w*vlo|w*a>=alo } };
+  Bool Lexpl(Real r, Real h, Real v, Real w, Real vlo, Real rv);
+End.
+  
+  
+Lemma "ACAS X/Lemma Lie".
+  ProgramVariables.
+
+    /* horizontal */
+    Real r;    /* relative distance in ft; xi - xo */
+               /* x = r */
+    Real rv;   /* relative speed -(vi - vo) */
+
+    /* vertical */
+    Real h;    /* relative altitude in ft */
+               /* if negative: the intruder is lower than the ownship */
+               /* h := hi - ho */
+               /* z = h */
+    Real v;    /* vertical velocity of ownship */
+    Real vlo;  /* target minimum velocity */
+    Real w;    /* velocity direction */
+    Real a;
+
+  End.
+Problem
+  init(rv) & (w=wUp | w=wLo) -> (Limpl(r,h,v,w,vlo,rv)<->Lexpl(r,h,v,w,vlo,rv))
+End.
+
+Tactic "CHEAT"
+      hideR(1);
+      cut("\forall x x^2>=0"); <(
+        "Use":
+          cut("\forall x (x^(1/2))^2=x"); <(
+            "Use":
+              allL("(-1)", 'L=="\forall x (x^(1/2))^2=x");
+              allL("(-1)^(1/2)", 'L=="\forall x x^2>=0");
+              allL2R('L=="((-1)^(1/2))^2=(-1)");
+              hideL('L=="((-1)^(1/2))^2=(-1)");
+              QE,
+            "Show":
+              hideR('R=="false");
+              hideL('L=="\forall x x^2>=0");
+              QE
+          ),
+        "Show":
+          QE
+      )
+End.
+            
+End.            
+
+
+Theorem "ACAS X/Corollary 1: Correctness of explicit safe regions".
+
+ProgramVariables.
+
+  /* horizontal */
+  Real r;    /* relative distance in ft; xi - xo */
+             /* x = r */
+  Real rv;   /* relative speed -(vi - vo) */
+
+  /* vertical */
+  Real h;    /* relative altitude in ft */
+             /* if negative: the intruder is lower than the ownship */
+             /* h := hi - ho */
+             /* z = h */
+  Real v;    /* vertical velocity of ownship */
+  Real vlo;  /* target minimum velocity */
+  Real w;    /* velocity direction */
+  Real a;
+
+End.
+  
+Problem.
+(
+    init(rv)
+  & ( (w=wUp | w=wLo) & Limpl(r,h,v,w,vlo,rv) )
+  ->
+  [{ {
+     { ?true;
+       ++
+       {{ w:=wUp; ++ w:=wLo; }
+        vlo := *;
+        ?Limpl(r,h,v,w,vlo,rv);
+       }
+     }
+     a := *;
+     }
+     motion;
+   }*
+  ] ( (abs(r) > rp | abs(h) > hp) & Limpl(r,h,v,w,vlo,rv) )
+) -> (
+     init(rv)
+   & ( (w=wUp | w=wLo) & Lexpl(r,h,v,w,vlo,rv) )
+   ->
+   [{ {
+      { ?true;
+        ++
+        {{ w:=wUp; ++ w:=wLo; }
+         vlo := *;
+         ?Lexpl(r,h,v,w,vlo,rv);
+        }
+      }
+      a := *;
+      }
+      motion;
+    }*@invariant((init(rv) & (w=wUp | w=wLo))
+                 & ((abs(r) > rp | abs(h) > hp) & Limpl(r,h,v,w,vlo,rv)))
+   ] ( (abs(r) > rp | abs(h) > hp) & Lexpl(r,h,v,w,vlo,rv) )
+)
+End.
+
+
+Tactic "Congruence proof"
+                   implyR('R=="(init(rv)&(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)->[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv)))->init(rv)&(w=wUp()|w=wLo())&Lexpl(r,h,v,w,vlo,rv)->[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Lexpl(r,h,v,w,vlo,rv))");
+                   implyR('R=="init(rv)&(w=wUp()|w=wLo())&Lexpl(r,h,v,w,vlo,rv)->[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Lexpl(r,h,v,w,vlo,rv))");
+                   implyL('L=="init(rv)&(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)->[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))"); <(
+                     "init(rv)&(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)":
+                       hideR('R=="[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Lexpl(r,h,v,w,vlo,rv))");
+                       andR('R=="init(rv)&(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)"); <(
+                         "init(rv)":
+                           propClose,
+                         "(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)":
+                           andR('R=="(w=wUp()|w=wLo())&Limpl(r,h,v,w,vlo,rv)"); <(
+                             "w=wUp()|w=wLo()":
+                               propClose,
+                             "Limpl(r,h,v,w,vlo,rv)":
+                               todo
+                           )
+                       ),
+                     "[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))":
+                       loop("(init(rv)&(w=wUp()|w=wLo()))&(abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv)", 'R=="[{{{?true;++{w:=wUp();++w:=wLo();}vlo:=*;?Lexpl(r,h,v,w,vlo,rv);}a:=*;}motion{|^@|};}*]((abs(r)>rp()|abs(h)>hp())&Lexpl(r,h,v,w,vlo,rv))"); <(
+                         "Init":
+                           iterateb('L=="[{{{?true;++{w:=(-1);++w:=1;}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                           andL('L=="((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))&[{{?true;++{w:=(-1);++w:=1;}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}][{{{?true;++{w:=(-1);++w:=1;}vlo:=*;?Limpl(r,h,v,w,vlo,rv);}a:=*;}{r'=-rv,h'=-v,v'=a&w*v>=w*vlo|w*a>=alo()}}*]((abs(r)>rp()|abs(h)>hp())&Limpl(r,h,v,w,vlo,rv))");
+                           propClose,
+                         "Post":
+                           andR('R=="(abs(r)>rp()|abs(h)>hp())&Lexpl(r,h,v,w,vlo,rv)"); <(
+                             "abs(r)>rp()|abs(h)>hp()":
+                               propClose,
+                             "Lexpl(r,h,v,w,vlo,rv)":
+                               todo
+                           ),
+                         "Step":
+                           todo
+                       )
+                   )
+End.
+
+End.

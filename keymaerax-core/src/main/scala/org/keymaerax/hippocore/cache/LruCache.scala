@@ -9,7 +9,7 @@ import org.keymaerax.hippocore.tools.Hash
 
 import scala.collection.mutable
 
-class LruCache[V](val capacity: Int = 1000) extends Cache[V] {
+class LruCache[V](val capacity: Int = 100000) extends Cache[V] {
   require(capacity > 0, "capacity must be positive")
 
   private val values = mutable.LinkedHashMap[Hash, V]()

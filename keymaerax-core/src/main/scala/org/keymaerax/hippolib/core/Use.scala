@@ -25,13 +25,13 @@ import org.keymaerax.hippolib.belle.Belle
  *
  * How it works:
  * {{{
- *         *                             proof
- *   -------------- Belle(propClose)    ------- Unpack
- *    G', p' |- D'                       |- p
- *   -------------- ExpandAll         ----------- CoHideRight
- *     G, p |- D                       G |- D, p
- *    ------------------------------------------- Cut
- *                      G |- D
+ *         *                        proof
+ *   -------------- Belle(prop)    ------- Unpack
+ *    G', p' |- D'                  |- p
+ *   -------------- ExpandAll    ----------- CoHideRight
+ *     G, p |- D                  G |- D, p
+ *    -------------------------------------- Cut
+ *                    G |- D
  * }}}
  */
 case class Use(proof: HippoProof)(implicit lib: HippoLib) extends BackwardTactic {

@@ -623,12 +623,12 @@ val lem_equivalenceOfExplicitSafeRegionsLtr = verified theorem
 
 print("lem_equivalenceOfExplicitSafeRegionsLtr proved");
 
-//val instantiateLimpl = function(t, ro, ho) backward[$premise] :=
-//  core.Expand("Limpl__") :<
-//  belle.allL(atAnte(dLf!{ \forall t x__ }), t) :<
-//  belle.allL(atAnte(dLf!{ \forall ro x__ }), ro) :<
-//  belle.allL(atAnte(dLf!{ \forall ho x__ }), ho) :<
-//  $premise;
+val instantiateLimpl = function(t, ro, ho) backward[$premise] :=
+  core.Expand("Limpl__") :<
+  belle.allL(atAnte(dLf!{ \forall t x__ }), t) :<
+  belle.allL(atAnte(dLf!{ \forall ro x__ }), ro) :<
+  belle.allL(atAnte(dLf!{ \forall ho x__ }), ho) :<
+  $premise;
 
 val lem_equivalenceOfExplicitSafeRegionsRtl = verified theorem
   dLs{
@@ -660,19 +660,18 @@ val lem_equivalenceOfExplicitSafeRegionsRtl = verified theorem
         core.Hide(atAnte(dLf!{ Limpl__(r,h,v,w,vlo,rv) })) :<
         QE[],
       ] :<
-      core.Expand("Limpl__") :<
       belle.orL(atAnte(dLf!{ rv=0 | rv>0 }))[
         // rv = 0
-        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ 0 }) :<
-        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ 0 }) :<
-        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ 0 }) :<
+        instantiateLimpl(dLt{ 0 }, dLt{ 0 }, dLt{ 0 }) :<
         belle.fullSimplify :<
         belle.implyL(atAnte(dLf!{ 0 < maxI__(v,w,vlo)/alo() | x__ -> y__ })) :<
         ..QE[],
         // rv > 0
-        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (r+rp())/rv }) :<
-        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*((r+rp())/rv) }) :<
-        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ w*alo()/2*((r+rp())/rv)^2+v*((r+rp())/rv) }) :<
+        instantiateLimpl(
+          dLt{ (r+rp())/rv },
+          dLt{ rv*((r+rp())/rv) },
+          dLt{ w*alo()/2*((r+rp())/rv)^2+v*((r+rp())/rv) },
+        ) :<
         belle.implyL(atAnte(dLf!{ 0 <= (r+rp())/rv & x__ | y__ -> z__ })) :<
         ..QE[],
       ],
@@ -682,10 +681,11 @@ val lem_equivalenceOfExplicitSafeRegionsRtl = verified theorem
     ///////////////////////////////////////////////////////
     belle.andR(1)[
       belle.implyR(1) :<
-      core.Expand("Limpl__") :<
-      belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ -minI__(v,w)/alo() }) :<
-      belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*(-minI__(v,w)/alo()) }) :<
-      belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ w*alo()/2*(-minI__(v,w)/alo())^2+v*(-minI__(v,w)/alo()) }) :<
+      instantiateLimpl(
+        dLt{ -minI__(v,w)/alo() },
+        dLt{ rv*(-minI__(v,w)/alo()) },
+        dLt{ w*alo()/2*(-minI__(v,w)/alo())^2+v*(-minI__(v,w)/alo()) },
+      ) :<
       belle.implyL(atAnte(dLf!{ 0<=-minI__(v,w)/alo() & x__ | y__ -> z__ })) :<
       ..QE[],
     _] :<
@@ -701,19 +701,18 @@ val lem_equivalenceOfExplicitSafeRegionsRtl = verified theorem
         core.Hide(atAnte(dLf!{ Limpl__(r,h,v,w,vlo,rv) })) :<
         QE[],
       ] :<
-      core.Expand("Limpl__") :<
       belle.orL(atAnte(dLf!{ rv=0 | rv>0 }))[
         // rv = 0
-        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ 0 }) :<
-        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ 0 }) :<
-        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ 0 }) :<
+        instantiateLimpl(dLt{ 0 }, dLt{ 0 }, dLt{ 0 }) :<
         belle.fullSimplify :<
         belle.implyL(atAnte(dLf!{ 0 < maxI__(v,w,vlo)/alo() | x__ -> y__ })) :<
         ..QE[],
         // rv > 0
-        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (r-rp())/rv }) :<
-        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*((r-rp())/rv) }) :<
-        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ w*alo()/2*((r-rp())/rv)^2+v*((r-rp())/rv) }) :<
+        instantiateLimpl(
+          dLt{ (r-rp())/rv },
+          dLt{ rv*((r-rp())/rv) },
+          dLt{ w*alo()/2*((r-rp())/rv)^2+v*((r-rp())/rv) },
+        ) :<
         belle.implyL(atAnte(dLf!{ 0 <= (r-rp())/rv & x__ | y__ -> z__ })) :<
         ..QE[],
       ],
@@ -735,10 +734,11 @@ val lem_equivalenceOfExplicitSafeRegionsRtl = verified theorem
       belle.orR(1) :<
       belle.id[],
       // rv > 0
-      core.Expand("Limpl__") :<
-      belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (r-rp())/rv }) :<
-      belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*((r-rp())/rv) }) :<
-      belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ vlo*((r-rp())/rv)-w*maxI__(v,w,vlo)^2/(2*alo()) }) :<
+      instantiateLimpl(
+        dLt{ (r-rp())/rv },
+        dLt{ rv*((r-rp())/rv) },
+        dLt{ vlo*((r-rp())/rv)-w*maxI__(v,w,vlo)^2/(2*alo()) },
+      ) :<
       belle.implyL(atAnte(dLf!{ 0 <= (r-rp())/rv & x__ | y__ -> z__ }))[_, QE[]] :<
       core.Hide(atSucc(dLf!{ bound4__(r,h,v,w,vlo,rv) })) :<
       belle.orR(1) :<
@@ -763,19 +763,18 @@ val lem_equivalenceOfExplicitSafeRegionsRtl = verified theorem
         core.Hide(atAnte(dLf!{ Limpl__(r,h,v,w,vlo,rv) })) :<
         QE[],
       ] :<
-      core.Expand("Limpl__") :<
       belle.orL(atAnte(dLf!{ rv=0 | rv>0 }))[
         // rv = 0
-        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ 0 }) :<
-        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ 0 }) :<
-        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ 0 }) :<
+        instantiateLimpl(dLt{ 0 }, dLt{ 0 }, dLt{ 0 }) :<
         belle.fullSimplify :<
         belle.implyL(atAnte(dLf!{ 0 < maxI__(v,w,vlo)/alo() | x__ -> y__ })) :<
         ..QE[],
         // rv > 0
-        belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (r+rp())/rv }) :<
-        belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*((r+rp())/rv) }) :<
-        belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ w*alo()/2*((r+rp())/rv)^2+v*((r+rp())/rv) }) :<
+        instantiateLimpl(
+          dLt{ (r+rp())/rv },
+          dLt{ rv*((r+rp())/rv) },
+          dLt{ w*alo()/2*((r+rp())/rv)^2+v*((r+rp())/rv) },
+        ) :<
         belle.implyL(atAnte(dLf!{ 0 <= (r+rp())/rv & x__ | y__ -> z__ })) :<
         ..QE[],
       ],
@@ -796,10 +795,11 @@ val lem_equivalenceOfExplicitSafeRegionsRtl = verified theorem
     belle.orL(atAnte(dLf!{ rv=0 | rv>0 }))[_,
       // rv > 0
       core.Hide(atSucc(dLf!{ rv=0 & r>rp() })) :<
-      core.Expand("Limpl__") :<
-      belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (r+rp())/rv }) :<
-      belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ rv*((r+rp())/rv) }) :<
-      belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ vlo*((r+rp())/rv)-w*maxI__(v,w,vlo)^2/(2*alo()) }) :<
+      instantiateLimpl(
+        dLt{ (r+rp())/rv },
+        dLt{ rv*((r+rp())/rv) },
+        dLt{ vlo*((r+rp())/rv)-w*maxI__(v,w,vlo)^2/(2*alo()) },
+      ) :<
       belle.implyL(atAnte(dLf!{ 0<=(r+rp())/rv & x__ | y__ -> z__ })) :<
       ..QE[],
     ] :<
@@ -813,17 +813,19 @@ val lem_equivalenceOfExplicitSafeRegionsRtl = verified theorem
     })[_, QE[]] :<
     belle.orL(atAnte(dLf!{ x__ >= y__ | z__ < a__ }))[
       // (h+w*maxI__(v,w,vlo)^2/(2*alo()))/vlo >= maxI__(v,w,vlo)/alo()
-      core.Expand("Limpl__") :<
-      belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ (h+w*maxI__(v,w,vlo)^2/(2*alo()))/vlo }) :<
-      belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ 0 }) :<
-      belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ h }) :<
+      instantiateLimpl(
+        dLt{ (h+w*maxI__(v,w,vlo)^2/(2*alo()))/vlo },
+        dLt{ 0 },
+        dLt{ h },
+      ) :<
       belle.implyL(atAnte(dLf!{ 0<=x__ & y__ | z__ -> a__ })) :<
       ..QE[],
       // (h+w*maxI__(v,w,vlo)^2/(2*alo()))/vlo < maxI__(v,w,vlo)/alo()
-      core.Expand("Limpl__") :<
-      belle.allL(atAnte(dLf!{ \forall t x__ }), dLt{ maxI__(v,w,vlo)/alo() }) :<
-      belle.allL(atAnte(dLf!{ \forall ro x__ }), dLt{ 0 }) :<
-      belle.allL(atAnte(dLf!{ \forall ho x__ }), dLt{ vlo*maxI__(v,w,vlo)/alo()-w*maxI__(v,w,vlo)^2/(2*alo()) }) :<
+      instantiateLimpl(
+        dLt{ maxI__(v,w,vlo)/alo() },
+        dLt{ 0 },
+        dLt{ vlo*maxI__(v,w,vlo)/alo()-w*maxI__(v,w,vlo)^2/(2*alo()) },
+      ) :<
       belle.implyL(atAnte(dLf!{ 0<=x__ & y__ | z__ -> a__ })) :<
       ..QE[],
     ];

@@ -184,30 +184,6 @@ print("lem_safeUseCaseLowerBound proved");
 // Lemma: Safe lower bound //
 /////////////////////////////
 
-// Horizontal
-//
-// r: Relative distance in ft
-//   xi - xo
-//   x = r
-//
-// rv: Relative speed
-//   -(vi - vo)
-
-// Vertical
-//
-// h: Relative altitude in ft
-//   If negative, the intruder is lower than the ownship.
-//   h := hi - ho
-//   z = h
-//
-// v: Vertical velocity of ownship
-//
-// vlo: Target minimum velocity
-//
-// w: Velocity bound
-//
-// a
-
 val lem_safeLowerBound = verified theorem
   dLs{
   ==>
@@ -304,30 +280,6 @@ print("lem_safeLowerBound proved");
 /////////////////////////////////////////////////////
 // Theorem 1: Correctness of implicit safe regions //
 /////////////////////////////////////////////////////
-
-// Horizontal
-//
-// r: Relative distance in ft
-//   xi - xo
-//   x = r
-//
-// rv: Relative speed
-//   -(vi - vo)
-
-// Vertical
-//
-// h: Relative altitude in ft
-//   If negative, the intruder is lower than the ownship.
-//   h := hi - ho
-//   z = h
-//
-// v: Vertical velocity of ownship
-//
-// vlo: Target minimum velocity
-//
-// w: Velocity direction
-//
-// a
 
 val lem_stepInv = theorem
   dLs{

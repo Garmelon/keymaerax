@@ -147,6 +147,9 @@ class InterpreterPure(ictx: InterpreterContext, ctx: HippoContext) {
       val nestedNamespace = new MutableNamespace(Some(namespace))
       eval(nestedNamespace, e.inner)
 
+    case e: HlangExpression.ForwardBlock =>
+      HlangValue.Tactic(InterpreterForward.tactic(ictx = ictx, namespace = namespace.freeze, expr = e))
+
     case e: HlangExpression.BackwardBlock =>
       HlangValue.Tactic(InterpreterBackward.tactic(ictx = ictx, namespace = namespace.freeze, expr = e))
 

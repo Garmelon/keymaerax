@@ -128,6 +128,11 @@ object HlangExpression {
     override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digest(inner)
   }
 
+  case class ForwardBlock(slice: SourceFile#Slice, premises: Seq[HlangIdentifier], inner: HlangExpression)
+      extends HlangExpression {
+    override def digestInto(hasher: Hasher): Unit = hasher.digest[this.type].digestSeq(premises).digest(inner)
+  }
+
   case class BackwardBlock(
       slice: SourceFile#Slice,
       premises: Seq[HlangIdentifier],

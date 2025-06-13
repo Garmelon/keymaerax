@@ -155,6 +155,8 @@ object HlangConversions {
           slice = e.slice,
           Sequence(slice = e.slice, exprs = e.exprs.map(_.toHExpr), returnExpr = e.returnExpr.map(_.toHExpr)),
         )
+      case e: AstExpression.ForwardBlock =>
+        ForwardBlock(slice = e.slice, premises = e.premises.map(_.name), inner = e.inner.toHExpr)
       case e: AstExpression.BackwardBlock => BackwardBlock(
           slice = e.slice,
           premises = e.premises.map(_.name),

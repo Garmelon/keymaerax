@@ -1,10 +1,9 @@
-val two = dLt{ 2 };
-val fml = dLf{ 1 - 1 + 1 = two__ };
 
-val result = match (fml) {
-  case dLf!{ x__ - y__ = z__ } => print("sub: ", x, ", ", y, ", ", z),
-  case dLf!{ x__ + y__ = z__ } => print("add: ", x, ", ", y, ", ", z),
-  otherwise => print("idk"),
-};
+val additionWorks = theorem
+  dLs{ ==> a() & b() & c() -> d() | e() | f() }
+  given dLs{ a(), b(), c() ==> d(), e(), f() }
+  by forward[p] {
+    core.Unpack[p]
+  };
 
-print("result: ", result);
+print(additionWorks);

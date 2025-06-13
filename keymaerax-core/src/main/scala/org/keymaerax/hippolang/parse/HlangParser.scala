@@ -223,6 +223,12 @@ class HlangParser(source: SourceFile) {
     }
   }
 
+  private def forwardExpression[$: P]: P[AstExpression.ForwardBlock] = P {
+    sliced(keywordForward ~/ tacticArgumentList.? ~ blockExpression).map { case ((premises, inner), slice) =>
+      AstExpression.ForwardBlock(slice = slice, premises = premises.getOrElse(Seq.empty), inner = inner)
+    }
+  }
+
   private def backwardExpression[$: P]: P[AstExpression] = P {
     // Combines backward blocks and backward assignment so we can cut on the "backward" keyword.
     type Block = (AstIdentifier, AstExpression.Block)
@@ -254,7 +260,8 @@ class HlangParser(source: SourceFile) {
   private def primitiveExpression[$: P]: P[AstExpression] = P {
     nullExpression | boolExpression | intExpression | stringExpression | dlSequentExpression | dlExpressionExpression |
       importExpression | declareExpression | ifExpression | whileExpression | matchExpression | functionExpression |
-      theoremExpression | parensExpression | blockExpression | backwardExpression | graphBlockExpression |
+      theoremExpression | parensExpression | blockExpression | forwardExpression | backwardExpression |
+      graphBlockExpression |
       // Assignment must come before lookup because lookup is a prefix of assignment.
       assignGoalExpression | lookupGoalExpression |
       // Because these two start with a literal, they have to come last so they don't shadow literals like "while".
@@ -416,6 +423,7 @@ object HlangParser {
   private val keywordElse = "else"
   private val keywordExport = "export"
   private val keywordFalse = "false"
+  private val keywordForward = "forward"
   private val keywordFunction = "function"
   private val keywordGiven = "given"
   private val keywordGraph = "graph"
@@ -442,6 +450,7 @@ object HlangParser {
     keywordElse,
     keywordExport,
     keywordFalse,
+    keywordForward,
     keywordFunction,
     keywordGiven,
     keywordGraph,

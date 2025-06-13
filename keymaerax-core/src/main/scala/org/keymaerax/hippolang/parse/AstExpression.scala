@@ -236,6 +236,14 @@ object AstExpression {
 
   /**
    * {{{
+   *   forward { ... }
+   *   forward[p1, p2] { ... }
+   * }}}
+   */
+  case class ForwardBlock(slice: SourceFile#Slice, premises: Seq[AstIdentifier], inner: Block) extends AstExpression
+
+  /**
+   * {{{
    *   backward -> $c { ... }
    *   backward[$p1, $p2] -> $c { ... }
    * }}}

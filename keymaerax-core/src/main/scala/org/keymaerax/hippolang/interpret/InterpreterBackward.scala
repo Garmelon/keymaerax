@@ -33,7 +33,7 @@ class InterpreterBackward(
 
   override def during: String = "during backwards evaluation"
 
-  // TODO Better error handling
+  // TODO Better error handling - do this check in parser?
   require(expr.premises.length == expr.premises.toSet.size)
 
   private var chain: ProofChain = ctx.chain(conclusion)

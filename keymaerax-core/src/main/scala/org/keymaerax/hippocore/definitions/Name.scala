@@ -5,14 +5,14 @@
 
 package org.keymaerax.hippocore.definitions
 
-import org.keymaerax.core.{DotTerm, NamedSymbol, Nothing}
+import org.keymaerax.core.{DotFormula, DotTerm, NamedSymbol, Nothing}
 import org.keymaerax.hippocore.tools.{Hashable, Hasher}
 
 import scala.math.Ordered.orderingToOrdered
 
 case class Name(name: String, index: Option[Int] = None) extends Ordered[Name] with Hashable {
   // Naming convention checks that mirror the checks done in the core.
-  if (name != DotTerm().name && name != Nothing.name) {
+  if (name != DotTerm().name && name != DotFormula.name && name != Nothing.name) {
     val firstUnderscore = name.indexOf('_')
     val (chars, underscores) = if (firstUnderscore >= 0) name.splitAt(firstUnderscore) else (name, "")
     require(chars.nonEmpty, "name must not be empty")

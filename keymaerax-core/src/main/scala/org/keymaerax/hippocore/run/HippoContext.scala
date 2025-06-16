@@ -12,6 +12,7 @@ import org.keymaerax.hippocore.definitions.{Definitions, Name}
 import org.keymaerax.hippocore.proof.{ExternalSource, HippoPremise, HippoProof, HippoSequent}
 import org.keymaerax.hippocore.tools.Hasher
 import org.keymaerax.hippocore.{BackwardTactic, ForwardTactic, HippoException, PureTactic, Tactic}
+import org.keymaerax.hippolib.belle.Belle
 
 import java.nio.file.Path
 
@@ -132,13 +133,15 @@ class HippoContext(
 
   def cachedPure(tactic: PureTactic): HippoProof = {
     val hash = Hasher().digest("pure").digest(tactic.hash).hash
-    val proof = tacticCache.getOrCompute(hash) { pure(tactic) }
+//    val proof = tacticCache.getOrCompute(hash) { pure(tactic) }
+    val proof = pure(tactic)
     HippoProof.External(proof.conclusion, proof.premises, ExternalSource.Cache(hash))
   }
 
   def cachedForward(tactic: ForwardTactic, premises: IndexedSeq[HippoSequent]): HippoProof = {
     val hash = Hasher().digest("forward").digest(tactic.hash).digestSeqWith(premises)(_.digest(_)).hash
-    val proof = tacticCache.getOrCompute(hash) { forward(tactic, premises) }
+//    val proof = tacticCache.getOrCompute(hash) { forward(tactic, premises) }
+    val proof = forward(tactic, premises)
     HippoProof.External(proof.conclusion, proof.premises, ExternalSource.Cache(hash))
   }
 
@@ -149,7 +152,12 @@ class HippoContext(
       .digest(conclusion)
       .digestSeqWith(premises.toSeq.sortBy(_._1)) { case (b, (i, p)) => b.digest(i).digest(p) }
       .hash
-    val proof = tacticCache.getOrCompute(hash) { backward(tactic, conclusion, premises) }
+//    val proof = tacticCache.getOrCompute(hash) { backward(tactic, conclusion, premises) }
+//    val proof = backward(tactic, conclusion, premises)
+    val proof = tactic match {
+      case Belle("QE", _*) => tacticCache.getOrCompute(hash) { backward(tactic, conclusion, premises) }
+      case _ => backward(tactic, conclusion, premises)
+    }
     HippoProof.External(proof.conclusion, proof.premises, ExternalSource.Cache(hash))
   }
 

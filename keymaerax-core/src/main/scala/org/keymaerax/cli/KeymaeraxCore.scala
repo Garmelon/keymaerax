@@ -151,7 +151,20 @@ object KeymaeraxCore {
           msgOut = System.out,
           resultOut = System.out,
         )
-      case Some(cmd: Command.HRun) => new Hippo(options).run(cmd.file)
+      case Some(cmd: Command.HRun) =>
+        // Warmup
+        for (i <- 0 until 5) {
+          println(s"WARMUP: $i")
+          new Hippo(options).bench(cmd.file, 10, record = false)
+        }
+
+        // Now we can record our times
+        for (i <- 0 until 20) {
+          println(s"RUN: $i")
+          new Hippo(options).bench(cmd.file, 1, record = true)
+        }
+
+        println("Benchmarking's all done!")
       case Some(cmd: Command.HWatch) => new Hippo(options).watch(cmd.file)
       // Unknown or no commands
       case Some(command) => println("WARNING: Unknown command " + command)

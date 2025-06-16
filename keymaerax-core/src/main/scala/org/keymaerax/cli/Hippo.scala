@@ -13,6 +13,7 @@ import org.keymaerax.hippolang.HlangException
 import org.keymaerax.hippolang.interpret.InterpreterContext
 import org.keymaerax.tools.ToolName
 
+import java.io.FileWriter
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
 import java.util.concurrent.TimeUnit
 import scala.util.control.Breaks.breakable
@@ -98,6 +99,46 @@ class Hippo(options: Options) {
         println()
         runOrPrintError(file)
       }
+    }
+  }
+
+  def benchRunOrPrintError(file: Path, record: Boolean): Unit = {
+    val before = System.currentTimeMillis()
+    try interpreter.run(file)
+    catch {
+      case e: HlangException =>
+        println()
+        e.print()
+      case e: Throwable =>
+        println("An exception occurred during hippo evaluation:")
+        println(e.getMessage)
+        e.printStackTrace()
+    }
+    val after = System.currentTimeMillis()
+
+    val time = after - before
+    println(s"Execution took $time ms.")
+
+    if (record) {
+      val fw = new FileWriter("stats.csv", true)
+      fw.write(s"$time,")
+      fw.close()
+    }
+  }
+
+  def bench(file: Path, repetitions: Int, record: Boolean): Unit = {
+    val file2 = file.getParent.resolve(file.getFileName.toString + "x")
+
+    for (i <- 1 to repetitions) {
+      println(s"Loop $i")
+      benchRunOrPrintError(file, record)
+      benchRunOrPrintError(file2, record)
+    }
+
+    if (record) {
+      val fw = new FileWriter("stats.csv", true)
+      fw.write("\n")
+      fw.close()
     }
   }
 }

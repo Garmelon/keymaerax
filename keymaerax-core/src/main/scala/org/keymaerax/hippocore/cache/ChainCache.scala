@@ -8,7 +8,20 @@ package org.keymaerax.hippocore.cache
 import org.keymaerax.hippocore.tools.Hash
 
 class ChainCache[V](val first: Cache[V], val second: Cache[V]) extends Cache[V] {
-  override def get(key: Hash): Option[V] = first.get(key).orElse(second.get(key))
+  override def get(key: Hash): Option[V] = {
+    first.get(key) match {
+      case Some(value) => return Some(value)
+      case None =>
+    }
+
+    val value = second.get(key) match {
+      case None => return None
+      case Some(value) => value
+    }
+
+    first.put(key, value)
+    Some(value)
+  }
 
   override def put(key: Hash, value: V): Unit = {
     second.put(key, value)

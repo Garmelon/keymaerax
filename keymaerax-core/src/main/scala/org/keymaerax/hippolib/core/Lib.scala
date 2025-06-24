@@ -432,7 +432,10 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
   ) { (at, eq, dir) => self.RewriteAtU(at = at, eq = eq, dir = dir.map(self.RewriteAt.Dir.parse)) }
 
   @publish
-  val Sorry: TacticInfo = TacticInfo.arg0("core.Sorry") { self.Sorry() }
+  val Sorry: TacticInfo = TacticInfo.arg1(
+    "core.Sorry",
+    TacticArgInfo(name = "conclusion", arg = TacticArg.Option(TacticArg.HippoSequent), default = None),
+  ) { conclusion => self.Sorry(conclusion = conclusion) }
 
   @publish
   val Unify: TacticInfo = TacticInfo

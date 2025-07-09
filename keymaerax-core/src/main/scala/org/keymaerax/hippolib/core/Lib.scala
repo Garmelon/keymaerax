@@ -434,7 +434,7 @@ class Lib(implicit ctx: HippoContext, lib: HippoLib) {
   @publish
   val Sorry: TacticInfo = TacticInfo.arg1(
     "core.Sorry",
-    TacticArgInfo(name = "conclusion", arg = TacticArg.Option(TacticArg.HippoSequent), default = None),
+    TacticArgInfo(name = "conclusion", arg = TacticArg.Option(TacticArg.HippoSequent), default = Some(None)),
   ) { conclusion => self.Sorry(conclusion = conclusion) }
 
   @publish

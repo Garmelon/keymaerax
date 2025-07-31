@@ -1,0 +1,10 @@
+val add_comm = theorem dLs{ ==> a() & b() -> b() & a() }
+  by backward -> $conclusion {
+    $conclusion := belle.implyR(1)[
+      belle.andL(-1)[
+        belle.andR(1)[belle.trivial(-1, 1)[], $b]
+      ]
+    ];
+  };
+
+print(add_comm);

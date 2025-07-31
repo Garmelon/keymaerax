@@ -1,10 +1,47 @@
-val add_comm = theorem dLs{ ==> a() & b() -> b() & a() }
-  by backward -> $conclusion {
-    $conclusion := belle.implyR(1)[
-      belle.andL(-1)[
-        belle.andR(1)[belle.trivial(-1, 1)[], $b]
-      ]
-    ];
-  };
+var x = 10;
+while (x > 0) {
+  print("Hello world! ", x);
+  x = x - 1;
+};
 
-print(add_comm);
+
+
+
+
+
+
+
+
+
+
+
+
+//val add_comm = theorem dLs{ ==> a&b -> b&a }
+//  by backward -> $conclusion {
+//    $conclusion := belle.implyR(1)[
+//      belle.andL(-1)[
+//        belle.andR(1)[belle.id[], belle.id[]]
+//      ]
+//    ];
+//  };
+//
+//print(add_comm);
+
+
+
+
+
+
+
+
+
+
+
+
+//val add_comm2 = theorem dLs{ ==> a()&b() -> b()&a() }
+//  by backward :=
+//  belle.implyR(1) :<
+//  belle.andL(-1) :<
+//  belle.andR(1)[ ..belle.id[] ];
+//
+//print(add_comm2);

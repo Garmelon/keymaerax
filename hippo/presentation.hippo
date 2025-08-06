@@ -14,6 +14,28 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //var n = 1;
 //while (x <= 5) {
 //  print("Hello  ", n);
@@ -35,7 +57,7 @@
 
 
 
-//val add_comm = theorem dLs{ ==> a&b -> b&a }
+//val and_comm = theorem dLs{ ==> a&b -> b&a }
 //  by backward :=
 //  belle.implyR(1)[
 //    belle.andL(-1)[
@@ -60,10 +82,10 @@
 
 
 
-//val add_comm2 = theorem dLs{ ==> a&b -> b&a }
+//val and_comm = theorem dLs{ ==> a&b -> b&a }
 //  by backward :=
 //  belle.implyR(1) :<
 //  belle.andL(-1) :<
 //  belle.andR(1)[ ..belle.id[] ];
 //
-//print(add_comm2);
+//print(and_comm);
